@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
-import { fetchMySales, refundSale, type SellerSale } from "../chain/village";
+import {
+  fetchMySales,
+  refundSale,
+  fetchOffersFor,
+  acceptOfferOnChain,
+  type SellerSale,
+  type StallOffer,
+} from "../chain/village";
 import { shortAddress } from "../wallet/wallet";
 import { giwaSepolia } from "../config/giwa";
 
@@ -9,15 +16,18 @@ export default function SellerLedgerDialog() {
   const open = useStore((s) => s.ledgerOpen);
   const walletAddress = useStore((s) => s.walletAddress);
   const [sales, setSales] = useState<SellerSale[] | null>(null);
+  const [offers, setOffers] = useState<StallOffer[]>([]);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !walletAddress) return;
     setSales(null);
+    setOffers([]);
     void fetchMySales(walletAddress)
       .then(setSales)
       .catch(() => setError("체인 조회 실패 — 잠시 후 다시 열어주세요."));
+    void fetchOffersFor(walletAddress).then(setOffers).catch(() => {});
   }, [open, walletAddress]);
 
   if (!open) return null;
@@ -44,12 +54,53 @@ export default function SellerLedgerDialog() {
     }
   }
 
+  async function onAccept(id: number) {
+    if (busy !== null || !walletAddress) return;
+    setBusy(id);
+    setError(null);
+    try {
+      await acceptOfferOnChain(id);
+      setOffers(await fetchOffersFor(walletAddress));
+      setSales(await fetchMySales(walletAddress));
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="gift-overlay" onClick={close}>
       <div className="gift-modal guild-modal" onClick={(e) => e.stopPropagation()}>
         <div className="gift-emoji">📒</div>
         <div className="gift-title">판매 장부</div>
-        <div className="gift-sub">내 노점의 온체인 판매 내역 · 분쟁은 환불로 해결</div>
+        <div className="gift-sub">내 노점의 온체인 판매·흥정 · 분쟁은 환불로 해결</div>
+
+        {offers.length > 0 && (
+          <div className="guild-board" style={{ borderTop: "none", paddingTop: 4 }}>
+            <div className="guild-board-title">💬 받은 흥정</div>
+            {offers.map((o) => (
+              <div key={o.id} className="guild-row">
+                <span className="guild-name">
+                  {o.itemName}
+                  <em className="honor-desc">
+                    {" "}
+                    {shortAddress(o.buyer)} 제안 · {o.amountEth} ETH
+                  </em>
+                </span>
+                <button
+                  className="gift-btn primary small"
+                  disabled={busy !== null}
+                  onClick={() => onAccept(o.id)}
+                  title="제안가로 즉시 체결 — 대금 정산 + 쿠폰 전달이 한 번에"
+                >
+                  {busy === o.id ? "체결 중…" : "수락"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {!sales && !error && <div className="gift-note">체인에서 불러오는 중…</div>}
         {sales && sales.length === 0 && (

@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import { buyOnMarket, shortAddress, isDojangVerified } from "../wallet/wallet";
-import { buyStallOnChain } from "../chain/village";
+import {
+  buyStallOnChain,
+  makeOfferOnChain,
+  cancelOfferOnChain,
+  fetchOffersFor,
+  type StallOffer,
+} from "../chain/village";
 import { useUpidName } from "../wallet/upid";
 import { buyStallItem } from "../net/colyseus";
 import { addCoupon } from "../state/coupons";
@@ -24,6 +30,9 @@ export default function StallDialog() {
   const [boughtItem, setBoughtItem] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ownerDojang, setOwnerDojang] = useState(false);
+  const [offerFor, setOfferFor] = useState<string | null>(null);
+  const [offerEth, setOfferEth] = useState("");
+  const [myOffers, setMyOffers] = useState<StallOffer[]>([]);
 
   const ownerAddress = stall?.ownerAddress;
   const ownerUpid = useUpidName(ownerAddress ?? null);
@@ -38,6 +47,25 @@ export default function StallDialog() {
       cancelled = true;
     };
   }, [ownerAddress]);
+
+  // 이 판매자에게 내가 걸어둔 흥정 (온체인 노점만)
+  useEffect(() => {
+    setMyOffers([]);
+    if (!ownerAddress || !walletAddress || !stallId?.startsWith("oc-")) return;
+    let cancelled = false;
+    void fetchOffersFor(ownerAddress)
+      .then((list) => {
+        if (!cancelled) {
+          setMyOffers(
+            list.filter((o) => o.buyer.toLowerCase() === walletAddress.toLowerCase()),
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [ownerAddress, walletAddress, stallId, busyItem]);
 
   if (!stallId || !stall) return null;
 
@@ -93,6 +121,37 @@ export default function StallDialog() {
     }
   }
 
+  async function onOffer(itemName: string) {
+    if (busyItem || !stall) return;
+    setBusyItem("offer");
+    setError(null);
+    try {
+      await makeOfferOnChain(stall.ownerAddress, itemName, offerEth.trim());
+      setOfferFor(null);
+      setOfferEth("");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg.length > 120 ? msg.slice(0, 120) + "…" : msg);
+    } finally {
+      setBusyItem(null);
+    }
+  }
+
+  async function onCancelOffer(id: number) {
+    if (busyItem) return;
+    setBusyItem("offer");
+    setError(null);
+    try {
+      await cancelOfferOnChain(id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg.length > 120 ? msg.slice(0, 120) + "…" : msg);
+    } finally {
+      setBusyItem(null);
+    }
+  }
+
+  const canOffer = !!stallId?.startsWith("oc-") && !!walletAddress && !isMine;
   const icon = stall.brand ? (THEME_EMOJI[stall.theme ?? ""] ?? "🏪") : "🧺";
 
   return (
@@ -129,9 +188,64 @@ export default function StallDialog() {
                     ? "구매 완료!"
                     : `${it.priceEth} ETH`}
               </button>
+              {canOffer && (
+                <button
+                  className="gift-btn small"
+                  disabled={!!busyItem}
+                  onClick={() => {
+                    setOfferFor(offerFor === it.id ? null : it.id);
+                    setOfferEth("");
+                  }}
+                  title="원하는 가격을 제안합니다 — 판매자가 수락하면 즉시 체결"
+                >
+                  흥정
+                </button>
+              )}
             </div>
           ))}
         </div>
+
+        {canOffer && offerFor && (
+          <div className="coupon-gift-row">
+            <input
+              className="gift-input wide"
+              type="number"
+              step="0.0001"
+              min="0"
+              placeholder="제안가 (ETH)"
+              value={offerEth}
+              onChange={(e) => setOfferEth(e.target.value)}
+            />
+            <button
+              className="gift-btn primary small"
+              disabled={!!busyItem || !(Number(offerEth) > 0)}
+              onClick={() =>
+                onOffer(stall.items.find((i) => i.id === offerFor)?.name ?? "")
+              }
+            >
+              {busyItem === "offer" ? "제안 중…" : "제안"}
+            </button>
+          </div>
+        )}
+
+        {myOffers.length > 0 && (
+          <div className="gift-note">
+            내 흥정:{" "}
+            {myOffers.map((o) => (
+              <span key={o.id}>
+                {o.itemName} {o.amountEth} ETH{" "}
+                <button
+                  className="gift-txlink"
+                  style={{ background: "none", border: "none", cursor: "pointer" }}
+                  disabled={!!busyItem}
+                  onClick={() => onCancelOffer(o.id)}
+                >
+                  취소
+                </button>{" "}
+              </span>
+            ))}
+          </div>
+        )}
 
         {!walletAddress && (
           <div className="gift-warn">지갑을 연결해야 구매할 수 있습니다.</div>

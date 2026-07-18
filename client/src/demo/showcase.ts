@@ -7,7 +7,12 @@ import { getBalanceEth } from "../wallet/wallet";
 import { loadCoupons } from "../state/coupons";
 import { giwaSepolia, FAUCET_URL, DEMO } from "../config/giwa";
 import { createGuild, dungeonBank, dungeonPick } from "../net/colyseus";
-import { HONOR_DEFS, fetchHonors, honorWrite } from "../chain/village";
+import {
+  HONOR_DEFS,
+  fetchHonors,
+  honorWrite,
+  fetchOffersFor,
+} from "../chain/village";
 
 const MIN_BALANCE_ETH = 0.002; // 구매 + 가스 여유
 
@@ -221,6 +226,62 @@ async function showGuildDungeon(my: string) {
   useStore.getState().setDungeon(null);
 }
 
+// ---- 선물·흥정 비트 ----
+
+async function showGiftBeat(_my: string) {
+  const peer = Object.values(useStore.getState().players).find((p) =>
+    /^0x[0-9a-fA-F]{40}$/.test(p.address ?? ""),
+  );
+  if (!peer) return; // 다른 방문자가 없으면 생략
+  caption(
+    "🎁 쿠폰은 <b>선물</b>할 수 있습니다 — ERC-1155 토큰이 지갑에서 지갑으로",
+    `${peer.name} 님에게 방금 산 쿠폰을 보내봅니다`,
+  );
+  useStore.getState().setCouponsOpen(true);
+  await pace(2200);
+  const giftBtn = findButton("선물");
+  if (!giftBtn) {
+    useStore.getState().setCouponsOpen(false);
+    return;
+  }
+  giftBtn.click();
+  await pace(800);
+  const input = document.querySelector<HTMLInputElement>(
+    "input[placeholder^='받는 지갑']",
+  );
+  if (input) await typeInto(input, peer.address);
+  await pace(400);
+  findButton("보내기")?.click();
+  await waitFor(() => !!findButton("선물함") || !findButton("보내기"), 60000);
+  caption("전달 완료 — 받는 쪽 쿠폰함에 체인 스캔만으로 나타납니다");
+  await pace(3000);
+  useStore.getState().setCouponsOpen(false);
+}
+
+async function showOfferBeat(my: string) {
+  const offers = await fetchOffersFor(my).catch(() => []);
+  if (offers.length === 0) return; // 들어온 제안이 없으면 생략
+  const o = offers[0];
+  caption(
+    `💬 <b>흥정</b>이 들어와 있습니다 — ${o.itemName}에 ${o.amountEth} ETH 제안`,
+    "제안 금액은 오퍼 컨트랙트에 에스크로로 걸려 있습니다",
+  );
+  useStore.getState().setLedgerOpen(true);
+  await pace(2800);
+  findButton("수락")?.click();
+  const deadline = Date.now() + 90000;
+  while (Date.now() < deadline) {
+    const left = (await fetchOffersFor(my).catch(() => offers)).length;
+    if (left < offers.length) break;
+    await pace(3000);
+  }
+  caption(
+    "🤝 수락 — 제안가로 <b>즉시 체결</b>: 정산 + 쿠폰 전달이 한 트랜잭션입니다",
+  );
+  await pace(3200);
+  useStore.getState().setLedgerOpen(false);
+}
+
 // ---- 칭호 비트 ----
 
 async function showHonors(my: string) {
@@ -397,6 +458,24 @@ async function run() {
       "구매·에스크로·쿠폰 민팅이 하나의 트랜잭션입니다",
     );
     await pace(9000);
+
+    // 6.5) 쿠폰 선물 (마을에 다른 방문자가 있을 때만)
+    try {
+      await showGiftBeat(my);
+    } catch (err) {
+      if (aborted) throw err;
+      console.warn("[showcase] 선물 시연 생략:", err);
+      useStore.getState().setCouponsOpen(false);
+    }
+
+    // 6.7) 받은 흥정 수락 (들어온 제안이 있을 때만)
+    try {
+      await showOfferBeat(my);
+    } catch (err) {
+      if (aborted) throw err;
+      console.warn("[showcase] 흥정 시연 생략:", err);
+      useStore.getState().setLedgerOpen(false);
+    }
 
     // 7) 길드 + 백층 던전 (실패해도 시연은 이어간다)
     try {
