@@ -55,7 +55,7 @@ export interface Identity {
 
 export async function joinVillage(identity: Identity): Promise<void> {
   if (DEMO) {
-    startDemo(localPos);
+    await startDemo(localPos);
     return;
   }
   const seq = ++joinSeq;

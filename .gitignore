@@ -2,6 +2,7 @@ node_modules/
 dist/
 .testwallets.json
 .botwallets.json
+.demo-burner.json
 server/data/
 *.local
 .env

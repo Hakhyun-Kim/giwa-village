@@ -28,27 +28,46 @@ function timedEmote(id: string, icon: string, ms = 2200) {
   if (at) setTimeout(() => useStore.getState().clearEmote(id, at), ms);
 }
 
-export function startDemo(localPos: LocalPos): void {
+export async function startDemo(localPos: LocalPos): Promise<void> {
   if (started) return;
   started = true;
   selfPos = localPos;
   const s = useStore.getState();
 
-  // 방문자 전용 로컬 버너 지갑 (브라우저에만 저장)
-  let pk = localStorage.getItem(STORAGE_KEY) as `0x${string}` | null;
-  if (pk && !/^0x[0-9a-fA-F]{64}$/.test(pk)) pk = null;
-  const freshBurner = !pk;
+  // 버너 지갑. 로컬 개발에서는 dev 서버가 파일(.demo-burner.json)로 보관하는
+  // 키 하나를 모든 브라우저가 공유한다 — 브라우저마다 새 지갑을 만들면
+  // 포셋(주소·IP당 24h 제한)을 지갑 수만큼 받아야 하기 때문. 공개 데모
+  // (프로덕션 빌드)는 기존대로 방문자 전용 키를 localStorage에 만든다.
+  let pk: `0x${string}` | null = null;
+  let freshBurner = false;
+  if (import.meta.env.DEV) {
+    try {
+      const res = await fetch("/__demo-burner");
+      const j = res.ok ? await res.json() : null;
+      if (j && /^0x[0-9a-fA-F]{64}$/.test(j.privateKey)) {
+        pk = j.privateKey as `0x${string}`;
+        freshBurner = !!j.created;
+      }
+    } catch {
+      // dev 서버 엔드포인트가 없으면 브라우저 로컬 키로 폴백
+    }
+  }
   if (!pk) {
-    pk = generatePrivateKey();
-    localStorage.setItem(STORAGE_KEY, pk);
+    pk = localStorage.getItem(STORAGE_KEY) as `0x${string}` | null;
+    if (pk && !/^0x[0-9a-fA-F]{64}$/.test(pk)) pk = null;
+    freshBurner = !pk;
+    if (!pk) {
+      pk = generatePrivateKey();
+      localStorage.setItem(STORAGE_KEY, pk);
+    }
   }
   const address = adoptLocalBurner(pk);
   s.setWallet(address, "burner", "DEMO");
-  // 새 컴/새 브라우저: 갓 만든 버너는 잔액 0이므로 로컬 개발에서는 포셋
-  // 페이지를 자동으로 열어 준다. window.open은 페이지 로드 중 팝업 차단에
-  // 걸리므로 dev 서버가 대신 연다(vite.config.ts의 __open-faucet — 클립보드
-  // 복사 포함). 포셋은 reCAPTCHA+PoW 방식이라 요청 자체는 사람이 마쳐야
-  // 한다. 공개 데모(프로덕션 빌드)는 HUD의 포셋 링크만 유지.
+  // 갓 만든 버너는 잔액 0이므로 로컬 개발에서는 포셋 페이지를 자동으로
+  // 열어 준다. window.open은 페이지 로드 중 팝업 차단에 걸리므로 dev 서버가
+  // 대신 연다(vite.config.ts의 __open-faucet — 클립보드 복사 포함). 포셋은
+  // reCAPTCHA+PoW 방식이라 요청 자체는 사람이 마쳐야 한다. 공개 데모는
+  // HUD의 포셋 링크만 유지.
   if (freshBurner && import.meta.env.DEV) {
     void fetch(`/__open-faucet?address=${address}`).catch(() => {});
     void navigator.clipboard?.writeText(address).catch(() => {});
