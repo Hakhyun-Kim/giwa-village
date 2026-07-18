@@ -8,3 +8,4 @@ server/data/
 .env.*
 !.env.example
 docs/
+CLAUDE.local.md
