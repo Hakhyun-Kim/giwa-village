@@ -1,7 +1,8 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { Color, Group } from "three";
+import { Color, Group, Mesh } from "three";
+import { honorCharmColor } from "../chain/honors";
 
 export interface AvatarVariant {
   hat: 0 | 1 | 2 | 3; // 0 없음, 1 갓, 2 패랭이, 3 두건
@@ -26,6 +27,33 @@ interface AvatarProps {
   verified?: boolean;
   speedRef: React.RefObject<number>;
   variant?: AvatarVariant;
+  /** 장착한 소울바운드 칭호 id — 어깨 위 발광 부적으로 렌더 */
+  honor?: number;
+}
+
+/** 칭호 코스메틱: 어깨 옆에 떠서 맴도는 발광 부적(등불) */
+function HonorCharm({ color }: { color: string }) {
+  const orb = useRef<Mesh>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (orb.current) {
+      orb.current.position.y = 1.75 + Math.sin(t * 2.2) * 0.08;
+      orb.current.position.x = 0.55 + Math.sin(t * 1.1) * 0.04;
+    }
+  });
+  return (
+    <group>
+      <mesh ref={orb} position={[0.55, 1.75, 0]}>
+        <sphereGeometry args={[0.09, 12, 12]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={1.6}
+        />
+      </mesh>
+      <pointLight position={[0.55, 1.75, 0]} color={color} intensity={1.2} distance={2.2} />
+    </group>
+  );
 }
 
 function Hat({ type, color }: { type: AvatarVariant["hat"]; color: number }) {
@@ -72,7 +100,9 @@ export default function Avatar({
   verified,
   speedRef,
   variant,
+  honor,
 }: AvatarProps) {
+  const charm = honorCharmColor(honor);
   const body = useRef<Group>(null);
   const leftArm = useRef<Group>(null);
   const rightArm = useRef<Group>(null);
@@ -159,6 +189,8 @@ export default function Avatar({
           </mesh>
         </group>
       </group>
+
+      {charm && <HonorCharm color={charm} />}
 
       <Html position={[0, 2.45, 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
         <div className="nametag">

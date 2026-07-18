@@ -37,6 +37,10 @@ export default function HonorsDialog() {
     try {
       await honorWrite(fn, id);
       setProfile(await fetchHonors(walletAddress));
+      if (fn === "equip") {
+        // 자기 아바타 코스메틱 즉시 반영
+        useStore.getState().setSelfHonor(id === 0 ? null : id);
+      }
     } catch (err) {
       const m = err instanceof Error ? err.message : String(err);
       setError(m.length > 100 ? m.slice(0, 100) + "…" : m);

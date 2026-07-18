@@ -71,6 +71,7 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
         emote={emote?.icon}
         verified={giftable}
         speedRef={speedRef}
+        honor={info.honor}
       />
     </group>
   );

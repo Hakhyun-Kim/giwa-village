@@ -39,6 +39,8 @@ interface VillageStore {
   dungeon: DungeonView | null;
   honorsOpen: boolean;
   ledgerOpen: boolean;
+  /** 내가 장착한 칭호 id (아바타 코스메틱) */
+  selfHonor: number | null;
 
   setStatus: (s: ConnectionStatus) => void;
   setSelfId: (id: string | null) => void;
@@ -71,6 +73,7 @@ interface VillageStore {
   setDungeon: (d: DungeonView | null) => void;
   setHonorsOpen: (v: boolean) => void;
   setLedgerOpen: (v: boolean) => void;
+  setSelfHonor: (id: number | null) => void;
   patchDungeon: (d: Partial<DungeonView>) => void;
 }
 
@@ -103,6 +106,7 @@ export const useStore = create<VillageStore>((set) => ({
   dungeon: null,
   honorsOpen: false,
   ledgerOpen: false,
+  selfHonor: null,
 
   setStatus: (status) => set({ status }),
   setSelfId: (selfId) => set({ selfId }),
@@ -150,6 +154,7 @@ export const useStore = create<VillageStore>((set) => ({
   setDungeon: (dungeon) => set({ dungeon }),
   setHonorsOpen: (honorsOpen) => set({ honorsOpen }),
   setLedgerOpen: (ledgerOpen) => set({ ledgerOpen }),
+  setSelfHonor: (selfHonor) => set({ selfHonor }),
   patchDungeon: (d) =>
     set((s) => (s.dungeon ? { dungeon: { ...s.dungeon, ...d } } : s)),
 }));

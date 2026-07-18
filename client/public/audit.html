@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>기와장터 — AI Self-Audit Report</title>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    background: #0d1017; color: #cfd6e2; line-height: 1.65;
+    font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    font-size: 15px;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 20px 60px; }
+  .hero { text-align: center; padding: 40px 16px 8px; }
+  .hero h1 { color: #fff; font-size: 26px; }
+  .hero .sub { color: #8ea0bd; font-size: 14px; margin-top: 6px; }
+  .hero a { color: #ffd66b; text-decoration: none; margin: 0 8px; font-size: 13.5px; }
+  h2 { color: #ffd66b; font-size: 18px; margin: 34px 0 10px; }
+  p { margin: 8px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+  th, td { border: 1px solid #2a3040; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #161b26; color: #9ecbff; }
+  .sev-high { color: #ff8f8f; font-weight: 700; }
+  .sev-mid { color: #ffd66b; font-weight: 700; }
+  .sev-low { color: #7de08a; font-weight: 700; }
+  code { background: #161b26; border: 1px solid #2a3040; border-radius: 4px; padding: 1px 5px; font-size: 12.5px; }
+  .note { background: #161b26; border: 1px solid #2a3040; border-left: 3px solid #ffd66b;
+    border-radius: 8px; padding: 12px 14px; font-size: 13.5px; margin: 14px 0; }
+  ul { padding-left: 20px; }
+  li { margin: 5px 0; }
+  footer { text-align: center; color: #5d6b82; font-size: 12.5px; padding: 24px; }
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>🔍 AI Self-Audit Report</h1>
+  <div class="sub">기와장터 (GIWA Village) — AI 페어 개발 워크플로우의 자체 감사 기록</div>
+  <div style="margin-top:10px">
+    <a href="./tech.html">← 기술 문서</a>
+    <a href="https://github.com/Hakhyun-Kim/giwa-village">GitHub</a>
+    <a href="https://sepolia-explorer.giwa.io/address/0x1f34506cda6619fc3124d68742a8fd5e7ba436e2">Verified 컨트랙트</a>
+  </div>
+</div>
+
+<main>
+  <h2>1. 방법론 — "개발한 AI가 감사자 모자를 쓴다"</h2>
+  <p>
+    이 프로젝트는 1인 + AI 에이전트 워크플로우로 개발된다. 기능 구현이 한 단락 끝날
+    때마다 같은 AI가 <b>감사자 역할로 전환</b>해 컨트랙트·클라이언트를 다시 읽고,
+    발견한 결함을 수정 → 재배포 → 소스 검증 → E2E 재통과까지 한 사이클로 닫는다.
+    아래는 실제로 발견·수정된 결함의 전체 기록이다 — 발견 못한 척하지 않고,
+    수정 커밋과 함께 공개한다.
+  </p>
+
+  <h2>2. 발견 및 수정 내역</h2>
+  <table>
+    <tr><th>심각도</th><th>결함</th><th>영향</th><th>조치</th></tr>
+    <tr>
+      <td class="sev-high">높음</td>
+      <td>ERC-1155 스펙 위반 — <code>supportsInterface</code>가 1155를 주장하는데
+        <code>balanceOfBatch</code>/<code>safeBatchTransferFrom</code> 부재</td>
+      <td>지갑·인덱서가 쿠폰 토큰 연동 시 오동작 가능</td>
+      <td>배치 함수 복원 후 재배포·검증</td>
+    </tr>
+    <tr>
+      <td class="sev-high">높음</td>
+      <td>던전 <code>settleRun</code> 권한 결함 — 회차 입장자 검증 없음</td>
+      <td>길드원 누구나 타인의 원정 회차를 대신 정산 가능</td>
+      <td>입장자 기록(<code>_runner</code>)·본인 검증 추가</td>
+    </tr>
+    <tr>
+      <td class="sev-high">높음</td>
+      <td>클라이언트 nonce 경합 — 프레즌스 비컨과 사용자 tx(구매·입장·정산)가
+        같은 지갑에서 병렬 전송</td>
+      <td>사용자 tx가 간헐적으로 소실 (E2E에서 재입장 tx 소실 재현: 8건 중 2건 실패)</td>
+      <td>지갑 쓰기 직렬화 큐(<code>queueTx</code>) 도입 → E2E 8/8 재통과</td>
+    </tr>
+    <tr>
+      <td class="sev-mid">중간</td>
+      <td>결정론적 문 결과의 오프라인 탐색 가능성 — 시드·회차가 확정되면
+        숙련 사용자는 무함정 경로를 미리 계산할 수 있다</td>
+      <td>던전 리스크(push-your-luck)가 스크립트 사용자에게 무력화</td>
+      <td>구조적 한계로 판단, 컨트랙트 주석·로드맵에 명시
+        (메인넷 수준에선 VRF 또는 커밋-리빌 필요)</td>
+    </tr>
+    <tr>
+      <td class="sev-low">낮음</td>
+      <td>비컨 좌표 무검증 — 악의적 비컨이 아바타를 월드 밖에 렌더 가능</td>
+      <td>시각적 교란 (자금 영향 없음)</td>
+      <td>수신 시 월드 반경·속도 클램프</td>
+    </tr>
+    <tr>
+      <td class="sev-low">회귀</td>
+      <td>자체 도입한 JSON-RPC 배칭이 GIWA 공개 RPC에서 403 거부됨 (실측)</td>
+      <td>배치에 묶인 모든 읽기가 동반 실패</td>
+      <td>배칭 롤백 + 금지 주석, 레이트리밋은 폴링 백오프로 대응</td>
+    </tr>
+  </table>
+
+  <h2>3. 검증 방법</h2>
+  <ul>
+    <li><b>서버 미기동 E2E</b> — 게임 서버를 완전히 끄고 두 지갑(A·B) 클라이언트로
+      노점 개설→동기화→비컨 데드레커닝→에스크로 구매→길드 창설→던전 입장·정산→
+      리더보드 동기화 8개 항목 자동 검증 (수정 전 6/8 → 수정 후 8/8)</li>
+    <li><b>컨트랙트 소스 검증</b> — 전 컨트랙트 Blockscout standard-input 검증
+      (solc 0.8.36, optimizer off)</li>
+    <li><b>스모크</b> — 칭호 자격→클레임→장착, 에스크로 confirm/dispute/refund 경로를
+      온체인 실거래로 확인</li>
+  </ul>
+
+  <h2>4. 알려진 한계 (미해결 공개)</h2>
+  <ul>
+    <li>던전 결과의 오프라인 탐색 가능성 (2절) — 테스트넷 실험 범위로 수용</li>
+    <li>공개 RPC 직접 폴링 — 동시 접속자가 늘면 레이트리밋에 막힌다.
+      계획: 읽기 캐시/인덱서 + 캐시 다운 시 RPC 폴백 (기술 문서 TODO 참고)</li>
+    <li><code>openStalls()</code>/<code>allGuilds()</code> 전체 순회 뷰 — 수천 개
+      규모가 되면 페이지네이션 필요</li>
+    <li>노점 상품 교체 프런트러닝 — 구매 tx 확정 직전에 판매자가 같은 가격의 다른
+      상품으로 교체 가능 (가격은 강제되므로 금전 피해는 없음)</li>
+  </ul>
+
+  <div class="note">
+    <b>정직한 고지:</b> 이 문서는 개발에 사용된 AI가 수행한 <b>자체 감사</b> 기록이며,
+    독립적인 외부 보안 감사를 대체하지 않는다. 메인넷 배포 전에는 외부 감사가 필요하다.
+    다만 "AI가 개발하고 AI가 감사하며 그 기록을 전부 공개한다"는 워크플로우 자체가
+    이 프로젝트의 개발 방법론이다.
+  </div>
+</main>
+
+<footer>기와장터 (GIWA Village) · GIWA Sepolia 테스트넷 · 최종 갱신 2026-07-19</footer>
+</body>
+</html>
