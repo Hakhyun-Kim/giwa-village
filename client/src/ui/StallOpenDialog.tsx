@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../state/store";
 import { openStall } from "../net/colyseus";
 import { listOnMarket } from "../wallet/wallet";
+import { DEMO } from "../config/giwa";
 
 const PRESET_GOODS = [
   { name: "할인쿠폰", emoji: "🎫" },
@@ -67,7 +68,9 @@ export default function StallOpenDialog() {
     // 같은 지갑에서 병렬 전송하면 nonce 충돌("replacement transaction
     // underpriced")이 나므로 반드시 순차 전송 — listOnMarket이 영수증까지
     // 대기하므로 순차면 안전. 일시 오류(RPC 리플리카 지연 등)는 재시도.
-    const addr = useStore.getState().walletAddress;
+    // 데모(서버리스) 모드에선 openStall이 V3 openStall 단일 tx로 리스팅까지
+    // 처리하므로 여기서는 건너뛴다.
+    const addr = DEMO ? null : useStore.getState().walletAddress;
     if (addr) {
       const stallId = `s-${addr.slice(2, 10).toLowerCase()}`;
       const drafts = [...items];

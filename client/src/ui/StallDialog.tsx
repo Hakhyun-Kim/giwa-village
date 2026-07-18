@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import { buyOnMarket, shortAddress, isDojangVerified } from "../wallet/wallet";
+import { buyStallOnChain } from "../chain/village";
 import { useUpidName } from "../wallet/upid";
 import { buyStallItem } from "../net/colyseus";
 import { addCoupon } from "../state/coupons";
@@ -58,11 +59,14 @@ export default function StallDialog() {
     setBusyItem(itemId);
     setError(null);
     try {
-      const { tx, purchaseId, tokenId } = await buyOnMarket(
-        stall.ownerAddress,
-        item.id,
-        item.priceEth,
-      );
+      // 온체인 노점(oc-)은 buyStall(인덱스 기반, 가격 강제), 나머지는 v2 경로
+      const { tx, purchaseId, tokenId } = stall.id.startsWith("oc-")
+        ? await buyStallOnChain(
+            stall.ownerAddress,
+            stall.items.findIndex((i) => i.id === itemId),
+            item.priceEth,
+          )
+        : await buyOnMarket(stall.ownerAddress, item.id, item.priceEth);
       buyStallItem(stall.id, item.id, tx);
       // 쿠폰은 구매 당사자가 에스크로 정보와 함께 직접 저장한다
       const my = useStore.getState().walletAddress;

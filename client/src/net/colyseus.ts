@@ -7,6 +7,17 @@ import {
   demoOpenStall,
   demoCloseStall,
 } from "../demo/demo";
+import {
+  openStallOnChain,
+  closeStallOnChain,
+  sendEmoteOnChain,
+  chainCreateGuild,
+  chainJoinGuild,
+  chainLeaveGuild,
+  chainDungeonEnter,
+  chainDungeonPick,
+  chainDungeonBank,
+} from "../chain/village";
 import { useStore, remoteTargets } from "../state/store";
 import type {
   PlayerSnapshot,
@@ -261,6 +272,7 @@ export function sendMove(x: number, z: number, rot: number): void {
 }
 
 export function sendEmote(icon: string): void {
+  if (DEMO) return sendEmoteOnChain(icon);
   room?.send("emote", icon);
 }
 
@@ -273,12 +285,23 @@ export function openStall(
   title: string,
   items: { name: string; emoji: string; priceEth: string }[],
 ): void {
-  if (DEMO) return demoOpenStall(title, items);
+  if (DEMO) {
+    // 낙관적 로컬 반영 + 온체인 기록 (단일 tx — 리스팅 포함)
+    demoOpenStall(title, items);
+    void openStallOnChain(title, items).catch((err) =>
+      console.warn("[chain] 노점 온체인 기록 실패(가스 부족 등):", err),
+    );
+    return;
+  }
   room?.send("stall:open", { title, items });
 }
 
 export function closeStall(): void {
-  if (DEMO) return demoCloseStall();
+  if (DEMO) {
+    demoCloseStall();
+    void closeStallOnChain().catch(() => {});
+    return;
+  }
   room?.send("stall:close");
 }
 
@@ -287,31 +310,37 @@ export function buyStallItem(stallId: string, itemId: string, tx: string): void 
   room?.send("stall:buy", { stallId, itemId, tx });
 }
 
-// ---- 길드 + 비동기 코업 던전 (서버 전용 — 데모 모드에선 미지원) ----
+// ---- 길드 + 비동기 코업 던전 (서버 모드: 룸 메시지 / 데모 모드: 온체인) ----
 
 export function createGuild(name: string, emblem: string): void {
+  if (DEMO) return chainCreateGuild(name, emblem);
   room?.send("guild:create", { name, emblem });
 }
 
 export function joinGuild(guildId: string): void {
+  if (DEMO) return chainJoinGuild(guildId);
   room?.send("guild:join", { guildId });
 }
 
 export function leaveGuild(): void {
+  if (DEMO) return chainLeaveGuild();
   room?.send("guild:leave");
 }
 
 export function dungeonEnter(): void {
+  if (DEMO) return void chainDungeonEnter();
   useStore.getState().setDungeon(null);
   room?.send("dungeon:enter");
 }
 
 export function dungeonPick(door: number): void {
+  if (DEMO) return chainDungeonPick(door);
   useStore.getState().patchDungeon({ busy: true, lastOutcome: undefined });
   room?.send("dungeon:pick", { door });
 }
 
 export function dungeonBank(): void {
+  if (DEMO) return void chainDungeonBank();
   useStore.getState().patchDungeon({ busy: true });
   room?.send("dungeon:bank");
 }

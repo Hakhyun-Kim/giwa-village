@@ -28,7 +28,9 @@ function StallButtons({ walletAddress }: { walletAddress: string }) {
           className="hud-btn sub"
           onClick={() => {
             closeStall();
-            // 같은 지갑 병렬 전송은 nonce 충돌 — 언리스팅도 순차로
+            // 같은 지갑 병렬 전송은 nonce 충돌 — 언리스팅도 순차로.
+            // 데모(서버리스) 모드는 closeStall이 온체인 폐점을 처리한다.
+            if (DEMO) return;
             const items = [...myStall.items];
             void (async () => {
               for (const it of items) {
@@ -53,14 +55,12 @@ function StallButtons({ walletAddress }: { walletAddress: string }) {
       >
         🎫 쿠폰함 {couponCount > 0 ? couponCount : ""}
       </button>
-      {!DEMO && (
-        <button
-          className="hud-btn sub"
-          onClick={() => useStore.getState().setGuildOpen(true)}
-        >
-          🏯 길드
-        </button>
-      )}
+      <button
+        className="hud-btn sub"
+        onClick={() => useStore.getState().setGuildOpen(true)}
+      >
+        🏯 길드
+      </button>
     </div>
   );
 }

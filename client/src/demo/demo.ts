@@ -6,6 +6,7 @@ import { useStore, remoteTargets } from "../state/store";
 import { FAUCET_URL } from "../config/giwa";
 import { adoptLocalBurner, colorFromString } from "../wallet/wallet";
 import { DEMO_STALLS, DEMO_NPCS } from "./demoData";
+import { startOnchainVillage } from "../chain/village";
 import type { PlayerInfo, Stall } from "../types";
 
 interface LocalPos {
@@ -136,6 +137,9 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
     const n = npcs[Math.floor(Math.random() * npcs.length)];
     timedEmote(n.id, EMOTES[Math.floor(Math.random() * EMOTES.length)]);
   }, 9000);
+
+  // 풀온체인 레이어: 노점·길드·던전·프레즌스를 체인에서 직접 읽고 쓴다
+  startOnchainVillage(localPos);
 }
 
 /** 선물 확정 후 로컬 피드 반영 (서버 브로드캐스트 대체) */

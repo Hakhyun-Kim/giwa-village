@@ -177,7 +177,7 @@ async function showGuildDungeon(my: string) {
   if (!inGuild()) {
     const guildName = `원정대-${my.slice(2, 6)}`;
     createGuild(guildName, "🐯");
-    await waitFor(() => !!inGuild(), 10000);
+    await waitFor(() => !!inGuild(), 40000); // 온체인 모드: tx 확정 + 동기화 대기
     if (!inGuild()) throw new Error("길드 생성 실패");
     caption(`길드 <b>${guildName}</b> 창설 — 이제 함께 등반할 수 있습니다`);
     await pace(2500);
@@ -185,7 +185,7 @@ async function showGuildDungeon(my: string) {
 
   useStore.getState().setGuildOpen(false);
   useStore.getState().setDungeonOpen(true);
-  await waitFor(() => !!useStore.getState().dungeon, 10000);
+  await waitFor(() => !!useStore.getState().dungeon, 40000);
   await pace(2000);
 
   // 문 두 개까지 열어보고, 수확이 있으면 귀환해 길드 기록에 쌓는다
@@ -201,7 +201,7 @@ async function showGuildDungeon(my: string) {
   if (d && !d.ended && d.tentative > 0) {
     caption(`🏮 귀환 — +${d.tentative}층을 길드 기록에 확정합니다`);
     dungeonBank();
-    await waitFor(() => useStore.getState().dungeon?.ended === true, 10000);
+    await waitFor(() => useStore.getState().dungeon?.ended === true, 60000);
     await pace(2200);
   } else if (d?.ended) {
     caption("💥 함정! 잠정 층수를 잃었습니다 — 다음 길드원이 이어서 도전합니다");
@@ -225,18 +225,11 @@ async function showGuildDungeon(my: string) {
 async function run() {
   mountOverlay();
   try {
-    if (DEMO) {
-      caption(
-        "이 페이지는 <b>기본 샘플 데모</b>입니다",
-        "자동 시연·멀티플레이 테스트는 저장소를 클론해 showcase.cmd 로 실행하세요",
-      );
-      await pace(10000);
-      teardown();
-      return;
-    }
-
-    // 0) 접속·지갑 대기
-    caption("🏮 <b>기와장터</b> — 지갑이 아바타가 되는 한옥 저잣거리입니다", "접속 중…");
+    // 0) 접속·지갑 대기 (데모 모드 = 풀온체인 서버리스로 그대로 시연)
+    caption(
+      "🏮 <b>기와장터</b> — 지갑이 아바타가 되는 한옥 저잣거리입니다",
+      DEMO ? "풀온체인 서버리스 — 서버 없이 GIWA 체인만으로 동작 중" : "접속 중…",
+    );
     const ready = await waitFor(() => {
       const s = useStore.getState();
       return s.status === "connected" && !!s.walletAddress && s.stalls.length > 0;

@@ -1,7 +1,7 @@
-// 자동 생성 파일 — scripts/deploy-market.mjs 가 기록한다. 직접 수정 금지.
-export const MARKET_ADDRESS = "0x67cddd9be658dd334730e34c3791959a6681ad67" as `0x${string}`;
-export const MARKET_DEPLOY_TX = "0x823c3266d01a96745ac812d568c4a285682453b8d2988caf263749dd91d111bd";
-export const MARKET_DEPLOY_BLOCK = 31012249n;
+// 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
+export const MARKET_ADDRESS = "0xb190f22f921fa221eeef6053245e8ccc1277cb72" as `0x${string}`;
+export const MARKET_DEPLOY_TX = "0x3e578cfa4f9cebbf994f8d6b34c3737d700fd8fb7b44d385c7854433f02075ec";
+export const MARKET_DEPLOY_BLOCK = 31034314n;
 export const MARKET_ABI = [
   {
     "inputs": [],
@@ -163,35 +163,42 @@ export const MARKET_ABI = [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "operator",
+        "name": "owner",
         "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "ids",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "values",
-        "type": "uint256[]"
       }
     ],
-    "name": "TransferBatch",
+    "name": "StallClosed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "int32",
+        "name": "x",
+        "type": "int32"
+      },
+      {
+        "indexed": false,
+        "internalType": "int32",
+        "name": "z",
+        "type": "int32"
+      }
+    ],
+    "name": "StallOpened",
     "type": "event"
   },
   {
@@ -290,30 +297,6 @@ export const MARKET_ABI = [
   {
     "inputs": [
       {
-        "internalType": "address[]",
-        "name": "accounts",
-        "type": "address[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "ids",
-        "type": "uint256[]"
-      }
-    ],
-    "name": "balanceOfBatch",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "out",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address payable",
         "name": "seller",
         "type": "address"
@@ -333,6 +316,37 @@ export const MARKET_ABI = [
       }
     ],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address payable",
+        "name": "seller",
+        "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "index",
+        "type": "uint8"
+      }
+    ],
+    "name": "buyStall",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "purchaseId",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "closeStall",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -420,6 +434,118 @@ export const MARKET_ABI = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "title",
+        "type": "string"
+      },
+      {
+        "internalType": "int32",
+        "name": "x",
+        "type": "int32"
+      },
+      {
+        "internalType": "int32",
+        "name": "z",
+        "type": "int32"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "emoji",
+            "type": "string"
+          },
+          {
+            "internalType": "uint128",
+            "name": "price",
+            "type": "uint128"
+          }
+        ],
+        "internalType": "struct GiwaMarketV3.StallItem[]",
+        "name": "items",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "openStall",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "openStalls",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "owners",
+        "type": "address[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "int32",
+            "name": "x",
+            "type": "int32"
+          },
+          {
+            "internalType": "int32",
+            "name": "z",
+            "type": "int32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "openedAt",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bool",
+            "name": "open",
+            "type": "bool"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "emoji",
+                "type": "string"
+              },
+              {
+                "internalType": "uint128",
+                "name": "price",
+                "type": "uint128"
+              }
+            ],
+            "internalType": "struct GiwaMarketV3.StallItem[]",
+            "name": "items",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct GiwaMarketV3.Stall[]",
+        "name": "data",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "purchaseCount",
     "outputs": [
@@ -497,39 +623,6 @@ export const MARKET_ABI = [
         "type": "address"
       },
       {
-        "internalType": "uint256[]",
-        "name": "ids",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256[]",
-        "name": "values",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      }
-    ],
-    "name": "safeBatchTransferFrom",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
@@ -566,6 +659,74 @@ export const MARKET_ABI = [
     "name": "setApprovalForAll",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "stallOf",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "int32",
+            "name": "x",
+            "type": "int32"
+          },
+          {
+            "internalType": "int32",
+            "name": "z",
+            "type": "int32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "openedAt",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bool",
+            "name": "open",
+            "type": "bool"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "emoji",
+                "type": "string"
+              },
+              {
+                "internalType": "uint128",
+                "name": "price",
+                "type": "uint128"
+              }
+            ],
+            "internalType": "struct GiwaMarketV3.StallItem[]",
+            "name": "items",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct GiwaMarketV3.Stall",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
