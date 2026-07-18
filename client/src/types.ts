@@ -59,4 +59,10 @@ export interface Coupon {
   priceEth: string;
   tx: string;
   at: number;
+  /** v2 에스크로 구매 id — 정산 확정에 사용 */
+  purchaseId?: number;
+  /** ERC-1155 쿠폰 토큰 id */
+  tokenId?: string;
+  /** 에스크로 정산 완료 여부 */
+  settled?: boolean;
 }

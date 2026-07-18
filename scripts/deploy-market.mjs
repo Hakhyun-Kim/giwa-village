@@ -18,7 +18,8 @@ const require = createRequire(import.meta.url);
 const solc = require("solc");
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SRC = path.resolve(ROOT, "contracts", "GiwaMarket.sol");
+const SRC = path.resolve(ROOT, "contracts", "GiwaMarketV2.sol");
+const CONTRACT = "GiwaMarketV2";
 const OUT_TS = path.resolve(ROOT, "client", "src", "config", "market.ts");
 
 const giwaSepolia = defineChain({
@@ -33,9 +34,10 @@ const giwaSepolia = defineChain({
 const source = fs.readFileSync(SRC, "utf8");
 const input = {
   language: "Solidity",
-  sources: { "GiwaMarket.sol": { content: source } },
+  sources: { [`${CONTRACT}.sol`]: { content: source } },
   settings: {
-    optimizer: { enabled: true, runs: 200 },
+    // solc-js WASM이 V2+optimizer 조합에서 크래시 — 테스트넷이라 최적화 불필요
+    optimizer: { enabled: false, runs: 200 },
     outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } },
   },
 };
@@ -45,10 +47,10 @@ if (errors.length) {
   for (const e of errors) console.error(e.formattedMessage);
   process.exit(1);
 }
-const artifact = output.contracts["GiwaMarket.sol"].GiwaMarket;
+const artifact = output.contracts[`${CONTRACT}.sol`][CONTRACT];
 const abi = artifact.abi;
 const bytecode = "0x" + artifact.evm.bytecode.object;
-console.log(`[compile] GiwaMarket — bytecode ${(bytecode.length - 2) / 2} bytes`);
+console.log(`[compile] ${CONTRACT} — bytecode ${(bytecode.length - 2) / 2} bytes`);
 
 // --- 배포 ---
 const wallets = JSON.parse(
@@ -80,6 +82,7 @@ console.log(`[deploy] 컨트랙트: https://sepolia-explorer.giwa.io/address/${a
 const ts = `// 자동 생성 파일 — scripts/deploy-market.mjs 가 기록한다. 직접 수정 금지.
 export const MARKET_ADDRESS = ${JSON.stringify(address)} as \`0x\${string}\`;
 export const MARKET_DEPLOY_TX = ${JSON.stringify(hash)};
+export const MARKET_DEPLOY_BLOCK = ${receipt.blockNumber.toString()}n;
 export const MARKET_ABI = ${JSON.stringify(abi, null, 2)} as const;
 `;
 fs.writeFileSync(OUT_TS, ts, "utf8");

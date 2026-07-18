@@ -2,6 +2,7 @@ import {
   createPublicClient,
   createWalletClient,
   custom,
+  decodeEventLog,
   formatEther,
   http,
   parseEther,
@@ -127,6 +128,10 @@ export async function getBalanceEth(address: string): Promise<string> {
 export interface GiftResult {
   tx: `0x${string}`;
   amountEth: string;
+  /** v2 에스크로 구매 id (confirm에 사용) */
+  purchaseId?: number;
+  /** ERC-1155 쿠폰 토큰 id */
+  tokenId?: string;
 }
 
 /**
@@ -184,8 +189,51 @@ export async function buyOnMarket(
     args: [seller as `0x${string}`, itemId],
     value,
   });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
+
+  // Purchased 이벤트에서 에스크로 구매 id + 쿠폰 토큰 id를 회수
+  let purchaseId: number | undefined;
+  let tokenId: string | undefined;
+  for (const log of receipt.logs) {
+    if (log.address.toLowerCase() !== MARKET_ADDRESS.toLowerCase()) continue;
+    try {
+      const ev = decodeEventLog({ abi: MARKET_ABI, data: log.data, topics: log.topics });
+      if (ev.eventName === "Purchased") {
+        const args = ev.args as { purchaseId: bigint; tokenId: bigint };
+        purchaseId = Number(args.purchaseId);
+        tokenId = args.tokenId.toString();
+      }
+    } catch {
+      // 다른 이벤트(TransferSingle 등)는 무시
+    }
+  }
+  return { tx, amountEth: priceEth, purchaseId, tokenId };
+}
+
+/** 에스크로 정산 확정 — 구매자가 확인하면 판매자에게 대금이 전달된다 */
+export async function confirmPurchase(purchaseId: number): Promise<`0x${string}`> {
+  const wc = activeWalletClient;
+  if (!wc?.account) throw new Error("지갑이 연결되어 있지 않습니다.");
+  const tx = await wc.writeContract({
+    account: wc.account,
+    chain: giwaSepolia,
+    address: MARKET_ADDRESS,
+    abi: MARKET_ABI,
+    functionName: "confirm",
+    args: [BigInt(purchaseId)],
+  });
   await publicClient.waitForTransactionReceipt({ hash: tx });
-  return { tx, amountEth: priceEth };
+  return tx;
+}
+
+/** ERC-1155 쿠폰 토큰 보유 수량 조회 */
+export async function couponOwned(owner: string, tokenId: string): Promise<bigint> {
+  return publicClient.readContract({
+    address: MARKET_ADDRESS,
+    abi: MARKET_ABI,
+    functionName: "balanceOf",
+    args: [owner as `0x${string}`, BigInt(tokenId)],
+  });
 }
 
 /** best-effort on-chain listing so the contract can enforce the price */

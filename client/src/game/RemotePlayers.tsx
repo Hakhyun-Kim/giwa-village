@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { Group } from "three";
 import Avatar from "./Avatar";
 import { useStore, remoteTargets } from "../state/store";
+import { useUpidName } from "../wallet/upid";
 import type { PlayerInfo } from "../types";
 
 function lerpAngle(a: number, b: number, t: number): number {
@@ -18,6 +19,8 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
   const initialized = useRef(false);
   const emote = useStore((s) => s.emotes[id]);
   const giftable = !!info.address;
+  // UP.ID 이름이 있으면 서버 이름 대신 표시
+  const upidName = useUpidName(info.address || null);
 
   function onClick(e: { stopPropagation: () => void }) {
     e.stopPropagation();
@@ -64,7 +67,7 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
     >
       <Avatar
         color={info.color}
-        name={info.name}
+        name={upidName ?? info.name}
         emote={emote?.icon}
         verified={giftable}
         speedRef={speedRef}

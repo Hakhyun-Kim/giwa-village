@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import { buyOnMarket, shortAddress, isDojangVerified } from "../wallet/wallet";
+import { useUpidName } from "../wallet/upid";
 import { buyStallItem } from "../net/colyseus";
+import { addCoupon } from "../state/coupons";
 import { giwaSepolia } from "../config/giwa";
 import { MARKET_ADDRESS } from "../config/market";
 
@@ -23,6 +25,7 @@ export default function StallDialog() {
   const [ownerDojang, setOwnerDojang] = useState(false);
 
   const ownerAddress = stall?.ownerAddress;
+  const ownerUpid = useUpidName(ownerAddress ?? null);
   useEffect(() => {
     setOwnerDojang(false);
     if (!ownerAddress) return;
@@ -55,8 +58,27 @@ export default function StallDialog() {
     setBusyItem(itemId);
     setError(null);
     try {
-      const { tx } = await buyOnMarket(stall.ownerAddress, item.id, item.priceEth);
+      const { tx, purchaseId, tokenId } = await buyOnMarket(
+        stall.ownerAddress,
+        item.id,
+        item.priceEth,
+      );
       buyStallItem(stall.id, item.id, tx);
+      // 쿠폰은 구매 당사자가 에스크로 정보와 함께 직접 저장한다
+      const my = useStore.getState().walletAddress;
+      if (my) {
+        addCoupon(my, {
+          name: item.name,
+          emoji: item.emoji,
+          from: stall.title,
+          priceEth: item.priceEth,
+          tx,
+          at: Date.now(),
+          purchaseId,
+          tokenId,
+        });
+        useStore.getState().bumpCoupons();
+      }
       setBoughtItem(itemId);
       setTimeout(() => setBoughtItem(null), 2500);
     } catch (err) {
@@ -84,7 +106,7 @@ export default function StallDialog() {
             <span className="badge-inline">✓ 지갑 상인</span>
           )}{" "}
           {stall.brand ? stall.title : stall.ownerName} ·{" "}
-          {shortAddress(stall.ownerAddress)}
+          {ownerUpid ?? shortAddress(stall.ownerAddress)}
         </div>
 
         <div className="stall-items">
@@ -119,7 +141,8 @@ export default function StallDialog() {
           </button>
         </div>
         <div className="gift-note">
-          결제는 기와장터 컨트랙트 경유 온체인 영수증 발행 · 쿠폰은 🎫 쿠폰함에 저장{" "}
+          결제는 에스크로 보관 · 쿠폰은 ERC-1155 토큰으로 지갑에 발행 ·
+          쿠폰함에서 정산 확정 (24시간 후 자동){" "}
           <a
             className="gift-txlink"
             href={`${giwaSepolia.blockExplorers.default.url}/address/${MARKET_ADDRESS}`}

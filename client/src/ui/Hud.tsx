@@ -10,6 +10,7 @@ import { joinVillage, closeStall } from "../net/colyseus";
 import { giwaSepolia, DEMO, FAUCET_URL } from "../config/giwa";
 import { loadCoupons } from "../state/coupons";
 import { unlistOnMarket, isDojangVerified } from "../wallet/wallet";
+import { useUpidName } from "../wallet/upid";
 
 function StallButtons({ walletAddress }: { walletAddress: string }) {
   const myStall = useStore((s) =>
@@ -68,6 +69,7 @@ export default function Hud() {
   const walletError = useStore((s) => s.walletError);
   const nearPortal = useStore((s) => s.nearPortal);
   const selfDojang = useStore((s) => s.selfDojang);
+  const myUpid = useUpidName(walletAddress);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -153,7 +155,7 @@ export default function Hud() {
               onClick={onCopy}
               title={`${walletAddress} (클릭하여 복사)`}
             >
-              {copied ? "복사됨!" : shortAddress(walletAddress)}
+              {copied ? "복사됨!" : (myUpid ?? shortAddress(walletAddress))}
             </button>
             <span className="balance">
               {balanceEth === null ? "…" : balanceEth} ETH

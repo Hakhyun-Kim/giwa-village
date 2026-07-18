@@ -4,7 +4,6 @@
 import { generatePrivateKey } from "viem/accounts";
 import { useStore, remoteTargets } from "../state/store";
 import { adoptLocalBurner, colorFromString } from "../wallet/wallet";
-import { addCoupon } from "../state/coupons";
 import { DEMO_STALLS, DEMO_NPCS } from "./demoData";
 import type { PlayerInfo, Stall } from "../types";
 
@@ -139,17 +138,7 @@ export function demoBuy(stallId: string, itemId: string, tx: string): void {
     at: Date.now(),
   });
   timedEmote("demo-self", "🛍️", 2600);
-  if (s.walletAddress) {
-    addCoupon(s.walletAddress, {
-      name: item.name,
-      emoji: item.emoji,
-      from: stall.title,
-      priceEth: item.priceEth,
-      tx,
-      at: Date.now(),
-    });
-    s.bumpCoupons();
-  }
+  // 쿠폰 저장은 구매 당사자(StallDialog)가 에스크로 정보와 함께 직접 한다
 }
 
 /** 데모에서도 내 노점을 펼 수 있다 (로컬 전용, 새로고침 전까지) */

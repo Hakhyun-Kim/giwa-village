@@ -8,7 +8,6 @@ import {
   demoCloseStall,
 } from "../demo/demo";
 import { useStore, remoteTargets } from "../state/store";
-import { addCoupon } from "../state/coupons";
 import type { PlayerSnapshot, PlayerInfo, FeedEvent, Stall } from "../types";
 
 interface SaleMessage extends FeedEvent {
@@ -179,19 +178,7 @@ export async function joinVillage(identity: Identity): Promise<void> {
     s.setEmote(sale.buyer, "🛍️");
     const at = useStore.getState().emotes[sale.buyer]?.at;
     if (at) setTimeout(() => useStore.getState().clearEmote(sale.buyer, at), 2600);
-    // my purchase → drop the coupon into my local coupon box
-    const my = s.walletAddress;
-    if (my && sale.buyerAddress?.toLowerCase() === my.toLowerCase()) {
-      addCoupon(my, {
-        name: sale.itemName ?? "",
-        emoji: sale.itemEmoji ?? "🎫",
-        from: sale.stallTitle,
-        priceEth: sale.priceEth,
-        tx: sale.tx,
-        at: sale.at,
-      });
-      s.bumpCoupons();
-    }
+    // 쿠폰 저장은 구매 당사자(StallDialog)가 에스크로 정보와 함께 직접 한다
   });
 
   // handlers are registered — now it is race-free to ask for the stall list

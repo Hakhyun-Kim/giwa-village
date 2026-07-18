@@ -15,3 +15,14 @@ export function addCoupon(address: string, c: Coupon): void {
   list.unshift(c);
   localStorage.setItem(key(address), JSON.stringify(list.slice(0, 50)));
 }
+
+export function updateCoupon(
+  address: string,
+  tx: string,
+  patch: Partial<Coupon>,
+): void {
+  const list = loadCoupons(address).map((c) =>
+    c.tx === tx ? { ...c, ...patch } : c,
+  );
+  localStorage.setItem(key(address), JSON.stringify(list));
+}
