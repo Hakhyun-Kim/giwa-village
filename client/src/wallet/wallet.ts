@@ -19,7 +19,9 @@ import {
 
 export const publicClient = createPublicClient({
   chain: giwaSepolia,
-  transport: http(),
+  // JSON-RPC 배칭: 같은 틱의 읽기(블록번호+로그 2종 등)를 한 요청으로 —
+  // 공개 RPC 레이트리밋 대비 요청 수를 1/3로 줄인다
+  transport: http(undefined, { batch: { wait: 50 } }),
 });
 
 /** the wallet client currently driving the avatar (injected or burner) */

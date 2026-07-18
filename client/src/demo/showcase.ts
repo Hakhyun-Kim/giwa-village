@@ -292,7 +292,7 @@ async function run() {
     await pace(900);
     findButton("노점 개설")?.click();
     caption(
-      "노점 개설 — 상품 가격은 <b>GiwaMarketV2 컨트랙트에 온체인 리스팅</b>됩니다",
+      "노점 개설 — 상품 가격은 <b>GiwaMarket 컨트랙트에 온체인 기록</b>됩니다",
       "이후 구매는 컨트랙트가 정확한 가격만 받도록 강제합니다",
     );
     await waitFor(() => !!findButton("노점 닫기"), 30000);

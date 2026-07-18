@@ -550,7 +550,15 @@ function applyPeers(): void {
   }
 }
 
+let pollSkip = 0;
+
 async function pollChain(): Promise<void> {
+  // 레이트리밋 백오프 + 숨김 탭 감속 (동시 접속자 대비 읽기 부하 절감)
+  if (pollSkip > 0) {
+    pollSkip--;
+    return;
+  }
+  if (document.hidden) pollSkip = 3;
   const s = useStore.getState();
   const my = s.walletAddress?.toLowerCase();
   try {
@@ -623,7 +631,8 @@ async function pollChain(): Promise<void> {
       });
     }
   } catch {
-    // RPC 레이트리밋 등 — 다음 틱에 재시도
+    // RPC 레이트리밋 등 — 약 20초 백오프 후 재시도
+    pollSkip = 8;
   }
 }
 
@@ -653,12 +662,12 @@ export function startOnchainVillage(localPos: LocalPos): void {
   selfPosRef = localPos;
   lastSent = { x: localPos.x, z: localPos.z, at: Date.now() };
 
-  void syncStalls();
-  void syncGuilds();
+  void syncStalls().catch(() => {});
+  void syncGuilds().catch(() => {});
   void checkBeaconBudget();
 
-  setInterval(() => void syncStalls(), STALL_SYNC_MS);
-  setInterval(() => void syncGuilds(), GUILD_SYNC_MS);
+  setInterval(() => void syncStalls().catch(() => {}), STALL_SYNC_MS);
+  setInterval(() => void syncGuilds().catch(() => {}), GUILD_SYNC_MS);
   setInterval(() => void checkBeaconBudget(), 60000);
   setInterval(() => void sendBeacon(), BEACON_INTERVAL_MS);
   setInterval(() => void pollChain(), READ_INTERVAL_MS);
