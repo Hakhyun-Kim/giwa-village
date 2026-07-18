@@ -6,6 +6,13 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "-w", "client"],
       "port": 5173
+    },
+    {
+      "name": "demo-client",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "set VITE_DEMO=1&& npm run dev -w client -- --port %PORT%"],
+      "port": 5173,
+      "autoPort": true
     }
   ]
 }
