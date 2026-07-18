@@ -79,6 +79,38 @@ export async function connectWallet(): Promise<`0x${string}`> {
   return address;
 }
 
+/**
+ * 데모(서버리스) 모드: 방문자 자신의 지갑(MetaMask 등)에서 버너로 테스트넷
+ * ETH를 충전한다. 비컨(2초)마다 서명 팝업을 띄울 수 없으므로 인젝티드 지갑은
+ * 서명자로 쓰지 않고 — 충전 1회만 팝업 — 이후엔 버너가 조용히 서명한다.
+ * activeWalletClient(버너)는 건드리지 않는다.
+ */
+export async function fundBurnerFromInjected(amountEth: string): Promise<`0x${string}`> {
+  const burner = activeWalletClient?.account?.address;
+  if (!burner) throw new Error("버너 지갑이 없습니다.");
+  if (!window.ethereum) {
+    throw new Error("브라우저에서 지갑을 찾을 수 없습니다. MetaMask 등을 설치해 주세요.");
+  }
+  const transport = custom(window.ethereum as Parameters<typeof custom>[0]);
+  const probe = createWalletClient({ chain: giwaSepolia, transport });
+  const [address] = await probe.requestAddresses();
+  if (!address) throw new Error("지갑 계정을 가져오지 못했습니다.");
+  try {
+    await probe.switchChain({ id: giwaSepolia.id });
+  } catch {
+    await probe.addChain({ chain: giwaSepolia });
+  }
+  const injected = createWalletClient({ account: address, chain: giwaSepolia, transport });
+  const tx = await injected.sendTransaction({
+    account: address,
+    chain: giwaSepolia,
+    to: burner,
+    value: parseEther(amountEth),
+  });
+  await publicClient.waitForTransactionReceipt({ hash: tx });
+  return tx;
+}
+
 /** 데모 모드: 브라우저에 저장된 로컬 키로 지갑 클라이언트를 구성 */
 export function adoptLocalBurner(privateKey: `0x${string}`): `0x${string}` {
   const account = privateKeyToAccount(privateKey);

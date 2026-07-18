@@ -824,3 +824,15 @@ body,
   color: #7de08a;
   font-weight: 700;
 }
+
+.hud-fund-msg {
+  margin-top: 4px;
+  background: rgba(20, 24, 34, 0.85);
+  border: 1px solid #2a3040;
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: 11.5px;
+  color: #ffd66b;
+  max-width: 240px;
+  text-align: right;
+}

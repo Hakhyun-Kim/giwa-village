@@ -9,7 +9,12 @@ import {
 import { joinVillage, closeStall } from "../net/colyseus";
 import { giwaSepolia, DEMO, FAUCET_URL } from "../config/giwa";
 import { loadCoupons } from "../state/coupons";
-import { unlistOnMarket, isDojangVerified } from "../wallet/wallet";
+import {
+  unlistOnMarket,
+  isDojangVerified,
+  fundBurnerFromInjected,
+} from "../wallet/wallet";
+import { refreshBeaconBudget } from "../chain/village";
 import { useUpidName } from "../wallet/upid";
 
 function StallButtons({ walletAddress }: { walletAddress: string }) {
@@ -61,6 +66,45 @@ function StallButtons({ walletAddress }: { walletAddress: string }) {
       >
         🏯 길드
       </button>
+    </div>
+  );
+}
+
+/** 데모(서버리스) 모드: 방문자 자신의 지갑에서 버너로 테스트넷 ETH 충전 */
+function FundButton() {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function onFund() {
+    if (busy) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await fundBurnerFromInjected("0.002");
+      const addr = useStore.getState().walletAddress;
+      if (addr) useStore.getState().setBalance(await getBalanceEth(addr));
+      void refreshBeaconBudget();
+      setMsg("충전 완료! 이제 거래·비컨이 활성화됩니다");
+      setTimeout(() => setMsg(null), 5000);
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      setMsg(m.length > 90 ? m.slice(0, 90) + "…" : m);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="hud-stall-btns">
+      <button
+        className="hud-btn sub"
+        onClick={onFund}
+        disabled={busy}
+        title="내 지갑(MetaMask 등)에서 이 버너로 0.002 테스트넷 ETH를 보냅니다 — 서명 팝업 1회"
+      >
+        {busy ? "충전 중…" : "🦊 내 지갑에서 충전"}
+      </button>
+      {msg && <div className="hud-fund-msg">{msg}</div>}
     </div>
   );
 }
@@ -195,6 +239,7 @@ export default function Hud() {
         )}
         {walletError && <div className="hud-error">{walletError}</div>}
         {walletAddress && <StallButtons walletAddress={walletAddress} />}
+        {DEMO && walletAddress && walletKind === "burner" && <FundButton />}
       </div>
 
       <div className="hud-bottom">

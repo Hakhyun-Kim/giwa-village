@@ -627,6 +627,11 @@ async function pollChain(): Promise<void> {
   }
 }
 
+/** 충전 직후 등 잔액 변화를 즉시 반영 */
+export async function refreshBeaconBudget(): Promise<void> {
+  return checkBeaconBudget();
+}
+
 async function checkBeaconBudget(): Promise<void> {
   const s = useStore.getState();
   if (!s.walletAddress) return;
