@@ -1,7 +1,7 @@
 // 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
-export const MARKET_ADDRESS = "0xfb28e3bc250e71c0015b95ea7ab5f919b83edba7" as `0x${string}`;
-export const MARKET_DEPLOY_TX = "0xb703e80de023c91e389320962684bf4b8cea2a2cdab6e7a5aa736abad4fb6212";
-export const MARKET_DEPLOY_BLOCK = 31038051n;
+export const MARKET_ADDRESS = "0xb5cb2b998ab08b6bb8a4d336aba9025bd82652b6" as `0x${string}`;
+export const MARKET_DEPLOY_TX = "0xadd01d0222cd9fd53e1ba8a00d016dd70b8a73e66a051a12cf21adcf2512fbd9";
+export const MARKET_DEPLOY_BLOCK = 31039123n;
 export const MARKET_ABI = [
   {
     "inputs": [],
@@ -149,6 +149,31 @@ export const MARKET_ABI = [
       }
     ],
     "name": "Purchased",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "who",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "Redeemed",
     "type": "event"
   },
   {
@@ -670,6 +695,24 @@ export const MARKET_ABI = [
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "redeem",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

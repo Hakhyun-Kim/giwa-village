@@ -12,10 +12,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = "https://sepolia-explorer.giwa.io/api/v2/smart-contracts";
 
 const TARGETS = [
-  { file: "GiwaMarketV3.sol", name: "GiwaMarketV3", address: "0xfb28e3bc250e71c0015b95ea7ab5f919b83edba7" },
+  { file: "GiwaMarketV3.sol", name: "GiwaMarketV3", address: "0xb5cb2b998ab08b6bb8a4d336aba9025bd82652b6" },
   { file: "GiwaGuilds.sol", name: "GiwaGuilds", address: "0xdf0d34616a1edbe5e948b3fbb362b7d135ed9662" },
   { file: "GiwaPresence.sol", name: "GiwaPresence", address: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93" },
-  { file: "GiwaHonors.sol", name: "GiwaHonors", address: "0xdc1c3388129b4e9a5ab23a8bc3b90a5c7eafc648" },
+  { file: "GiwaHonors.sol", name: "GiwaHonors", address: "0xd755f48e4d4ad0a2b9e5491aea8d13225ded1839" },
 ];
 
 const ver = "v" + solc.version().replace(/\.Emscripten.*$/, "");

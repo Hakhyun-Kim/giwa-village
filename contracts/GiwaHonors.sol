@@ -39,6 +39,10 @@ interface IGiwaGuilds {
     function guildOf(address member) external view returns (uint256 idPlus1);
 
     function guildAt(uint256 id) external view returns (Guild memory);
+
+    function guildCount() external view returns (uint256);
+
+    function currentEpoch() external view returns (uint256);
 }
 
 /// 기와장터 칭호 — 소울바운드 기록 (전송 함수 자체가 없다: 규제 안전선).
@@ -46,8 +50,8 @@ interface IGiwaGuilds {
 /// 장착(equip)한 칭호는 클라이언트가 이름표 배지(코스메틱)로 그린다.
 contract GiwaHonors {
     // id 1 개점(노점을 열어봄) · 2 길드 창설자 · 3 등반가(최고 10층+) ·
-    // id 4 고층 정복자(최고 30층+)
-    uint256 public constant MAX_ID = 4;
+    // id 4 고층 정복자(최고 30층+) · 5 등반왕(이번 주 1위 길드의 길드원)
+    uint256 public constant MAX_ID = 5;
 
     IGiwaMarketStalls public immutable market;
     IGiwaGuilds public immutable guilds;
@@ -75,6 +79,20 @@ contract GiwaHonors {
         if (id == 2) return g.founder == who;
         if (id == 3) return g.d.best >= 10;
         if (id == 4) return g.d.best >= 30;
+        if (id == 5) {
+            // 이번 주 1위 길드(1층 이상, 동점 허용)의 길드원 — 주간 결산은
+            // 클레임으로 영구 기록된다 (키퍼 없는 자동화)
+            uint256 e = guilds.currentEpoch();
+            uint16 myFloor = g.d.epoch == e ? g.d.floor : 0;
+            if (myFloor == 0) return false;
+            uint256 n = guilds.guildCount();
+            for (uint256 i; i < n; i++) {
+                IGiwaGuilds.Guild memory o = guilds.guildAt(i);
+                uint16 f = o.d.epoch == e ? o.d.floor : 0;
+                if (f > myFloor) return false;
+            }
+            return true;
+        }
         return false;
     }
 

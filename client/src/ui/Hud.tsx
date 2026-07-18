@@ -28,6 +28,14 @@ function StallButtons({ walletAddress }: { walletAddress: string }) {
 
   return (
     <div className="hud-stall-btns">
+      {myStall && (
+        <button
+          className="hud-btn sub"
+          onClick={() => useStore.getState().setLedgerOpen(true)}
+        >
+          📒 장부
+        </button>
+      )}
       {myStall ? (
         <button
           className="hud-btn sub"

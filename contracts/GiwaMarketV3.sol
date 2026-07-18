@@ -340,4 +340,19 @@ contract GiwaMarketV3 {
     function purchaseCount() external view returns (uint256) {
         return _purchases.length;
     }
+
+    // ---------- 쿠폰 사용 (소각) ----------
+    event Redeemed(address indexed who, uint256 indexed id, uint256 value);
+
+    /// 쿠폰 사용 — 보유한 ERC-1155 쿠폰을 소각하고 온체인 사용 증빙을 남긴다.
+    /// (기프티콘의 바코드 스캔에 해당 — 상인은 Redeemed 이벤트로 검증)
+    function redeem(uint256 id, uint256 value) external {
+        uint256 b = _balances[id][msg.sender];
+        require(value > 0 && b >= value, "bal");
+        unchecked {
+            _balances[id][msg.sender] = b - value;
+        }
+        emit TransferSingle(msg.sender, msg.sender, address(0), id, value);
+        emit Redeemed(msg.sender, id, value);
+    }
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
 import { loadCoupons, updateCoupon } from "../state/coupons";
-import { confirmPurchase, disputePurchase } from "../wallet/wallet";
+import { confirmPurchase, disputePurchase, redeemCoupon } from "../wallet/wallet";
 import { giwaSepolia } from "../config/giwa";
 
 export default function CouponBox() {
@@ -27,6 +27,23 @@ export default function CouponBox() {
     try {
       await disputePurchase(purchaseId);
       updateCoupon(walletAddress, tx, { disputed: true });
+      useStore.getState().bumpCoupons();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg.length > 100 ? msg.slice(0, 100) + "…" : msg);
+    } finally {
+      setBusyTx(null);
+    }
+  }
+
+  async function onRedeem(tx: string, tokenId: string) {
+    if (busyTx || !walletAddress) return;
+    if (!confirm("쿠폰을 사용할까요? 토큰이 소각되고 온체인 사용 증빙이 남습니다.")) return;
+    setBusyTx(tx);
+    setError(null);
+    try {
+      const usedTx = await redeemCoupon(tokenId);
+      updateCoupon(walletAddress, tx, { usedTx });
       useStore.getState().bumpCoupons();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -98,15 +115,36 @@ export default function CouponBox() {
                     </button>
                   )}
                 </span>
-              ) : (
+              ) : c.usedTx ? (
                 <a
                   className="coupon-price"
-                  href={`${explorer}/tx/${c.tx}`}
+                  href={`${explorer}/tx/${c.usedTx}`}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {c.settled ? "정산됨 ↗" : `${c.priceEth} ETH ↗`}
+                  사용됨 ↗
                 </a>
+              ) : (
+                <span className="coupon-actions">
+                  {c.settled && c.tokenId && (
+                    <button
+                      className="gift-btn primary small"
+                      disabled={busyTx !== null}
+                      onClick={() => onRedeem(c.tx, c.tokenId!)}
+                      title="쿠폰 토큰을 소각하고 온체인 사용 증빙을 남깁니다"
+                    >
+                      {busyTx === c.tx ? "사용 중…" : "사용"}
+                    </button>
+                  )}
+                  <a
+                    className="coupon-price"
+                    href={`${explorer}/tx/${c.tx}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {c.settled ? "정산됨 ↗" : `${c.priceEth} ETH ↗`}
+                  </a>
+                </span>
               )}
             </div>
           ))}

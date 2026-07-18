@@ -15,11 +15,12 @@ import {
   activeWalletClient,
   colorFromString,
 } from "../wallet/wallet";
-import { MARKET_ADDRESS, MARKET_ABI } from "../config/market";
+import { MARKET_ADDRESS, MARKET_ABI, MARKET_DEPLOY_BLOCK } from "../config/market";
 import { GUILDS_ADDRESS, GUILDS_ABI } from "../config/guilds";
 import { PRESENCE_ADDRESS, PRESENCE_ABI } from "../config/presence";
 import { HONORS_ADDRESS, HONORS_ABI } from "../config/honors";
 import { useStore, remoteTargets } from "../state/store";
+import { upidNameOf } from "../wallet/upid";
 import type { Guild, PlayerInfo, Stall } from "../types";
 import type { GiftResult } from "../wallet/wallet";
 
@@ -437,6 +438,62 @@ export async function chainDungeonBank(): Promise<void> {
   }
 }
 
+// ---------- 판매자 장부 (내 노점 판매·분쟁·환불) ----------
+
+export interface SellerSale {
+  purchaseId: number;
+  itemName: string;
+  amountEth: string;
+  buyer: string;
+  settled: boolean;
+  disputed: boolean;
+  tx: string;
+}
+
+export async function fetchMySales(me: string): Promise<SellerSale[]> {
+  const logs = await publicClient.getLogs({
+    address: MARKET_ADDRESS,
+    event: PURCHASED_EVENT,
+    args: { seller: me as `0x${string}` },
+    fromBlock: MARKET_DEPLOY_BLOCK,
+  });
+  const sales = await Promise.all(
+    logs.map(async (l) => {
+      const p = (await publicClient.readContract({
+        address: MARKET_ADDRESS,
+        abi: MARKET_ABI,
+        functionName: "purchaseOf",
+        args: [l.args.purchaseId!],
+      })) as [string, string, bigint, bigint, boolean, boolean];
+      return {
+        purchaseId: Number(l.args.purchaseId),
+        itemName: l.args.itemId ?? "",
+        amountEth: formatEther(l.args.amount ?? 0n),
+        buyer: l.args.buyer ?? "",
+        settled: p[4],
+        disputed: p[5],
+        tx: l.transactionHash,
+      };
+    }),
+  );
+  return sales.reverse();
+}
+
+/** 판매자 환불 — 에스크로 대금을 구매자에게 돌려준다 */
+export async function refundSale(purchaseId: number): Promise<void> {
+  const wc = activeWalletClient;
+  if (!wc?.account) throw new Error("지갑이 없습니다.");
+  const tx = await wc.writeContract({
+    account: wc.account,
+    chain: wc.chain,
+    address: MARKET_ADDRESS,
+    abi: MARKET_ABI,
+    functionName: "refund",
+    args: [BigInt(purchaseId)],
+  });
+  await publicClient.waitForTransactionReceipt({ hash: tx });
+}
+
 // ---------- 칭호 (소울바운드) + 이름표 배지 코스메틱 ----------
 
 export const HONOR_DEFS = [
@@ -444,6 +501,7 @@ export const HONOR_DEFS = [
   { id: 2, emoji: "🏯", name: "길드 창설자", desc: "길드를 세운 자" },
   { id: 3, emoji: "⛰️", name: "등반가", desc: "길드 최고 기록 10층 이상" },
   { id: 4, emoji: "🌕", name: "고층 정복자", desc: "길드 최고 기록 30층 이상" },
+  { id: 5, emoji: "🥇", name: "등반왕", desc: "이번 주 1위 길드의 길드원" },
 ] as const;
 
 export interface HonorProfile {
@@ -487,32 +545,32 @@ export async function honorWrite(functionName: "claim" | "equip", id: number): P
   await publicClient.waitForTransactionReceipt({ hash: tx });
 }
 
-/** 장착 칭호를 이름표 배지로 — 피어별 1회 조회 캐시 */
-const badgeCache = new Map<string, string>();
+/** 피어 이름표 꾸미기 — 장착 칭호 배지 + UP.ID 이름 (주소별 1회 조회 캐시) */
+const decorated = new Set<string>();
 
 async function decoratePeer(addr: string): Promise<void> {
-  if (badgeCache.has(addr)) return;
-  badgeCache.set(addr, "");
+  if (decorated.has(addr)) return;
+  decorated.add(addr);
   try {
-    const [, equipped] = (await publicClient.readContract({
-      address: HONORS_ADDRESS,
-      abi: HONORS_ABI,
-      functionName: "profileOf",
-      args: [addr as `0x${string}`],
-    })) as [bigint, bigint];
-    const def = HONOR_DEFS.find((d) => d.id === Number(equipped));
-    if (!def) return;
-    badgeCache.set(addr, def.emoji);
+    const [profile, upid] = await Promise.all([
+      publicClient.readContract({
+        address: HONORS_ADDRESS,
+        abi: HONORS_ABI,
+        functionName: "profileOf",
+        args: [addr as `0x${string}`],
+      }) as Promise<[bigint, bigint]>,
+      upidNameOf(addr),
+    ]);
+    const def = HONOR_DEFS.find((d) => d.id === Number(profile[1]));
+    const base = upid ?? `나그네-${addr.slice(2, 6)}`;
+    const name = def ? `${def.emoji} ${base}` : base;
     const s = useStore.getState();
     const p = s.players[addr];
-    if (p) {
-      s.setPlayers({
-        ...s.players,
-        [addr]: { ...p, name: `${def.emoji} ${p.name.replace(/^\S+ /, "")}` },
-      });
+    if (p && p.name !== name) {
+      s.setPlayers({ ...s.players, [addr]: { ...p, name } });
     }
   } catch {
-    badgeCache.delete(addr);
+    decorated.delete(addr);
   }
 }
 

@@ -276,6 +276,22 @@ export async function disputePurchase(purchaseId: number): Promise<`0x${string}`
   return tx;
 }
 
+/** 쿠폰 사용 — ERC-1155 쿠폰 1장을 소각하고 온체인 사용 증빙을 남긴다 */
+export async function redeemCoupon(tokenId: string): Promise<`0x${string}`> {
+  const wc = activeWalletClient;
+  if (!wc?.account) throw new Error("지갑이 연결되어 있지 않습니다.");
+  const tx = await wc.writeContract({
+    account: wc.account,
+    chain: giwaSepolia,
+    address: MARKET_ADDRESS,
+    abi: MARKET_ABI,
+    functionName: "redeem",
+    args: [BigInt(tokenId), 1n],
+  });
+  await publicClient.waitForTransactionReceipt({ hash: tx });
+  return tx;
+}
+
 /** ERC-1155 쿠폰 토큰 보유 수량 조회 */
 export async function couponOwned(owner: string, tokenId: string): Promise<bigint> {
   return publicClient.readContract({

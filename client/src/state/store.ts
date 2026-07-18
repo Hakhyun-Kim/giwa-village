@@ -38,6 +38,7 @@ interface VillageStore {
   dungeonOpen: boolean;
   dungeon: DungeonView | null;
   honorsOpen: boolean;
+  ledgerOpen: boolean;
 
   setStatus: (s: ConnectionStatus) => void;
   setSelfId: (id: string | null) => void;
@@ -69,6 +70,7 @@ interface VillageStore {
   setDungeonOpen: (v: boolean) => void;
   setDungeon: (d: DungeonView | null) => void;
   setHonorsOpen: (v: boolean) => void;
+  setLedgerOpen: (v: boolean) => void;
   patchDungeon: (d: Partial<DungeonView>) => void;
 }
 
@@ -100,6 +102,7 @@ export const useStore = create<VillageStore>((set) => ({
   dungeonOpen: false,
   dungeon: null,
   honorsOpen: false,
+  ledgerOpen: false,
 
   setStatus: (status) => set({ status }),
   setSelfId: (selfId) => set({ selfId }),
@@ -146,6 +149,7 @@ export const useStore = create<VillageStore>((set) => ({
   setDungeonOpen: (dungeonOpen) => set({ dungeonOpen }),
   setDungeon: (dungeon) => set({ dungeon }),
   setHonorsOpen: (honorsOpen) => set({ honorsOpen }),
+  setLedgerOpen: (ledgerOpen) => set({ ledgerOpen }),
   patchDungeon: (d) =>
     set((s) => (s.dungeon ? { dungeon: { ...s.dungeon, ...d } } : s)),
 }));

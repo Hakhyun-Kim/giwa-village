@@ -107,4 +107,6 @@ export interface Coupon {
   settled?: boolean;
   /** 분쟁 신고됨 (자동 정산 7일 연장, 판매자 환불 가능) */
   disputed?: boolean;
+  /** 쿠폰 사용(소각) 완료 — redeem tx 해시 */
+  usedTx?: string;
 }

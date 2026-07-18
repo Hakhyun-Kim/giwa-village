@@ -7,6 +7,7 @@ import { getBalanceEth } from "../wallet/wallet";
 import { loadCoupons } from "../state/coupons";
 import { giwaSepolia, FAUCET_URL, DEMO } from "../config/giwa";
 import { createGuild, dungeonBank, dungeonPick } from "../net/colyseus";
+import { HONOR_DEFS, fetchHonors, honorWrite } from "../chain/village";
 
 const MIN_BALANCE_ETH = 0.002; // 구매 + 가스 여유
 
@@ -220,6 +221,36 @@ async function showGuildDungeon(my: string) {
   useStore.getState().setDungeon(null);
 }
 
+// ---- 칭호 비트 ----
+
+async function showHonors(my: string) {
+  caption(
+    "🎖 <b>소울바운드 칭호</b> — 온체인 기록으로 증명하고 이름표에 답니다",
+    "전송 함수가 아예 없는 순수 기록 — 게임 보상 양도 불가 원칙",
+  );
+  useStore.getState().setHonorsOpen(true);
+  await pace(2800);
+  const p = await fetchHonors(my);
+  const target = HONOR_DEFS.find(
+    (d, i) => p.eligible[i] && (p.mask & (1 << d.id)) === 0,
+  );
+  if (target) {
+    caption(`${target.emoji} <b>${target.name}</b> 획득 중 — ${target.desc}`);
+    await honorWrite("claim", target.id);
+    await honorWrite("equip", target.id);
+    // 다이얼로그를 새로 열어 획득·장착 상태를 반영
+    useStore.getState().setHonorsOpen(false);
+    useStore.getState().setHonorsOpen(true);
+    caption(
+      `${target.emoji} <b>${target.name}</b> 장착 — 다른 주민들에게 이름표 배지로 보입니다`,
+    );
+    await pace(3500);
+  } else {
+    await pace(1500);
+  }
+  useStore.getState().setHonorsOpen(false);
+}
+
 // ---- 시나리오 ----
 
 async function run() {
@@ -375,6 +406,15 @@ async function run() {
       console.warn("[showcase] 길드 시연 생략:", err);
       useStore.getState().setDungeonOpen(false);
       useStore.getState().setGuildOpen(false);
+    }
+
+    // 8) 소울바운드 칭호 (실패해도 시연은 이어간다)
+    try {
+      await showHonors(my);
+    } catch (err) {
+      if (aborted) throw err;
+      console.warn("[showcase] 칭호 시연 생략:", err);
+      useStore.getState().setHonorsOpen(false);
     }
 
     teardown(
