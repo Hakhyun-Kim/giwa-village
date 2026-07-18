@@ -111,4 +111,6 @@ export interface Coupon {
   disputed?: boolean;
   /** 쿠폰 사용(소각) 완료 — redeem tx 해시 */
   usedTx?: string;
+  /** 다른 지갑에 선물함 — transfer tx 해시 */
+  giftedTx?: string;
 }

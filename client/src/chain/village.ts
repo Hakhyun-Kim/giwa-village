@@ -25,6 +25,7 @@ import {
 export * from "./core";
 export * from "./stalls";
 export * from "./ledger";
+export * from "./gifts";
 export * from "./guilds";
 export * from "./honors";
 export * from "./presence";
