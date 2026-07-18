@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>기와장터 — 기술 문서 (One-Pager)</title>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: #f6f4ef;
+    color: #1f2328;
+    line-height: 1.65;
+  }
+  .hero {
+    background: #2e3138;
+    color: #fff;
+    padding: 48px 24px 40px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 34px; letter-spacing: 1px; }
+  .hero .sub { color: #d9a441; margin-top: 6px; font-size: 15px; }
+  .hero .links { margin-top: 18px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .hero .links a {
+    color: #ffe9c4; text-decoration: none; font-size: 13px;
+    border: 1px solid rgba(255, 214, 107, 0.45); border-radius: 999px; padding: 6px 14px;
+  }
+  .hero .links a:hover { background: rgba(255, 214, 107, 0.12); }
+  main { max-width: 860px; margin: 0 auto; padding: 36px 20px 60px; }
+  h2 {
+    font-size: 21px; margin: 40px 0 14px; color: #2e3138;
+    display: flex; align-items: center; gap: 8px;
+  }
+  h2 .n {
+    background: #c3423f; color: #fff; font-size: 13px; width: 24px; height: 24px;
+    border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  }
+  p.lead { font-size: 15.5px; }
+  .diagram {
+    background: #2e3138; border-radius: 14px; padding: 26px 20px; margin-top: 14px;
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 8px; align-items: center;
+    overflow-x: auto;
+  }
+  .node {
+    background: #3b4048; border: 1px solid #4a5160; border-radius: 10px;
+    color: #eef2f8; padding: 12px 10px; text-align: center; font-size: 12.5px; min-width: 150px;
+  }
+  .node b { display: block; color: #ffd66b; font-size: 13.5px; margin-bottom: 4px; }
+  .node.chain { border-color: #d9a441; }
+  .arrow { color: #d9a441; font-size: 18px; text-align: center; white-space: nowrap; }
+  .arrow small { display: block; color: #9aa2ae; font-size: 10px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #e3ded2; vertical-align: top; }
+  th { color: #6b7280; font-size: 12px; font-weight: 600; }
+  td b { color: #2e3138; }
+  code, .addr {
+    font-family: ui-monospace, Consolas, monospace; font-size: 12px;
+    background: #ece8dd; border-radius: 5px; padding: 1px 6px; word-break: break-all;
+  }
+  .flow {
+    background: #fff; border: 1px solid #e3ded2; border-radius: 12px;
+    padding: 16px 18px; margin-top: 12px; font-size: 14px;
+  }
+  .flow ol { padding-left: 20px; }
+  .flow li { margin: 6px 0; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+  @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } }
+  .card {
+    background: #fff; border: 1px solid #e3ded2; border-radius: 12px; padding: 16px 18px;
+    font-size: 13.5px;
+  }
+  .card b.t { display: block; color: #c3423f; margin-bottom: 6px; font-size: 14px; }
+  a { color: #a8802c; }
+  footer { text-align: center; color: #9a917e; font-size: 12px; padding: 24px 0 40px; }
+  .gold { color: #a8802c; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>기와장터 <span style="font-weight:300">GIWA Village</span></h1>
+  <div class="sub">기술 문서 (One-Pager) — 한옥 저잣거리 소셜 플랫폼의 아키텍처와 온체인 구현</div>
+  <div class="links">
+    <a href="https://hakhyun-kim.github.io/giwa-village/">🏮 라이브 데모</a>
+    <a href="https://github.com/Hakhyun-Kim/giwa-village">GitHub 저장소</a>
+    <a href="https://sepolia-explorer.giwa.io/address/0x67cddd9be658dd334730e34c3791959a6681ad67">Verified 컨트랙트</a>
+  </div>
+</div>
+
+<main>
+  <p class="lead">
+    기와장터는 GIWA 체인(이더리움 L2, OP Stack) 위의 3D 소셜 플랫폼입니다.
+    지갑이 아바타가 되고, P2P 거래가 노점이 되고, 신원 인증이 상인의 뱃지가 됩니다.
+    설계 원칙은 하나입니다 — <b>서버는 공간만 담당하고, 가치는 전부 체인 위에서 움직인다.</b>
+  </p>
+
+  <h2><span class="n">1</span>시스템 아키텍처</h2>
+  <div class="diagram">
+    <div class="node">
+      <b>클라이언트 (브라우저)</b>
+      React Three Fiber 3D 마을<br/>viem 지갑·컨트랙트 호출<br/>Colyseus.js 실시간 동기화
+    </div>
+    <div class="arrow">⇄<small>WebSocket 15Hz</small></div>
+    <div class="node">
+      <b>Colyseus 룸 서버</b>
+      아바타 위치·이모트 중계<br/>노점 레지스트리(영속)<br/>이름 중복 해소·유휴 정리
+    </div>
+    <div class="arrow">⇄<small>JSON-RPC</small></div>
+    <div class="node chain">
+      <b>GIWA Sepolia (L2)</b>
+      GiwaMarketV2 (상거래)<br/>DojangScroll (신원 인증)<br/>UPNameRegistry (이름)
+    </div>
+  </div>
+  <p style="margin-top:10px; font-size:13.5px; color:#6b7280">
+    ※ 결제·소유·인증은 클라이언트가 체인과 <b>직접</b> 통신합니다. 서버는 자금·키를
+    일절 다루지 않는 비수탁(non-custodial) 구조이며, 서버가 꺼져도 자산은 안전합니다.
+    정적 데모 모드에서는 서버 없이 NPC를 로컬 시뮬레이션하고 온체인 기능은 동일하게 동작합니다.
+  </p>
+
+  <h2><span class="n">2</span>온체인 컴포넌트</h2>
+  <table>
+    <tr><th>컨트랙트</th><th>역할</th><th>주소 (GIWA Sepolia)</th></tr>
+    <tr>
+      <td><b>GiwaMarketV2</b><br/>(자체 개발·Verified)</td>
+      <td>노점 상거래 레이어 — ① 아이템 리스팅과 <b>가격 체인 강제</b>
+        ② 대금 <b>에스크로</b> 보관(구매자 확정 또는 24시간 후 자동 정산)
+        ③ 구매 즉시 <b>ERC-1155 쿠폰 토큰</b> 민팅 ④ Purchased/Settled 이벤트 영수증</td>
+      <td><a href="https://sepolia-explorer.giwa.io/address/0x67cddd9be658dd334730e34c3791959a6681ad67" class="addr">0x67cddd…ad67</a></td>
+    </tr>
+    <tr>
+      <td><b>DojangScroll</b><br/>(GIWA 생태계)</td>
+      <td>업비트 코리아가 발행하는 신원 어테스테이션을 <code>isVerified(주소, 발행자ID)</code>로
+        조회 → 마을에서 <span class="gold">Dojang 인증 상인</span> 뱃지 표시</td>
+      <td><span class="addr">0xd5077b…17B9</span></td>
+    </tr>
+    <tr>
+      <td><b>UPNameRegistry</b><br/>(GIWA 생태계)</td>
+      <td>Upbit Web3 Names(ERC-721) — <code>hasActiveName → ownedTokenId → getLabel</code>
+        역방향 조회로 주소 대신 이름을 이름표·상점에 표시</td>
+      <td><span class="addr">0x091D00…9628</span></td>
+    </tr>
+  </table>
+
+  <h2><span class="n">3</span>핵심 플로우: 노점 구매</h2>
+  <div class="flow">
+    <ol>
+      <li>손님이 노점 클릭 → 상품 선택 → <code>GiwaMarketV2.buy(판매자, 아이템ID)</code> 호출 (viem, 클라이언트 직접 서명)</li>
+      <li>컨트랙트가 리스팅 가격과 <b>정확히 일치하는 금액만</b> 수락 → 대금은 <b>에스크로에 보관</b></li>
+      <li>같은 트랜잭션에서 <b>ERC-1155 쿠폰 토큰</b>이 구매자 지갑으로 민팅 (tokenId = keccak(판매자, 아이템ID))</li>
+      <li>Purchased 이벤트가 온체인 영수증 — 클라이언트는 tx 해시만 서버에 전달, 서버는 형식 검증 후 판매 피드 브로드캐스트</li>
+      <li>구매자가 쿠폰함에서 <b>정산 확정</b> → <code>confirm()</code> → 판매자에게 대금 전달 (미확정 시 24시간 후 <code>release()</code> 가능)</li>
+    </ol>
+    GIWA의 1초 블록 덕분에 1~5단계가 <b>대화 템포(1~2초)</b> 안에 끝납니다 — "게임 속 상점"의 체감을 실제 온체인으로 구현한 핵심 근거입니다.
+  </div>
+
+  <h2><span class="n">4</span>공간 설계: 노점의 영속성</h2>
+  <p style="font-size:14px">
+    노점은 주인이 접속을 끊어도 마을에 남습니다(서버 레지스트리 영속 + 리스팅은 온체인).
+    소셜 플랫폼의 최대 리스크인 콜드 스타트를 <b>유저 생성 콘텐츠(노점)</b>가 공간을
+    채우는 구조로 풉니다 — 동시접속이 적어도 저잣거리는 상점으로 북적입니다.
+    라그나로크 프론테라 노점 문화의 구조적 재해석입니다.
+  </p>
+
+  <h2><span class="n">5</span>기술 스택 & 품질</h2>
+  <div class="cols">
+    <div class="card">
+      <b class="t">스택</b>
+      클라이언트: React Three Fiber(three.js) · zustand · viem · Colyseus.js<br/>
+      서버: Node.js · Colyseus (15Hz 스냅샷, 하트비트 유휴 정리, 자동 재접속)<br/>
+      컨트랙트: Solidity 0.8.36 (ERC-1155 자체 구현 포함, 외부 의존성 0)<br/>
+      배포: GitHub Actions → GitHub Pages (정적 데모 모드)
+    </div>
+    <div class="card">
+      <b class="t">검증</b>
+      E2E 스모크 테스트 6종 — 실시간 동기화 / 선물 실전송 / 노점 서버 플로우 /
+      <b>컨트랙트 실거래</b>(에스크로 보관·쿠폰 민팅·가격 강제 revert·이중 정산 거부) /
+      Dojang 조회 / UP.ID 조회. 모든 주장에 온체인 트랜잭션 증거가 있습니다.
+    </div>
+    <div class="card">
+      <b class="t">신뢰 설계</b>
+      비수탁: 서버는 자금·개인키 미접촉 · 가격은 체인이 강제 · 영수증은 이벤트 로그 ·
+      서버 수신 메시지는 tx 해시 형식·발신자 검증 후에만 중계 (표시용 데이터는 체인이 진실 소스)
+    </div>
+    <div class="card">
+      <b class="t">규제 안전선</b>
+      게임 플레이 보상은 양도 불가(소울바운드 설계) — 사행성(환전) 고리 차단 ·
+      거래 대상은 코스메틱·쿠폰 등 재화만 (금융상품·오더북 없음) ·
+      포지셔닝은 게임이 아닌 아바타 소셜 플랫폼
+    </div>
+  </div>
+
+  <h2><span class="n">6</span>왜 GIWA 체인인가</h2>
+  <p style="font-size:14px">
+    ① <b>Dojang은 GIWA에만 있다</b> — 업비트가 신원을 보증하는 "인증 상인"은 다른 체인으로
+    이식 불가능한 핵심 가치. ② <b>1초 블록</b> — 상거래 UX가 대화 템포 안에 확정.
+    ③ <b>UP.ID·월렛 생태계</b> — 이름·인증·지갑이 늘수록 마을의 표현력이 함께 자란다.
+    ④ 웹 기반이라 GIWA 월렛에 웹뷰로 탑재 가능한 구조.
+  </p>
+</main>
+
+<footer>
+  기와장터 (GIWA Village) · 김학현 · hakhyun.2023@gmail.com<br/>
+  라이브 데모: hakhyun-kim.github.io/giwa-village · GIWA Sepolia 테스트넷
+</footer>
+
+</body>
+</html>
