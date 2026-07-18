@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>GIWA 마을 — 듀얼 테스트</title>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    background: #0d1017;
+    font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 14px;
+    color: #cfd6e2;
+    font-size: 13px;
+  }
+  header b { color: #ffd66b; }
+  header button {
+    margin-left: auto;
+    cursor: pointer;
+    border: 1px solid #444;
+    background: #1a2030;
+    color: #eef2f8;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+  }
+  header button:disabled { opacity: 0.4; cursor: default; }
+
+  /* ---- dashboard strip ---- */
+  #dash {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 14px 8px;
+    font-size: 12px;
+    color: #cfd6e2;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #161b26;
+    border: 1px solid #2a3040;
+    border-radius: 999px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: #666; }
+  .chip .dot.ok { background: #7de08a; }
+  .chip .dot.bad { background: #ff8f8f; }
+  .chip b { color: #9ecbff; font-weight: 600; }
+  .chip .bal { color: #7de08a; }
+  .chip a { color: #ffd66b; text-decoration: none; }
+  .chip button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #8ea0bd;
+    font-size: 11px;
+    padding: 0;
+  }
+  .chip button:hover { color: #ffd66b; }
+  .addr { cursor: pointer; }
+  .addr:hover { color: #ffd66b; }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
+    gap: 4px;
+    padding: 0 4px 4px;
+    min-height: 0;
+  }
+  .pane {
+    position: relative;
+    border: 2px solid #2a3040;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .pane.focused { border-color: #ffd66b; }
+  .pane .label {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 5;
+    background: rgba(20, 24, 34, 0.8);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    pointer-events: none;
+  }
+  .pane.focused .label::after { content: " · 조작 중"; color: #ffd66b; }
+  iframe { width: 100%; height: 100%; border: 0; display: block; }
+</style>
+</head>
+<body>
+<header>
+  <span><b>GIWA 마을</b> 듀얼 클라이언트 테스트</span>
+  <span>패널 클릭 → 해당 클라이언트 조작 (WASD 이동 · E 인사 · 포털에서 F)</span>
+  <button id="add">+ 클라이언트 추가</button>
+</header>
+
+<div id="dash">
+  <span class="chip"><span class="dot" id="srv-dot"></span>서버 :2567</span>
+  <span class="chip" id="roster">접속자 —</span>
+  <span id="wallet-chips"></span>
+  <span class="chip"><a href="https://faucet.giwa.io/" target="_blank">🚰 GIWA 포셋</a></span>
+  <span class="chip"><a href="https://faucet.lambda256.io/giwa-sepolia" target="_blank">🚰 Nodit 포셋</a></span>
+  <span class="chip"><button id="refresh">↻ 새로고침</button></span>
+</div>
+
+<main id="panes"></main>
+
+<script>
+  const MAX = 4;
+  const SLOTS = ["A", "B", "C", "D"];
+  const RPC = "https://sepolia-rpc.giwa.io";
+  const EXPLORER = "https://sepolia-explorer.giwa.io";
+  const SERVER = "http://localhost:2567";
+
+  const panes = document.getElementById("panes");
+  const addBtn = document.getElementById("add");
+
+  function addPane() {
+    if (panes.children.length >= MAX) return;
+    const slot = SLOTS[panes.children.length];
+    const div = document.createElement("div");
+    div.className = "pane";
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = "클라이언트 " + slot;
+    const frame = document.createElement("iframe");
+    frame.src = "/?slot=" + slot;
+    div.append(label, frame);
+    panes.appendChild(div);
+    addBtn.disabled = panes.children.length >= MAX;
+  }
+
+  addPane();
+  addPane();
+  addBtn.addEventListener("click", addPane);
+
+  setInterval(() => {
+    for (const pane of panes.children) {
+      pane.classList.toggle("focused", pane.contains(document.activeElement));
+    }
+  }, 250);
+
+  // ---- dashboard ----
+  const srvDot = document.getElementById("srv-dot");
+  const walletChips = document.getElementById("wallet-chips");
+
+  function short(a) { return a.slice(0, 6) + "…" + a.slice(-4); }
+
+  async function rpcBalance(address) {
+    const res = await fetch(RPC, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0", id: 1,
+        method: "eth_getBalance", params: [address, "latest"],
+      }),
+    });
+    const { result } = await res.json();
+    return (Number(BigInt(result)) / 1e18).toFixed(4);
+  }
+
+  async function refreshDash() {
+    let serverOk = false;
+    try {
+      const r = await fetch(SERVER + "/", { signal: AbortSignal.timeout(2000) });
+      serverOk = r.ok;
+    } catch {}
+    srvDot.className = "dot " + (serverOk ? "ok" : "bad");
+
+    if (!serverOk) return;
+
+    try {
+      const r = await fetch(SERVER + "/dev/status");
+      const s = await r.json();
+      const names = s.players.map((p) => p.name).join(", ");
+      document.getElementById("roster").textContent =
+        "접속자 " + s.online + (names ? " : " + names : "");
+    } catch {}
+
+    let wallets = [];
+    try {
+      const r = await fetch(SERVER + "/dev/wallets");
+      if (r.ok) wallets = await r.json();
+    } catch {}
+
+    walletChips.replaceChildren();
+    for (const w of wallets) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      const b = document.createElement("b");
+      b.textContent = w.slot;
+      const addr = document.createElement("span");
+      addr.className = "addr";
+      addr.textContent = short(w.address);
+      addr.title = w.address + " (클릭하여 복사)";
+      addr.onclick = () => {
+        navigator.clipboard.writeText(w.address);
+        addr.textContent = "복사됨!";
+        setTimeout(() => (addr.textContent = short(w.address)), 1000);
+      };
+      const bal = document.createElement("span");
+      bal.className = "bal";
+      bal.textContent = "…";
+      rpcBalance(w.address)
+        .then((v) => (bal.textContent = v + " ETH"))
+        .catch(() => (bal.textContent = "?"));
+      const link = document.createElement("a");
+      link.href = EXPLORER + "/address/" + w.address;
+      link.target = "_blank";
+      link.textContent = "↗";
+      chip.append(b, addr, bal, link);
+      walletChips.appendChild(chip);
+    }
+  }
+
+  document.getElementById("refresh").onclick = refreshDash;
+  refreshDash();
+  setInterval(refreshDash, 30000);
+</script>
+</body>
+</html>

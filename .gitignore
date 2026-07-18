@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.testwallets.json
+.botwallets.json
+server/data/
+*.local
+.env
+.env.*
+!.env.example
+docs/
