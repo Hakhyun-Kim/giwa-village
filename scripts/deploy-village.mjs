@@ -37,8 +37,8 @@ const TARGETS = [
 // 이미 배포된 주소 (부분 재배포 시 생성자 인자·유지용).
 // 사용법: node scripts/deploy-village.mjs [컨트랙트명 ...] — 인자 없으면 전부.
 const deployed = {
-  GiwaMarketV3: "0xb5cb2b998ab08b6bb8a4d336aba9025bd82652b6",
-  GiwaGuilds: "0xdf0d34616a1edbe5e948b3fbb362b7d135ed9662",
+  GiwaMarketV3: "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2",
+  GiwaGuilds: "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638",
   GiwaPresence: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93",
 };
 const only = process.argv.slice(2);

@@ -1,7 +1,7 @@
 // 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
-export const MARKET_ADDRESS = "0xb5cb2b998ab08b6bb8a4d336aba9025bd82652b6" as `0x${string}`;
-export const MARKET_DEPLOY_TX = "0xadd01d0222cd9fd53e1ba8a00d016dd70b8a73e66a051a12cf21adcf2512fbd9";
-export const MARKET_DEPLOY_BLOCK = 31039123n;
+export const MARKET_ADDRESS = "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2" as `0x${string}`;
+export const MARKET_DEPLOY_TX = "0xd19290ed99d8d1e16811ab5e840769f5a70ec795f180e3dbcb3b43c3fedb8c6c";
+export const MARKET_DEPLOY_BLOCK = 31040869n;
 export const MARKET_ABI = [
   {
     "inputs": [],
@@ -293,6 +293,43 @@ export const MARKET_ABI = [
       },
       {
         "indexed": false,
+        "internalType": "uint256[]",
+        "name": "ids",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "values",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "TransferBatch",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
@@ -371,6 +408,30 @@ export const MARKET_ABI = [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "accounts",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "ids",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "balanceOfBatch",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "out",
+        "type": "uint256[]"
       }
     ],
     "stateMutability": "view",
@@ -737,6 +798,39 @@ export const MARKET_ABI = [
       }
     ],
     "name": "release",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "ids",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "values",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "safeBatchTransferFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

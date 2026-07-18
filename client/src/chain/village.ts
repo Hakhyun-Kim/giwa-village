@@ -14,6 +14,7 @@ import {
   publicClient,
   activeWalletClient,
   colorFromString,
+  queueTx,
 } from "../wallet/wallet";
 import { MARKET_ADDRESS, MARKET_ABI, MARKET_DEPLOY_BLOCK } from "../config/market";
 import { GUILDS_ADDRESS, GUILDS_ABI } from "../config/guilds";
@@ -108,23 +109,25 @@ export async function openStallOnChain(
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 없습니다.");
   const pos = selfPosRef;
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: wc.chain,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "openStall",
-    args: [
-      title,
-      Math.round((pos?.x ?? 0) * POS_SCALE),
-      Math.round((pos?.z ?? 0) * POS_SCALE),
-      items.map((it) => ({
-        name: it.name,
-        emoji: it.emoji,
-        price: parseEther(it.priceEth),
-      })),
-    ],
-  });
+  const tx = await queueTx(() =>
+    wc.writeContract({
+      account: wc.account!,
+      chain: wc.chain,
+      address: MARKET_ADDRESS,
+      abi: MARKET_ABI,
+      functionName: "openStall",
+      args: [
+        title,
+        Math.round((pos?.x ?? 0) * POS_SCALE),
+        Math.round((pos?.z ?? 0) * POS_SCALE),
+        items.map((it) => ({
+          name: it.name,
+          emoji: it.emoji,
+          price: parseEther(it.priceEth),
+        })),
+      ],
+    }),
+  );
   await publicClient.waitForTransactionReceipt({ hash: tx });
   void syncStalls();
 }
@@ -132,14 +135,16 @@ export async function openStallOnChain(
 export async function closeStallOnChain(): Promise<void> {
   const wc = activeWalletClient;
   if (!wc?.account) return;
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: wc.chain,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "closeStall",
-    args: [],
-  });
+  const tx = await queueTx(() =>
+    wc.writeContract({
+      account: wc.account!,
+      chain: wc.chain,
+      address: MARKET_ADDRESS,
+      abi: MARKET_ABI,
+      functionName: "closeStall",
+      args: [],
+    }),
+  );
   await publicClient.waitForTransactionReceipt({ hash: tx });
   void syncStalls();
 }
@@ -152,15 +157,17 @@ export async function buyStallOnChain(
 ): Promise<GiftResult> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 연결되어 있지 않습니다.");
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: wc.chain,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "buyStall",
-    args: [seller as `0x${string}`, index],
-    value: parseEther(priceEth),
-  });
+  const tx = await queueTx(() =>
+    wc.writeContract({
+      account: wc.account!,
+      chain: wc.chain,
+      address: MARKET_ADDRESS,
+      abi: MARKET_ABI,
+      functionName: "buyStall",
+      args: [seller as `0x${string}`, index],
+      value: parseEther(priceEth),
+    }),
+  );
   const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
   let purchaseId: number | undefined;
   let tokenId: string | undefined;
@@ -242,14 +249,16 @@ async function guildWrite(functionName: string, args: unknown[]): Promise<boolea
     return false;
   }
   try {
-    const tx = await wc.writeContract({
-      account: wc.account,
-      chain: wc.chain,
-      address: GUILDS_ADDRESS,
-      abi: GUILDS_ABI,
-      functionName,
-      args,
-    } as Parameters<typeof wc.writeContract>[0]);
+    const tx = await queueTx(() =>
+      wc.writeContract({
+        account: wc.account!,
+        chain: wc.chain,
+        address: GUILDS_ADDRESS,
+        abi: GUILDS_ABI,
+        functionName,
+        args,
+      } as Parameters<typeof wc.writeContract>[0]),
+    );
     await publicClient.waitForTransactionReceipt({ hash: tx });
     await syncGuilds();
     return true;
@@ -313,14 +322,16 @@ export async function chainDungeonEnter(): Promise<void> {
   const wc = activeWalletClient;
   if (!wc?.account) return;
   try {
-    const tx = await wc.writeContract({
-      account: wc.account,
-      chain: wc.chain,
-      address: GUILDS_ADDRESS,
-      abi: GUILDS_ABI,
-      functionName: "enterExpedition",
-      args: [],
-    });
+    const tx = await queueTx(() =>
+      wc.writeContract({
+        account: wc.account!,
+        chain: wc.chain,
+        address: GUILDS_ADDRESS,
+        abi: GUILDS_ABI,
+        functionName: "enterExpedition",
+        args: [],
+      }),
+    );
     const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
     let attempt = 0;
     for (const log of receipt.logs) {
@@ -400,14 +411,16 @@ export async function chainDungeonBank(): Promise<void> {
   const wc = activeWalletClient;
   if (!wc?.account) return;
   try {
-    const tx = await wc.writeContract({
-      account: wc.account,
-      chain: wc.chain,
-      address: GUILDS_ADDRESS,
-      abi: GUILDS_ABI,
-      functionName: "settleRun",
-      args: [run.attempt, run.picks],
-    });
+    const tx = await queueTx(() =>
+      wc.writeContract({
+        account: wc.account!,
+        chain: wc.chain,
+        address: GUILDS_ADDRESS,
+        abi: GUILDS_ABI,
+        functionName: "settleRun",
+        args: [run.attempt, run.picks],
+      }),
+    );
     const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
     let climbed = 0;
     let floor = s.dungeon.floor;
@@ -483,14 +496,16 @@ export async function fetchMySales(me: string): Promise<SellerSale[]> {
 export async function refundSale(purchaseId: number): Promise<void> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 없습니다.");
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: wc.chain,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "refund",
-    args: [BigInt(purchaseId)],
-  });
+  const tx = await queueTx(() =>
+    wc.writeContract({
+      account: wc.account!,
+      chain: wc.chain,
+      address: MARKET_ADDRESS,
+      abi: MARKET_ABI,
+      functionName: "refund",
+      args: [BigInt(purchaseId)],
+    }),
+  );
   await publicClient.waitForTransactionReceipt({ hash: tx });
 }
 
@@ -534,14 +549,16 @@ export async function fetchHonors(who: string): Promise<HonorProfile> {
 export async function honorWrite(functionName: "claim" | "equip", id: number): Promise<void> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 없습니다.");
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: wc.chain,
-    address: HONORS_ADDRESS,
-    abi: HONORS_ABI,
-    functionName,
-    args: [BigInt(id)],
-  });
+  const tx = await queueTx(() =>
+    wc.writeContract({
+      account: wc.account!,
+      chain: wc.chain,
+      address: HONORS_ADDRESS,
+      abi: HONORS_ABI,
+      functionName,
+      args: [BigInt(id)],
+    }),
+  );
   await publicClient.waitForTransactionReceipt({ hash: tx });
 }
 
@@ -620,16 +637,19 @@ async function sendBeacon(emote = 0): Promise<void> {
   ];
   lastSent = { x: pos.x, z: pos.z, at: now };
   try {
-    await wc.writeContract({
-      account: wc.account,
-      chain: wc.chain,
-      address: PRESENCE_ADDRESS,
-      abi: PRESENCE_ABI,
-      functionName: "beacon",
-      args,
-    });
+    // 모든 지갑 쓰기와 같은 큐 — 구매·입장 tx와의 nonce 경합을 원천 차단
+    await queueTx(() =>
+      wc.writeContract({
+        account: wc.account!,
+        chain: wc.chain,
+        address: PRESENCE_ADDRESS,
+        abi: PRESENCE_ABI,
+        functionName: "beacon",
+        args,
+      }),
+    );
   } catch {
-    // nonce 경합·RPC 지연 시 이번 비컨은 버린다 (다음 틱에 재시도)
+    // RPC 지연·거부 시 이번 비컨은 버린다 (다음 틱에 재시도)
   } finally {
     beaconPending = false;
   }
@@ -731,11 +751,13 @@ async function pollChain(): Promise<void> {
         useStore.getState().removePlayer(who);
         continue;
       }
+      // 악의적 비컨 좌표는 월드 반경으로 클램프
+      const cl = (v: number) => Math.max(-60, Math.min(60, v / POS_SCALE));
       peers.set(who, {
-        x: Number(a.x100) / POS_SCALE,
-        z: Number(a.z100) / POS_SCALE,
-        vx: Number(a.vx100) / POS_SCALE,
-        vz: Number(a.vz100) / POS_SCALE,
+        x: cl(Number(a.x100)),
+        z: cl(Number(a.z100)),
+        vx: Math.max(-8, Math.min(8, Number(a.vx100) / POS_SCALE)),
+        vz: Math.max(-8, Math.min(8, Number(a.vz100) / POS_SCALE)),
         at: Date.now(),
       });
       const icon = EMOTE_ICONS[a.emote ?? 0];

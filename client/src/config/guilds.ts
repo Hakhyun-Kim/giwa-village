@@ -1,7 +1,7 @@
 // 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
-export const GUILDS_ADDRESS = "0xdf0d34616a1edbe5e948b3fbb362b7d135ed9662" as `0x${string}`;
-export const GUILDS_DEPLOY_TX = "0xb565ee41c417c5d00c58c71ff15e7cece4d83b50d3661d6a886a5d353843d6a3";
-export const GUILDS_DEPLOY_BLOCK = 31034316n;
+export const GUILDS_ADDRESS = "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638" as `0x${string}`;
+export const GUILDS_DEPLOY_TX = "0x8b47aa102e8bf20f37b89f9c6e43b56902187063f1b493a5c84f12a3c1795b46";
+export const GUILDS_DEPLOY_BLOCK = 31040873n;
 export const GUILDS_ABI = [
   {
     "anonymous": false,

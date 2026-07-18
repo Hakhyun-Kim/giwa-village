@@ -1,7 +1,7 @@
 // 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
-export const HONORS_ADDRESS = "0xd755f48e4d4ad0a2b9e5491aea8d13225ded1839" as `0x${string}`;
-export const HONORS_DEPLOY_TX = "0x20ce665bea4ce2c6a89c94b9837afd1c09fcfd9291cf873a73d7290988641dc9";
-export const HONORS_DEPLOY_BLOCK = 31039127n;
+export const HONORS_ADDRESS = "0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f" as `0x${string}`;
+export const HONORS_DEPLOY_TX = "0x73ea1833d5bb96f5fba165e7c24156234c50a5568ec4a91e06567a0fee8c093c";
+export const HONORS_DEPLOY_BLOCK = 31040874n;
 export const HONORS_ABI = [
   {
     "inputs": [

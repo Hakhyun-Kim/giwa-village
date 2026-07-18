@@ -34,6 +34,8 @@ contract GiwaGuilds {
     mapping(address => uint256) private _memberGuild; // guildId + 1 (0 = 무소속)
     mapping(bytes32 => bool) private _nameTaken;
     mapping(uint256 => mapping(uint32 => bool)) private _attemptSettled;
+    // 회차 입장자 — 본인이 시작한 원정만 정산할 수 있다
+    mapping(uint256 => mapping(uint32 => address)) private _runner;
 
     mapping(uint256 => bytes32) public epochSeed;
     mapping(uint256 => uint64) public epochSeedBlock;
@@ -139,6 +141,7 @@ contract GiwaGuilds {
             emit SeedPinned(e, uint64(block.number - 1), epochSeed[e]);
         }
         g.d.attempts += 1;
+        _runner[idPlus1 - 1][g.d.attempts] = msg.sender;
         emit ExpeditionStarted(idPlus1 - 1, msg.sender, g.d.attempts, e);
         return (g.d.attempts, epochSeed[e]);
     }
@@ -158,7 +161,11 @@ contract GiwaGuilds {
     }
 
     /// 귀환 — 문 선택 배열을 재계산·검증해 길드 기록에 확정한다.
-    /// 함정이 포함된 배열은 거부된다(잠정 층수는 애초에 무효).
+    /// 함정이 포함된 배열은 거부되고, 본인이 입장한 회차만 정산할 수 있다.
+    ///
+    /// 알려진 한계(테스트넷 실험 범위): 결과가 시드로부터 결정론적이므로
+    /// 숙련 사용자는 오프라인 탐색으로 무함정 경로를 찾을 수 있다.
+    /// 메인넷 수준에서는 VRF 또는 커밋-리빌로 정산 시점 엔트로피가 필요하다.
     function settleRun(uint32 attempt, uint8[] calldata picks) external {
         uint256 idPlus1 = _memberGuild[msg.sender];
         require(idPlus1 != 0, "none");
@@ -168,6 +175,7 @@ contract GiwaGuilds {
 
         require(picks.length >= 1 && picks.length <= MAX_PICKS, "picks");
         require(attempt >= 1 && attempt <= g.d.attempts, "attempt");
+        require(_runner[gid][attempt] == msg.sender, "runner");
         require(!_attemptSettled[gid][attempt], "settled");
         _attemptSettled[gid][attempt] = true;
 

@@ -33,6 +33,17 @@ contract GiwaMarketV3 {
         return _balances[id][account];
     }
 
+    function balanceOfBatch(
+        address[] calldata accounts,
+        uint256[] calldata ids
+    ) external view returns (uint256[] memory out) {
+        require(accounts.length == ids.length, "len");
+        out = new uint256[](accounts.length);
+        for (uint256 i; i < accounts.length; i++) {
+            out[i] = _balances[ids[i]][accounts[i]];
+        }
+    }
+
     function setApprovalForAll(address operator, bool approved) external {
         _operatorApprovals[msg.sender][operator] = approved;
         emit ApprovalForAll(msg.sender, operator, approved);
@@ -55,6 +66,28 @@ contract GiwaMarketV3 {
         _balances[id][to] += value;
         emit TransferSingle(msg.sender, from, to, id, value);
         _checkReceiver(from, to, id, value, data);
+    }
+
+    event TransferBatch(
+        address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values
+    );
+
+    function safeBatchTransferFrom(
+        address from, address to, uint256[] calldata ids, uint256[] calldata values, bytes calldata data
+    ) external {
+        require(from == msg.sender || _operatorApprovals[from][msg.sender], "auth");
+        require(to != address(0), "to0");
+        require(ids.length == values.length, "len");
+        for (uint256 i; i < ids.length; i++) {
+            uint256 b = _balances[ids[i]][from];
+            require(b >= values[i], "bal");
+            unchecked {
+                _balances[ids[i]][from] = b - values[i];
+            }
+            _balances[ids[i]][to] += values[i];
+        }
+        emit TransferBatch(msg.sender, from, to, ids, values);
+        data; // 배치 수신자 콜백은 범위 외 (EOA 간 전송 가정)
     }
 
     function supportsInterface(bytes4 iid) external pure returns (bool) {

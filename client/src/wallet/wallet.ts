@@ -19,13 +19,25 @@ import {
 
 export const publicClient = createPublicClient({
   chain: giwaSepolia,
-  // JSON-RPC 배칭: 같은 틱의 읽기(블록번호+로그 2종 등)를 한 요청으로 —
-  // 공개 RPC 레이트리밋 대비 요청 수를 1/3로 줄인다
-  transport: http(undefined, { batch: { wait: 50 } }),
+  // 주의: JSON-RPC 배칭을 쓰지 말 것 — GIWA 공개 RPC가 큰 배치 배열을
+  // 403으로 거부해 배치에 묶인 모든 읽기가 함께 실패한다 (실측).
+  // 레이트리밋 대응은 폴링 백오프(chain/village.ts)로 한다.
+  transport: http(),
 });
 
 /** the wallet client currently driving the avatar (injected or burner) */
 export let activeWalletClient: WalletClient | null = null;
+
+/**
+ * 같은 지갑에서 병렬 전송하면 nonce가 충돌한다 (비컨 vs 구매/입장 등 —
+ * "replacement transaction underpriced"). 모든 버너 쓰기를 이 큐로 직렬화한다.
+ */
+let txChain: Promise<unknown> = Promise.resolve();
+export function queueTx<T>(fn: () => Promise<T>): Promise<T> {
+  const run = txChain.then(fn, fn);
+  txChain = run.catch(() => {});
+  return run;
+}
 
 declare global {
   interface Window {
@@ -186,12 +198,14 @@ export async function sendGiftTx(
   const balance = await publicClient.getBalance({ address: wc.account.address });
   if (balance < value) throw new Error("잔액이 부족합니다.");
 
-  const tx = await wc.sendTransaction({
-    account: wc.account,
-    chain: giwaSepolia,
-    to: to as `0x${string}`,
-    value,
-  });
+  const tx = await queueTx(() =>
+    wc.sendTransaction({
+      account: wc.account!,
+      chain: giwaSepolia,
+      to: to as `0x${string}`,
+      value,
+    }),
+  );
   await publicClient.waitForTransactionReceipt({ hash: tx });
   return { tx, amountEth };
 }
@@ -214,15 +228,17 @@ export async function buyOnMarket(
   const balance = await publicClient.getBalance({ address: wc.account.address });
   if (balance < value) throw new Error("잔액이 부족합니다.");
 
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: giwaSepolia,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "buy",
-    args: [seller as `0x${string}`, itemId],
-    value,
-  });
+  const tx = await queueTx(() =>
+    wc.writeContract({
+      account: wc.account!,
+      chain: giwaSepolia,
+      address: MARKET_ADDRESS,
+      abi: MARKET_ABI,
+      functionName: "buy",
+      args: [seller as `0x${string}`, itemId],
+      value,
+    }),
+  );
   const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
 
   // Purchased 이벤트에서 에스크로 구매 id + 쿠폰 토큰 id를 회수
@@ -248,14 +264,16 @@ export async function buyOnMarket(
 export async function confirmPurchase(purchaseId: number): Promise<`0x${string}`> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 연결되어 있지 않습니다.");
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: giwaSepolia,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "confirm",
-    args: [BigInt(purchaseId)],
-  });
+  const tx = await queueTx(() =>
+    wc.writeContract({
+      account: wc.account!,
+      chain: giwaSepolia,
+      address: MARKET_ADDRESS,
+      abi: MARKET_ABI,
+      functionName: "confirm",
+      args: [BigInt(purchaseId)],
+    }),
+  );
   await publicClient.waitForTransactionReceipt({ hash: tx });
   return tx;
 }
@@ -264,14 +282,16 @@ export async function confirmPurchase(purchaseId: number): Promise<`0x${string}`
 export async function disputePurchase(purchaseId: number): Promise<`0x${string}`> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 연결되어 있지 않습니다.");
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: giwaSepolia,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "dispute",
-    args: [BigInt(purchaseId)],
-  });
+  const tx = await queueTx(() =>
+    wc.writeContract({
+      account: wc.account!,
+      chain: giwaSepolia,
+      address: MARKET_ADDRESS,
+      abi: MARKET_ABI,
+      functionName: "dispute",
+      args: [BigInt(purchaseId)],
+    }),
+  );
   await publicClient.waitForTransactionReceipt({ hash: tx });
   return tx;
 }
@@ -280,14 +300,16 @@ export async function disputePurchase(purchaseId: number): Promise<`0x${string}`
 export async function redeemCoupon(tokenId: string): Promise<`0x${string}`> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 연결되어 있지 않습니다.");
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: giwaSepolia,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "redeem",
-    args: [BigInt(tokenId), 1n],
-  });
+  const tx = await queueTx(() =>
+    wc.writeContract({
+      account: wc.account!,
+      chain: giwaSepolia,
+      address: MARKET_ADDRESS,
+      abi: MARKET_ABI,
+      functionName: "redeem",
+      args: [BigInt(tokenId), 1n],
+    }),
+  );
   await publicClient.waitForTransactionReceipt({ hash: tx });
   return tx;
 }
