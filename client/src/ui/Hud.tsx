@@ -28,9 +28,13 @@ function StallButtons({ walletAddress }: { walletAddress: string }) {
           className="hud-btn sub"
           onClick={() => {
             closeStall();
-            for (const it of myStall.items) {
-              void unlistOnMarket(it.id).catch(() => {});
-            }
+            // 같은 지갑 병렬 전송은 nonce 충돌 — 언리스팅도 순차로
+            const items = [...myStall.items];
+            void (async () => {
+              for (const it of items) {
+                await unlistOnMarket(it.id).catch(() => {});
+              }
+            })();
           }}
         >
           🧺 노점 닫기

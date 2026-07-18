@@ -63,15 +63,31 @@ export default function StallOpenDialog() {
       }
     }
     openStall(title.trim(), items);
-    // 온체인 리스팅 (best-effort): 아이템 id는 서버 규칙과 동일하게 계산
+    // 온체인 리스팅 (best-effort): 아이템 id는 서버 규칙과 동일하게 계산.
+    // 같은 지갑에서 병렬 전송하면 nonce 충돌("replacement transaction
+    // underpriced")이 나므로 반드시 순차 전송 — listOnMarket이 영수증까지
+    // 대기하므로 순차면 안전. 일시 오류(RPC 리플리카 지연 등)는 재시도.
     const addr = useStore.getState().walletAddress;
     if (addr) {
       const stallId = `s-${addr.slice(2, 10).toLowerCase()}`;
-      items.forEach((it, i) => {
-        void listOnMarket(`${stallId}-${i}`, it.priceEth).catch((err) =>
-          console.warn("[market] 온체인 리스팅 실패(가스 부족 등):", err),
-        );
-      });
+      const drafts = [...items];
+      void (async () => {
+        for (let i = 0; i < drafts.length; i++) {
+          const it = drafts[i];
+          for (let attempt = 0; ; attempt++) {
+            try {
+              await listOnMarket(`${stallId}-${i}`, it.priceEth);
+              break;
+            } catch (err) {
+              if (attempt >= 2) {
+                console.warn(`[market] ${it.name} 온체인 리스팅 실패(가스 부족 등):`, err);
+                break;
+              }
+              await new Promise((r) => setTimeout(r, 1500));
+            }
+          }
+        }
+      })();
     }
     close();
   }
