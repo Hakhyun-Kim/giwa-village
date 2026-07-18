@@ -11,10 +11,13 @@ import GiftFeed from "./ui/GiftFeed";
 import StallDialog from "./ui/StallDialog";
 import StallOpenDialog from "./ui/StallOpenDialog";
 import CouponBox from "./ui/CouponBox";
+import GuildDialog from "./ui/GuildDialog";
+import DungeonDialog from "./ui/DungeonDialog";
 import { joinVillage, leaveVillage } from "./net/colyseus";
 import { useStore } from "./state/store";
 import { colorFromString, loadBurner } from "./wallet/wallet";
 import { DEMO } from "./config/giwa";
+import { maybeStartShowcase } from "./demo/showcase";
 
 export default function App() {
   useEffect(() => {
@@ -22,6 +25,7 @@ export default function App() {
       .get("slot")
       ?.toUpperCase();
     let cancelled = false;
+    maybeStartShowcase();
 
     (async () => {
       const store = useStore.getState();
@@ -81,6 +85,8 @@ export default function App() {
       <StallDialog />
       <StallOpenDialog />
       <CouponBox />
+      <GuildDialog />
+      <DungeonDialog />
     </div>
   );
 }

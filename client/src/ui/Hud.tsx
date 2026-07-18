@@ -53,6 +53,14 @@ function StallButtons({ walletAddress }: { walletAddress: string }) {
       >
         🎫 쿠폰함 {couponCount > 0 ? couponCount : ""}
       </button>
+      {!DEMO && (
+        <button
+          className="hud-btn sub"
+          onClick={() => useStore.getState().setGuildOpen(true)}
+        >
+          🏯 길드
+        </button>
+      )}
     </div>
   );
 }
@@ -138,9 +146,16 @@ export default function Hud() {
         </div>
         {DEMO && (
           <div className="hud-demo">
-            데모 모드 · 온체인은 실동작
+            기본 샘플 데모 · 온체인은 실동작
             <a href={FAUCET_URL} target="_blank" rel="noreferrer">
               테스트 ETH 받기 ↗
+            </a>
+            <a
+              href="https://github.com/Hakhyun-Kim/giwa-village#자동-시연-처음-보는-분"
+              target="_blank"
+              rel="noreferrer"
+            >
+              실제 테스트 방법 ↗
             </a>
           </div>
         )}

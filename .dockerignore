@@ -1,0 +1,13 @@
+node_modules
+*/node_modules
+dist
+*/dist
+.git
+.testwallets.json
+.botwallets.json
+server/data
+docs
+CLAUDE.local.md
+*.local
+.env
+.env.*

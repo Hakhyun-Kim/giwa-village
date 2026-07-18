@@ -5,7 +5,7 @@ import Avatar from "./Avatar";
 import { WORLD_RADIUS, PORTAL_POS } from "./Village";
 import { localPos, sendMove, sendEmote } from "../net/colyseus";
 import { useStore } from "../state/store";
-import { DUNGEON_URL } from "../config/giwa";
+import { DUNGEON_URL, DEMO } from "../config/giwa";
 
 const SPEED = 6;
 const SEND_INTERVAL = 1 / 15;
@@ -45,7 +45,9 @@ export default function Player() {
         }
       }
       if (e.code === "KeyF" && useStore.getState().nearPortal) {
-        window.open(DUNGEON_URL, "_blank");
+        // 서버 모드: 길드 코업 던전 / 데모 모드: 솔로 아케이드(외부)
+        if (DEMO) window.open(DUNGEON_URL, "_blank");
+        else useStore.getState().setDungeonOpen(true);
       }
     };
     const up = (e: KeyboardEvent) => keys.current.delete(e.code);

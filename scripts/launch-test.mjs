@@ -10,9 +10,13 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SERVER_PROBE = "http://localhost:2567/";
 const CLIENT_PROBE = "http://localhost:5173/";
-const TEST_URL = "http://localhost:5173/test.html";
 const NO_OPEN = process.argv.includes("--no-open");
 const NO_BOTS = process.argv.includes("--no-bots");
+// --showcase: 듀얼 테스트 페이지 대신 자동 시연 클라이언트를 연다
+const SHOWCASE = process.argv.includes("--showcase");
+const TEST_URL = SHOWCASE
+  ? "http://localhost:5173/?slot=A&showcase=1"
+  : "http://localhost:5173/test.html";
 
 const procs = [];
 let shuttingDown = false;

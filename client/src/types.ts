@@ -52,6 +52,46 @@ export interface FeedEvent {
   at: number;
 }
 
+export interface GuildMember {
+  address: string;
+  name: string;
+}
+
+export interface Guild {
+  id: string;
+  name: string;
+  emblem: string;
+  founderAddress: string;
+  createdAt: number;
+  members: GuildMember[];
+  dungeon: {
+    epoch: number;
+    floor: number;
+    best: number;
+    runs: number;
+    attempts: number;
+  };
+}
+
+/** 진행 중인 던전 원정 화면 상태 */
+export interface DungeonView {
+  guildId: string;
+  guildName: string;
+  emblem: string;
+  epoch: number;
+  seedBlock: number;
+  seedHash: string;
+  offchain: boolean;
+  floor: number;
+  tentative: number;
+  attempt: number;
+  lastOutcome?: "safe" | "bonus" | "trap";
+  lastDoor?: number;
+  ended?: boolean;
+  banked?: number;
+  busy?: boolean;
+}
+
 export interface Coupon {
   name: string;
   emoji: string;

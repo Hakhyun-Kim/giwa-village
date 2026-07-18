@@ -2,6 +2,7 @@ import { Room, Client } from "@colyseus/core";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { GuildRegistry, GUILD_EMBLEMS, MAX_FLOOR } from "./guilds";
 
 export interface PlayerState {
   id: string;
@@ -117,6 +118,9 @@ function isTxHash(v: unknown): v is string {
 }
 
 function systemAddress(): string {
+  // 호스팅 환경: 브랜드 상점 정산 수신 주소를 env로 지정 (테스트 지갑 파일이 없음)
+  const env = process.env.SYSTEM_WALLET_ADDRESS;
+  if (env && /^0x[0-9a-fA-F]{40}$/.test(env)) return env;
   try {
     const wallets = JSON.parse(fs.readFileSync(WALLETS_FILE, "utf8"));
     const d = wallets.find((w: { slot: string }) => w.slot === "D");
@@ -130,6 +134,12 @@ export class VillageRoom extends Room {
   private players = new Map<string, PlayerState>();
   private lastSeen = new Map<string, number>();
   private stalls = new Map<string, Stall>(); // keyed by stall id
+  private guilds = new GuildRegistry(path.resolve(DATA_DIR, "guilds.json"));
+  // 진행 중인 던전 원정 (세션별 잠정 층수 + 원정 회차)
+  private runs = new Map<
+    string,
+    { guildId: string; tentative: number; attempt: number }
+  >();
 
   private touch(sessionId: string) {
     this.lastSeen.set(sessionId, Date.now());
@@ -307,6 +317,134 @@ export class VillageRoom extends Room {
       console.log(`[sale] ${buyer.name} bought ${item.name} @ ${stall.title}`);
     });
 
+    // ---- 길드 + 비동기 코업 던전 ----
+
+    const broadcastGuilds = () => this.broadcast("guilds", this.guilds.list());
+
+    this.onMessage("guilds:get", (client) => {
+      this.touch(client.sessionId);
+      client.send("guilds", this.guilds.list());
+    });
+
+    this.onMessage("guild:create", (client, data: unknown) => {
+      this.touch(client.sessionId);
+      const p = this.players.get(client.sessionId);
+      if (!p?.address || typeof data !== "object" || data === null) return;
+      const d = data as Record<string, unknown>;
+      const name = sanitizeText(d.name, 12);
+      const emblem = typeof d.emblem === "string" ? d.emblem : GUILD_EMBLEMS[0];
+      const result = this.guilds.create(
+        { address: p.address, name: p.name },
+        name,
+        emblem,
+      );
+      if (typeof result === "string") {
+        client.send("guild:error", result);
+        return;
+      }
+      console.log(`[guild] create "${result.name}" by ${p.name}`);
+      broadcastGuilds();
+    });
+
+    this.onMessage("guild:join", (client, data: unknown) => {
+      this.touch(client.sessionId);
+      const p = this.players.get(client.sessionId);
+      if (!p?.address || typeof data !== "object" || data === null) return;
+      const d = data as Record<string, unknown>;
+      const result = this.guilds.join(
+        { address: p.address, name: p.name },
+        typeof d.guildId === "string" ? d.guildId : "",
+      );
+      if (typeof result === "string") {
+        client.send("guild:error", result);
+        return;
+      }
+      console.log(`[guild] ${p.name} joined "${result.name}"`);
+      broadcastGuilds();
+    });
+
+    this.onMessage("guild:leave", (client) => {
+      this.touch(client.sessionId);
+      const p = this.players.get(client.sessionId);
+      if (!p?.address) return;
+      this.runs.delete(client.sessionId);
+      if (this.guilds.leave(p.address)) broadcastGuilds();
+    });
+
+    this.onMessage("dungeon:enter", async (client) => {
+      this.touch(client.sessionId);
+      const p = this.players.get(client.sessionId);
+      const begun = p?.address ? this.guilds.beginRun(p.address) : undefined;
+      if (!p || !begun) {
+        client.send("guild:error", "던전은 길드 원정입니다 — 먼저 길드에 가입하세요.");
+        return;
+      }
+      const { guild, attempt } = begun;
+      const seed = await this.guilds.seedFor(this.guilds.currentEpoch());
+      this.runs.set(client.sessionId, { guildId: guild.id, tentative: 0, attempt });
+      client.send("dungeon:state", {
+        guildId: guild.id,
+        guildName: guild.name,
+        emblem: guild.emblem,
+        epoch: seed.epoch,
+        seedBlock: seed.seedBlock,
+        seedHash: seed.seedHash,
+        offchain: !!seed.offchain,
+        floor: guild.dungeon.floor,
+        tentative: 0,
+        attempt,
+      });
+    });
+
+    this.onMessage("dungeon:pick", async (client, data: unknown) => {
+      this.touch(client.sessionId);
+      const run = this.runs.get(client.sessionId);
+      const p = this.players.get(client.sessionId);
+      const guild = p?.address ? this.guilds.byMember(p.address) : undefined;
+      if (!run || !guild || guild.id !== run.guildId) return;
+      const d = (data ?? {}) as Record<string, unknown>;
+      const door = num(d.door, -1);
+      if (door < 0 || door > 2) return;
+      const seed = await this.guilds.seedFor(this.guilds.currentEpoch());
+      const floor = Math.min(MAX_FLOOR, guild.dungeon.floor + run.tentative);
+      const outcome = this.guilds.doorOutcome(
+        seed.seedHash,
+        guild.id,
+        run.attempt,
+        floor,
+        door,
+      );
+      if (outcome === "safe") run.tentative += 1;
+      else if (outcome === "bonus") run.tentative += 2;
+      const ended = outcome === "trap";
+      client.send("dungeon:result", {
+        outcome,
+        door,
+        tentative: ended ? 0 : run.tentative,
+        floor: guild.dungeon.floor,
+        ended,
+      });
+      if (ended) this.runs.delete(client.sessionId);
+    });
+
+    this.onMessage("dungeon:bank", (client) => {
+      this.touch(client.sessionId);
+      const run = this.runs.get(client.sessionId);
+      const p = this.players.get(client.sessionId);
+      if (!run || !p?.address || run.tentative <= 0) return;
+      const g = this.guilds.bank(p.address, run.tentative);
+      this.runs.delete(client.sessionId);
+      if (!g) return;
+      client.send("dungeon:banked", {
+        floors: run.tentative,
+        floor: g.dungeon.floor,
+      });
+      console.log(
+        `[dungeon] ${p.name} banked +${run.tentative}층 → ${g.name} ${g.dungeon.floor}층`,
+      );
+      broadcastGuilds();
+    });
+
     this.setSimulationInterval(() => {
       this.broadcast("snapshot", [...this.players.values()]);
     }, 1000 / SNAPSHOT_HZ);
@@ -368,6 +506,7 @@ export class VillageRoom extends Room {
     const p = this.players.get(client.sessionId);
     this.players.delete(client.sessionId);
     this.lastSeen.delete(client.sessionId);
+    this.runs.delete(client.sessionId);
     liveRoster.delete(client.sessionId);
     this.broadcast("leave", client.sessionId);
     console.log(`[leave] ${p?.name ?? client.sessionId} (${this.players.size} online)`);

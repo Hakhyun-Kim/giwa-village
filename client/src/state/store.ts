@@ -1,5 +1,12 @@
 import { create } from "zustand";
-import type { PlayerInfo, EmoteEvent, FeedEvent, Stall } from "../types";
+import type {
+  PlayerInfo,
+  EmoteEvent,
+  FeedEvent,
+  Stall,
+  Guild,
+  DungeonView,
+} from "../types";
 
 export type ConnectionStatus = "connecting" | "connected" | "offline";
 
@@ -25,6 +32,11 @@ interface VillageStore {
   couponsOpen: boolean;
   couponsVersion: number;
   selfDojang: boolean;
+  guilds: Guild[];
+  guildOpen: boolean;
+  guildError: string | null;
+  dungeonOpen: boolean;
+  dungeon: DungeonView | null;
 
   setStatus: (s: ConnectionStatus) => void;
   setSelfId: (id: string | null) => void;
@@ -50,6 +62,12 @@ interface VillageStore {
   setCouponsOpen: (v: boolean) => void;
   bumpCoupons: () => void;
   setSelfDojang: (v: boolean) => void;
+  setGuilds: (g: Guild[]) => void;
+  setGuildOpen: (v: boolean) => void;
+  setGuildError: (msg: string | null) => void;
+  setDungeonOpen: (v: boolean) => void;
+  setDungeon: (d: DungeonView | null) => void;
+  patchDungeon: (d: Partial<DungeonView>) => void;
 }
 
 export const useStore = create<VillageStore>((set) => ({
@@ -74,6 +92,11 @@ export const useStore = create<VillageStore>((set) => ({
   couponsOpen: false,
   couponsVersion: 0,
   selfDojang: false,
+  guilds: [],
+  guildOpen: false,
+  guildError: null,
+  dungeonOpen: false,
+  dungeon: null,
 
   setStatus: (status) => set({ status }),
   setSelfId: (selfId) => set({ selfId }),
@@ -114,6 +137,13 @@ export const useStore = create<VillageStore>((set) => ({
   setCouponsOpen: (couponsOpen) => set({ couponsOpen }),
   bumpCoupons: () => set((s) => ({ couponsVersion: s.couponsVersion + 1 })),
   setSelfDojang: (selfDojang) => set({ selfDojang }),
+  setGuilds: (guilds) => set({ guilds }),
+  setGuildOpen: (guildOpen) => set({ guildOpen, guildError: null }),
+  setGuildError: (guildError) => set({ guildError }),
+  setDungeonOpen: (dungeonOpen) => set({ dungeonOpen }),
+  setDungeon: (dungeon) => set({ dungeon }),
+  patchDungeon: (d) =>
+    set((s) => (s.dungeon ? { dungeon: { ...s.dungeon, ...d } } : s)),
 }));
 
 /**

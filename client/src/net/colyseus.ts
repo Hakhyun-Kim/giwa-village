@@ -8,7 +8,14 @@ import {
   demoCloseStall,
 } from "../demo/demo";
 import { useStore, remoteTargets } from "../state/store";
-import type { PlayerSnapshot, PlayerInfo, FeedEvent, Stall } from "../types";
+import type {
+  PlayerSnapshot,
+  PlayerInfo,
+  FeedEvent,
+  Stall,
+  Guild,
+  DungeonView,
+} from "../types";
 
 interface SaleMessage extends FeedEvent {
   stallId: string;
@@ -181,8 +188,53 @@ export async function joinVillage(identity: Identity): Promise<void> {
     // 쿠폰 저장은 구매 당사자(StallDialog)가 에스크로 정보와 함께 직접 한다
   });
 
-  // handlers are registered — now it is race-free to ask for the stall list
+  // ---- 길드 + 던전 ----
+
+  room.onMessage("guilds", (list: Guild[]) => {
+    useStore.getState().setGuilds(list);
+  });
+
+  room.onMessage("guild:error", (msg: string) => {
+    useStore.getState().setGuildError(msg);
+  });
+
+  room.onMessage("dungeon:state", (d: Omit<DungeonView, "busy">) => {
+    useStore.getState().setDungeon({ ...d, busy: false });
+  });
+
+  room.onMessage(
+    "dungeon:result",
+    (r: {
+      outcome: "safe" | "bonus" | "trap";
+      door: number;
+      tentative: number;
+      floor: number;
+      ended: boolean;
+    }) => {
+      useStore.getState().patchDungeon({
+        lastOutcome: r.outcome,
+        lastDoor: r.door,
+        tentative: r.tentative,
+        floor: r.floor,
+        ended: r.ended,
+        busy: false,
+      });
+    },
+  );
+
+  room.onMessage("dungeon:banked", (b: { floors: number; floor: number }) => {
+    useStore.getState().patchDungeon({
+      banked: b.floors,
+      floor: b.floor,
+      tentative: 0,
+      ended: true,
+      busy: false,
+    });
+  });
+
+  // handlers are registered — now it is race-free to ask for the lists
   room.send("stalls:get");
+  room.send("guilds:get");
 
   room.onLeave(() => {
     stopHeartbeat();
@@ -233,4 +285,33 @@ export function closeStall(): void {
 export function buyStallItem(stallId: string, itemId: string, tx: string): void {
   if (DEMO) return demoBuy(stallId, itemId, tx);
   room?.send("stall:buy", { stallId, itemId, tx });
+}
+
+// ---- 길드 + 비동기 코업 던전 (서버 전용 — 데모 모드에선 미지원) ----
+
+export function createGuild(name: string, emblem: string): void {
+  room?.send("guild:create", { name, emblem });
+}
+
+export function joinGuild(guildId: string): void {
+  room?.send("guild:join", { guildId });
+}
+
+export function leaveGuild(): void {
+  room?.send("guild:leave");
+}
+
+export function dungeonEnter(): void {
+  useStore.getState().setDungeon(null);
+  room?.send("dungeon:enter");
+}
+
+export function dungeonPick(door: number): void {
+  useStore.getState().patchDungeon({ busy: true, lastOutcome: undefined });
+  room?.send("dungeon:pick", { door });
+}
+
+export function dungeonBank(): void {
+  useStore.getState().patchDungeon({ busy: true });
+  room?.send("dungeon:bank");
 }
