@@ -25,7 +25,23 @@ const TARGETS = [
   { file: "GiwaMarketV3.sol", name: "GiwaMarketV3", out: "market.ts", prefix: "MARKET" },
   { file: "GiwaGuilds.sol", name: "GiwaGuilds", out: "guilds.ts", prefix: "GUILDS" },
   { file: "GiwaPresence.sol", name: "GiwaPresence", out: "presence.ts", prefix: "PRESENCE" },
+  {
+    file: "GiwaHonors.sol",
+    name: "GiwaHonors",
+    out: "honors.ts",
+    prefix: "HONORS",
+    args: (deployed) => [deployed.GiwaMarketV3, deployed.GiwaGuilds],
+  },
 ];
+
+// 이미 배포된 주소 (부분 재배포 시 생성자 인자·유지용).
+// 사용법: node scripts/deploy-village.mjs [컨트랙트명 ...] — 인자 없으면 전부.
+const deployed = {
+  GiwaMarketV3: "0xb190f22f921fa221eeef6053245e8ccc1277cb72",
+  GiwaGuilds: "0xdf0d34616a1edbe5e948b3fbb362b7d135ed9662",
+  GiwaPresence: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93",
+};
+const only = process.argv.slice(2);
 
 const giwaSepolia = defineChain({
   id: 91342,
@@ -82,10 +98,17 @@ if (balance === 0n) {
 }
 
 for (const t of TARGETS) {
+  if (only.length && !only.includes(t.name)) continue;
   const { abi, bytecode } = artifacts[t.name];
-  const hash = await wallet.deployContract({ abi, bytecode, account });
+  const hash = await wallet.deployContract({
+    abi,
+    bytecode,
+    account,
+    args: t.args ? t.args(deployed) : [],
+  });
   const receipt = await pub.waitForTransactionReceipt({ hash });
   const address = receipt.contractAddress;
+  deployed[t.name] = address;
   console.log(`[deploy] ${t.name}: https://sepolia-explorer.giwa.io/address/${address}`);
 
   const ts = `// 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.

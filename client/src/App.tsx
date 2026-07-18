@@ -13,6 +13,7 @@ import StallOpenDialog from "./ui/StallOpenDialog";
 import CouponBox from "./ui/CouponBox";
 import GuildDialog from "./ui/GuildDialog";
 import DungeonDialog from "./ui/DungeonDialog";
+import HonorsDialog from "./ui/HonorsDialog";
 import { joinVillage, leaveVillage } from "./net/colyseus";
 import { useStore } from "./state/store";
 import { colorFromString, loadBurner } from "./wallet/wallet";
@@ -87,6 +88,7 @@ export default function App() {
       <CouponBox />
       <GuildDialog />
       <DungeonDialog />
+      <HonorsDialog />
     </div>
   );
 }

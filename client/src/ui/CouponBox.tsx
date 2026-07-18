@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
 import { loadCoupons, updateCoupon } from "../state/coupons";
-import { confirmPurchase } from "../wallet/wallet";
+import { confirmPurchase, disputePurchase } from "../wallet/wallet";
 import { giwaSepolia } from "../config/giwa";
 
 export default function CouponBox() {
@@ -18,6 +18,23 @@ export default function CouponBox() {
     setError(null);
   };
   const explorer = giwaSepolia.blockExplorers.default.url;
+
+  async function onDispute(tx: string, purchaseId: number) {
+    if (busyTx || !walletAddress) return;
+    if (!confirm("분쟁을 신고할까요? 자동 정산이 7일로 늦춰지고, 판매자가 환불할 수 있게 됩니다.")) return;
+    setBusyTx(tx);
+    setError(null);
+    try {
+      await disputePurchase(purchaseId);
+      updateCoupon(walletAddress, tx, { disputed: true });
+      useStore.getState().bumpCoupons();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg.length > 100 ? msg.slice(0, 100) + "…" : msg);
+    } finally {
+      setBusyTx(null);
+    }
+  }
 
   async function onConfirm(tx: string, purchaseId: number) {
     if (busyTx || !walletAddress) return;
@@ -59,14 +76,28 @@ export default function CouponBox() {
                 </em>
               </span>
               {c.purchaseId !== undefined && !c.settled ? (
-                <button
-                  className="gift-btn primary small"
-                  disabled={busyTx !== null}
-                  onClick={() => onConfirm(c.tx, c.purchaseId!)}
-                  title="에스크로 대금을 판매자에게 정산합니다 (미확정 시 24시간 후 자동)"
-                >
-                  {busyTx === c.tx ? "정산 중…" : "정산 확정"}
-                </button>
+                <span className="coupon-actions">
+                  <button
+                    className="gift-btn primary small"
+                    disabled={busyTx !== null}
+                    onClick={() => onConfirm(c.tx, c.purchaseId!)}
+                    title="에스크로 대금을 판매자에게 정산합니다 (미확정 시 24시간 후 자동)"
+                  >
+                    {busyTx === c.tx ? "처리 중…" : "정산 확정"}
+                  </button>
+                  {c.disputed ? (
+                    <em className="coupon-disputed">분쟁 중</em>
+                  ) : (
+                    <button
+                      className="gift-btn small"
+                      disabled={busyTx !== null}
+                      onClick={() => onDispute(c.tx, c.purchaseId!)}
+                      title="자동 정산을 7일로 늦추고 판매자 환불을 가능하게 합니다"
+                    >
+                      신고
+                    </button>
+                  )}
+                </span>
               ) : (
                 <a
                   className="coupon-price"

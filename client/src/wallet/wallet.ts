@@ -260,6 +260,22 @@ export async function confirmPurchase(purchaseId: number): Promise<`0x${string}`
   return tx;
 }
 
+/** 분쟁 신고 — 자동 정산이 7일로 연장되고, 판매자는 refund로 환불할 수 있다 */
+export async function disputePurchase(purchaseId: number): Promise<`0x${string}`> {
+  const wc = activeWalletClient;
+  if (!wc?.account) throw new Error("지갑이 연결되어 있지 않습니다.");
+  const tx = await wc.writeContract({
+    account: wc.account,
+    chain: giwaSepolia,
+    address: MARKET_ADDRESS,
+    abi: MARKET_ABI,
+    functionName: "dispute",
+    args: [BigInt(purchaseId)],
+  });
+  await publicClient.waitForTransactionReceipt({ hash: tx });
+  return tx;
+}
+
 /** ERC-1155 쿠폰 토큰 보유 수량 조회 */
 export async function couponOwned(owner: string, tokenId: string): Promise<bigint> {
   return publicClient.readContract({

@@ -1,7 +1,7 @@
 // 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
-export const MARKET_ADDRESS = "0xb190f22f921fa221eeef6053245e8ccc1277cb72" as `0x${string}`;
-export const MARKET_DEPLOY_TX = "0x3e578cfa4f9cebbf994f8d6b34c3737d700fd8fb7b44d385c7854433f02075ec";
-export const MARKET_DEPLOY_BLOCK = 31034314n;
+export const MARKET_ADDRESS = "0xfb28e3bc250e71c0015b95ea7ab5f919b83edba7" as `0x${string}`;
+export const MARKET_DEPLOY_TX = "0xb703e80de023c91e389320962684bf4b8cea2a2cdab6e7a5aa736abad4fb6212";
+export const MARKET_DEPLOY_BLOCK = 31038051n;
 export const MARKET_ABI = [
   {
     "inputs": [],
@@ -62,6 +62,25 @@ export const MARKET_ABI = [
       }
     ],
     "name": "ApprovalForAll",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "purchaseId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
+      }
+    ],
+    "name": "Disputed",
     "type": "event"
   },
   {
@@ -130,6 +149,31 @@ export const MARKET_ABI = [
       }
     ],
     "name": "Purchased",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "purchaseId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "buyer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Refunded",
     "type": "event"
   },
   {
@@ -271,6 +315,19 @@ export const MARKET_ABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "DISPUTE_EXTENSION",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -358,6 +415,19 @@ export const MARKET_ABI = [
       }
     ],
     "name": "confirm",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "purchaseId",
+        "type": "uint256"
+      }
+    ],
+    "name": "dispute",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -592,9 +662,27 @@ export const MARKET_ABI = [
         "internalType": "bool",
         "name": "settled",
         "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "disputed",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "purchaseId",
+        "type": "uint256"
+      }
+    ],
+    "name": "refund",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

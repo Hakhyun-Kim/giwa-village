@@ -105,4 +105,6 @@ export interface Coupon {
   tokenId?: string;
   /** 에스크로 정산 완료 여부 */
   settled?: boolean;
+  /** 분쟁 신고됨 (자동 정산 7일 연장, 판매자 환불 가능) */
+  disputed?: boolean;
 }

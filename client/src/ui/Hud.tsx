@@ -66,6 +66,12 @@ function StallButtons({ walletAddress }: { walletAddress: string }) {
       >
         🏯 길드
       </button>
+      <button
+        className="hud-btn sub"
+        onClick={() => useStore.getState().setHonorsOpen(true)}
+      >
+        🎖 칭호
+      </button>
     </div>
   );
 }

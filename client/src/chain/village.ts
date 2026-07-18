@@ -18,6 +18,7 @@ import {
 import { MARKET_ADDRESS, MARKET_ABI } from "../config/market";
 import { GUILDS_ADDRESS, GUILDS_ABI } from "../config/guilds";
 import { PRESENCE_ADDRESS, PRESENCE_ABI } from "../config/presence";
+import { HONORS_ADDRESS, HONORS_ABI } from "../config/honors";
 import { useStore, remoteTargets } from "../state/store";
 import type { Guild, PlayerInfo, Stall } from "../types";
 import type { GiftResult } from "../wallet/wallet";
@@ -436,6 +437,85 @@ export async function chainDungeonBank(): Promise<void> {
   }
 }
 
+// ---------- 칭호 (소울바운드) + 이름표 배지 코스메틱 ----------
+
+export const HONOR_DEFS = [
+  { id: 1, emoji: "🧺", name: "개점", desc: "노점을 열어본 자" },
+  { id: 2, emoji: "🏯", name: "길드 창설자", desc: "길드를 세운 자" },
+  { id: 3, emoji: "⛰️", name: "등반가", desc: "길드 최고 기록 10층 이상" },
+  { id: 4, emoji: "🌕", name: "고층 정복자", desc: "길드 최고 기록 30층 이상" },
+] as const;
+
+export interface HonorProfile {
+  mask: number;
+  equipped: number;
+  eligible: boolean[]; // HONOR_DEFS 순서
+}
+
+export async function fetchHonors(who: string): Promise<HonorProfile> {
+  const [profile, ...elig] = await Promise.all([
+    publicClient.readContract({
+      address: HONORS_ADDRESS,
+      abi: HONORS_ABI,
+      functionName: "profileOf",
+      args: [who as `0x${string}`],
+    }) as Promise<[bigint, bigint]>,
+    ...HONOR_DEFS.map(
+      (d) =>
+        publicClient.readContract({
+          address: HONORS_ADDRESS,
+          abi: HONORS_ABI,
+          functionName: "eligible",
+          args: [who as `0x${string}`, BigInt(d.id)],
+        }) as Promise<boolean>,
+    ),
+  ]);
+  return { mask: Number(profile[0]), equipped: Number(profile[1]), eligible: elig };
+}
+
+export async function honorWrite(functionName: "claim" | "equip", id: number): Promise<void> {
+  const wc = activeWalletClient;
+  if (!wc?.account) throw new Error("지갑이 없습니다.");
+  const tx = await wc.writeContract({
+    account: wc.account,
+    chain: wc.chain,
+    address: HONORS_ADDRESS,
+    abi: HONORS_ABI,
+    functionName,
+    args: [BigInt(id)],
+  });
+  await publicClient.waitForTransactionReceipt({ hash: tx });
+}
+
+/** 장착 칭호를 이름표 배지로 — 피어별 1회 조회 캐시 */
+const badgeCache = new Map<string, string>();
+
+async function decoratePeer(addr: string): Promise<void> {
+  if (badgeCache.has(addr)) return;
+  badgeCache.set(addr, "");
+  try {
+    const [, equipped] = (await publicClient.readContract({
+      address: HONORS_ADDRESS,
+      abi: HONORS_ABI,
+      functionName: "profileOf",
+      args: [addr as `0x${string}`],
+    })) as [bigint, bigint];
+    const def = HONOR_DEFS.find((d) => d.id === Number(equipped));
+    if (!def) return;
+    badgeCache.set(addr, def.emoji);
+    const s = useStore.getState();
+    const p = s.players[addr];
+    if (p) {
+      s.setPlayers({
+        ...s.players,
+        [addr]: { ...p, name: `${def.emoji} ${p.name.replace(/^\S+ /, "")}` },
+      });
+    }
+  } catch {
+    badgeCache.delete(addr);
+  }
+}
+
 // ---------- 프레즌스 (비컨 + 데드레커닝) ----------
 
 interface Peer {
@@ -540,6 +620,7 @@ function applyPeers(): void {
           address: addr,
           color: colorFromString(addr),
         };
+        void decoratePeer(addr);
       }
     }
     s.setPlayers(players);

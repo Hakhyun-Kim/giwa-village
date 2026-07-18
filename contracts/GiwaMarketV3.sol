@@ -204,6 +204,7 @@ contract GiwaMarketV3 {
         uint128 amount;
         uint64 releaseAt;
         bool settled;
+        bool disputed;
     }
 
     Purchase[] private _purchases;
@@ -219,6 +220,10 @@ contract GiwaMarketV3 {
         uint256 tokenId
     );
     event Settled(uint256 indexed purchaseId, address indexed seller, uint256 amount);
+    event Disputed(uint256 indexed purchaseId, address indexed buyer);
+    event Refunded(uint256 indexed purchaseId, address indexed buyer, uint256 amount);
+
+    uint64 public constant DISPUTE_EXTENSION = 7 days;
 
     function tokenIdOf(address seller, string memory itemId) public pure returns (uint256) {
         return uint256(keccak256(abi.encodePacked(seller, itemId)));
@@ -235,6 +240,7 @@ contract GiwaMarketV3 {
                 seller,
                 uint128(msg.value),
                 uint64(block.timestamp) + AUTO_RELEASE_AFTER,
+                false,
                 false
             )
         );
@@ -282,6 +288,29 @@ contract GiwaMarketV3 {
         _settle(purchaseId, p);
     }
 
+    /// 분쟁 신고 (구매자) — 자동 정산을 7일로 늦춰 협의 시간을 확보한다.
+    /// 구매자는 여전히 confirm으로 정산할 수 있고, 판매자는 refund로 환불할 수 있다.
+    function dispute(uint256 purchaseId) external {
+        Purchase storage p = _purchases[purchaseId];
+        require(msg.sender == p.buyer, "buyer");
+        require(!p.settled && !p.disputed, "state");
+        p.disputed = true;
+        uint64 extended = uint64(block.timestamp) + DISPUTE_EXTENSION;
+        if (extended > p.releaseAt) p.releaseAt = extended;
+        emit Disputed(purchaseId, msg.sender);
+    }
+
+    /// 환불 (판매자) — 에스크로 대금을 구매자에게 돌려준다
+    function refund(uint256 purchaseId) external {
+        Purchase storage p = _purchases[purchaseId];
+        require(msg.sender == p.seller, "seller");
+        require(!p.settled, "settled");
+        p.settled = true;
+        (bool ok, ) = payable(p.buyer).call{value: p.amount}("");
+        if (!ok) revert TransferFailed();
+        emit Refunded(purchaseId, p.buyer, p.amount);
+    }
+
     function _settle(uint256 id, Purchase storage p) private {
         require(!p.settled, "settled");
         p.settled = true;
@@ -295,10 +324,17 @@ contract GiwaMarketV3 {
     )
         external
         view
-        returns (address buyer, address seller, uint256 amount, uint64 releaseAt, bool settled)
+        returns (
+            address buyer,
+            address seller,
+            uint256 amount,
+            uint64 releaseAt,
+            bool settled,
+            bool disputed
+        )
     {
         Purchase memory p = _purchases[id];
-        return (p.buyer, p.seller, p.amount, p.releaseAt, p.settled);
+        return (p.buyer, p.seller, p.amount, p.releaseAt, p.settled, p.disputed);
     }
 
     function purchaseCount() external view returns (uint256) {
