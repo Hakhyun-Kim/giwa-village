@@ -1,8 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
+import type { Mesh, PointLight } from "three";
+import { useStore } from "../state/store";
 
 export const WORLD_RADIUS = 55;
 export const PORTAL_POS: [number, number, number] = [0, 0, -30];
+export const CAMPFIRE_POS: [number, number, number] = [-9, 0, 9];
 
 function mulberry32(seed: number) {
   let a = seed >>> 0;
@@ -223,6 +227,96 @@ function Billboard({
   );
 }
 
+/** 모닥불 — 함께 쬐면 온기가 쌓인다 (X로 앉기) */
+function Campfire() {
+  const flame = useRef<Mesh>(null);
+  const inner = useRef<Mesh>(null);
+  const light = useRef<PointLight>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    const f = 1 + Math.sin(t * 9) * 0.12 + Math.sin(t * 23) * 0.06;
+    if (flame.current) flame.current.scale.set(f, 1.1 + Math.sin(t * 7) * 0.15, f);
+    if (inner.current) inner.current.scale.setScalar(0.9 + Math.sin(t * 13) * 0.1);
+    if (light.current) light.current.intensity = 2.2 + Math.sin(t * 11) * 0.5;
+  });
+  return (
+    <group position={CAMPFIRE_POS}>
+      {/* 돌 화덕 */}
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <mesh
+          key={i}
+          position={[Math.cos((i / 6) * Math.PI * 2) * 0.7, 0.12, Math.sin((i / 6) * Math.PI * 2) * 0.7]}
+          castShadow
+        >
+          <sphereGeometry args={[0.16, 8, 8]} />
+          <meshStandardMaterial color="#7b766c" />
+        </mesh>
+      ))}
+      {/* 장작 */}
+      <mesh position={[0, 0.14, 0]} rotation={[0, 0.5, 1.35]} castShadow>
+        <cylinderGeometry args={[0.07, 0.07, 0.9, 8]} />
+        <meshStandardMaterial color="#5a3d26" />
+      </mesh>
+      <mesh position={[0, 0.14, 0]} rotation={[0, -0.9, 1.35]} castShadow>
+        <cylinderGeometry args={[0.07, 0.07, 0.9, 8]} />
+        <meshStandardMaterial color="#6b4a30" />
+      </mesh>
+      {/* 불꽃 */}
+      <mesh ref={flame} position={[0, 0.45, 0]}>
+        <coneGeometry args={[0.28, 0.7, 10]} />
+        <meshStandardMaterial color="#ff7b2f" emissive="#ff5a00" emissiveIntensity={1.8} transparent opacity={0.92} />
+      </mesh>
+      <mesh ref={inner} position={[0, 0.38, 0]}>
+        <coneGeometry args={[0.15, 0.42, 8]} />
+        <meshStandardMaterial color="#ffd66b" emissive="#ffb200" emissiveIntensity={2.2} />
+      </mesh>
+      <pointLight ref={light} position={[0, 0.8, 0]} color="#ff9a3d" intensity={2.2} distance={9} />
+      {/* 통나무 의자 */}
+      {[[1.6, 0.35], [-1.6, 0.35], [0, -1.7]].map(([x, z], i) => (
+        <mesh key={i} position={[x, 0.18, z]} rotation={[0, i === 2 ? 0 : Math.PI / 2, 0]} castShadow>
+          <cylinderGeometry args={[0.16, 0.16, 1.2, 10]} />
+          <meshStandardMaterial color="#8a6a48" />
+        </mesh>
+      ))}
+      <Html position={[0, 1.6, 0]} center distanceFactor={18} zIndexRange={[5, 0]}>
+        <div className="portal-label">🔥 모닥불</div>
+      </Html>
+    </group>
+  );
+}
+
+/** 광장 길드 깃발 — 이번 주 등반 상위 길드가 게양된다 (온체인 순위) */
+function GuildFlags() {
+  const guilds = useStore((s) => s.guilds);
+  const top = guilds.filter((g) => g.dungeon.floor > 0).slice(0, 3);
+  if (top.length === 0) return null;
+  return (
+    <group position={[11, 0, -9]}>
+      {top.map((g, i) => {
+        const h = 5.2 - i * 0.9;
+        const x = i * 2.2;
+        return (
+          <group key={g.id} position={[x, 0, i * 0.6]}>
+            <mesh position={[0, h / 2, 0]} castShadow>
+              <cylinderGeometry args={[0.07, 0.09, h, 8]} />
+              <meshStandardMaterial color="#5d4a33" />
+            </mesh>
+            <mesh position={[0.55, h - 0.55, 0]} castShadow>
+              <boxGeometry args={[1.1, 0.75, 0.04]} />
+              <meshStandardMaterial color={i === 0 ? "#b8433a" : i === 1 ? "#3d5a8f" : "#4a6b4f"} />
+            </mesh>
+            <Html position={[0.55, h - 0.55, 0.1]} center distanceFactor={16} zIndexRange={[5, 0]}>
+              <div className="flag-label">
+                {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"} {g.emblem} {g.name} · {g.dungeon.floor}층
+              </div>
+            </Html>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 export default function Village() {
   // 한옥 링 — 동쪽(식당가)과 북쪽(포털 길)은 비워둔다
   const hanoks = useMemo(() => {
@@ -316,6 +410,8 @@ export default function Village() {
         <Tree key={i} {...t} />
       ))}
 
+      <Campfire />
+      <GuildFlags />
       <Lantern position={[7, 0, 7]} />
       <Lantern position={[-7, 0, 7]} />
       <Lantern position={[7, 0, -7]} />

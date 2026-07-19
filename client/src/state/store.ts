@@ -22,6 +22,8 @@ interface VillageStore {
   balanceEth: string | null;
   walletError: string | null;
   nearPortal: boolean;
+  nearFire: boolean;
+  selfSitting: boolean;
   selfName: string;
   selfColor: number;
   giftTarget: string | null;
@@ -59,6 +61,8 @@ interface VillageStore {
   setBalance: (eth: string | null) => void;
   setWalletError: (msg: string | null) => void;
   setNearPortal: (v: boolean) => void;
+  setNearFire: (v: boolean) => void;
+  setSelfSitting: (v: boolean) => void;
   setSelfIdentity: (name: string, color: number) => void;
   setGiftTarget: (id: string | null) => void;
   addFeed: (g: FeedEvent) => void;
@@ -92,6 +96,8 @@ export const useStore = create<VillageStore>((set) => ({
   balanceEth: null,
   walletError: null,
   nearPortal: false,
+  nearFire: false,
+  selfSitting: false,
   selfName: "",
   selfColor: 0x5aa0e6,
   giftTarget: null,
@@ -142,6 +148,8 @@ export const useStore = create<VillageStore>((set) => ({
   setBalance: (balanceEth) => set({ balanceEth }),
   setWalletError: (walletError) => set({ walletError }),
   setNearPortal: (nearPortal) => set({ nearPortal }),
+  setNearFire: (nearFire) => set({ nearFire }),
+  setSelfSitting: (selfSitting) => set({ selfSitting }),
   setSelfIdentity: (selfName, selfColor) => set({ selfName, selfColor }),
   setGiftTarget: (giftTarget) => set({ giftTarget }),
   addFeed: (g) => set((s) => ({ feed: [g, ...s.feed].slice(0, 6) })),

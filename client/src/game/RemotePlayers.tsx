@@ -73,6 +73,7 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
         speedRef={speedRef}
         honor={info.honor}
         trinket={info.trinket}
+        sitting={info.sitting}
       />
     </group>
   );

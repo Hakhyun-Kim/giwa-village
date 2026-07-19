@@ -14,7 +14,7 @@ import {
   isDojangVerified,
   fundBurnerFromInjected,
 } from "../wallet/wallet";
-import { refreshBeaconBudget } from "../chain/village";
+import { refreshBeaconBudget, marketDayLabel } from "../chain/village";
 import { useUpidName } from "../wallet/upid";
 
 function StallButtons({ walletAddress }: { walletAddress: string }) {
@@ -138,6 +138,14 @@ export default function Hud() {
   const balanceEth = useStore((s) => s.balanceEth);
   const walletError = useStore((s) => s.walletError);
   const nearPortal = useStore((s) => s.nearPortal);
+  const nearFire = useStore((s) => s.nearFire);
+  const selfSitting = useStore((s) => s.selfSitting);
+  const [festival, setFestival] = useState(() => marketDayLabel());
+
+  useEffect(() => {
+    const id = setInterval(() => setFestival(marketDayLabel()), 60000);
+    return () => clearInterval(id);
+  }, []);
   const selfDojang = useStore((s) => s.selfDojang);
   const myUpid = useUpidName(walletAddress);
   const [busy, setBusy] = useState(false);
@@ -202,6 +210,7 @@ export default function Hud() {
           {STATUS_LABEL[status]}
           {status === "connected" && ` · ${onlineCount}명`}
         </div>
+        <div className="hud-festival">{festival}</div>
         {DEMO && (
           <div className="hud-demo">
             기본 샘플 데모 · 온체인은 실동작
@@ -257,7 +266,11 @@ export default function Hud() {
       </div>
 
       <div className="hud-bottom">
-        {nearPortal ? (
+        {nearFire ? (
+          <div className="hud-card hud-prompt">
+            <b>X</b> — {selfSitting ? "일어나기" : "모닥불 쬐기 (함께 쬐면 온기가 쌓입니다)"}
+          </div>
+        ) : nearPortal ? (
           <div className="hud-card hud-prompt">
             <b>F</b> — 백층 던전 입장
           </div>

@@ -30,6 +30,7 @@ interface Peer {
   vx: number;
   vz: number;
   at: number;
+  sitting: boolean;
 }
 
 const peers = new Map<string, Peer>();
@@ -48,7 +49,7 @@ export function initPresence(): void {
   lastSent = { x: pos?.x ?? 0, z: pos?.z ?? 0, at: Date.now() };
 }
 
-export async function sendBeacon(emote = 0): Promise<void> {
+export async function sendBeacon(emote = 0, force = false): Promise<void> {
   const wc = activeWalletClient;
   const pos = selfPos.ref;
   if (!wc?.account || !pos || beaconPending || !canBeacon) return;
@@ -57,7 +58,9 @@ export async function sendBeacon(emote = 0): Promise<void> {
   const dx = pos.x - lastSent.x;
   const dz = pos.z - lastSent.z;
   const moved = Math.hypot(dx, dz) > 0.05;
-  if (!moved && emote === 0 && now - lastSent.at < HEARTBEAT_MS) return;
+  if (!moved && emote === 0 && !force && now - lastSent.at < HEARTBEAT_MS) return;
+  // 앉아 있으면 상태를 비컨에 실어 보낸다 (하트비트마다 유지)
+  if (emote === 0 && useStore.getState().selfSitting) emote = 4;
 
   const clamp16 = (v: number) => Math.max(-32000, Math.min(32000, Math.round(v)));
   beaconPending = true;
@@ -158,6 +161,7 @@ export function applyPeers(): void {
       membershipChanged = true;
     }
     if (!(addr in s.players)) membershipChanged = true;
+    else if (!!s.players[addr].sitting !== p.sitting) membershipChanged = true;
   }
 
   if (membershipChanged) {
@@ -165,14 +169,17 @@ export function applyPeers(): void {
     for (const id of Object.keys(players)) {
       if (id.startsWith("0x") && !peers.has(id)) delete players[id];
     }
-    for (const addr of peers.keys()) {
+    for (const [addr, peer] of peers) {
       if (!(addr in players)) {
         players[addr] = {
           name: `나그네-${addr.slice(2, 6)}`,
           address: addr,
           color: colorFromString(addr),
+          sitting: peer.sitting,
         };
         void decoratePeer(addr);
+      } else {
+        players[addr] = { ...players[addr], sitting: peer.sitting };
       }
     }
     s.setPlayers(players);
@@ -231,6 +238,7 @@ export async function pollChain(): Promise<void> {
         vx: Math.max(-8, Math.min(8, Number(a.vx100) / POS_SCALE)),
         vz: Math.max(-8, Math.min(8, Number(a.vz100) / POS_SCALE)),
         at: Date.now(),
+        sitting: a.emote === 4,
       });
       const icon = EMOTE_ICONS[a.emote ?? 0];
       if (icon) {

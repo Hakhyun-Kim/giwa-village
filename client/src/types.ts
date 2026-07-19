@@ -16,6 +16,8 @@ export interface PlayerInfo {
   honor?: number;
   /** 장착한 랜덤박스 장신구 id — 두 번째 모트 렌더용 */
   trinket?: number;
+  /** 모닥불에 앉아 있음 (비컨 상태) */
+  sitting?: boolean;
 }
 
 export interface EmoteEvent {

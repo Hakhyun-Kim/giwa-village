@@ -13,6 +13,7 @@ import { syncStalls } from "./stalls";
 import { syncGuilds } from "./guilds";
 import { fetchHonors } from "./honors";
 import { equippedTrinketOf } from "./boxes";
+import { fetchHearth, gatherHearth, claimHearth } from "./hearth";
 import {
   applyPeers,
   checkBeaconBudget,
@@ -29,6 +30,7 @@ export * from "./ledger";
 export * from "./gifts";
 export * from "./offers";
 export * from "./boxes";
+export * from "./hearth";
 export * from "./guilds";
 export * from "./honors";
 export * from "./presence";
@@ -52,6 +54,7 @@ export function startOnchainVillage(localPos: LocalPos): void {
   setInterval(() => void syncStalls().catch(() => {}), STALL_SYNC_MS);
   setInterval(() => void syncGuilds().catch(() => {}), GUILD_SYNC_MS);
   setInterval(() => void checkBeaconBudget(), 60000);
+  setInterval(() => void hearthTick().catch(() => {}), 30000);
   setInterval(() => void sendBeacon(), BEACON_INTERVAL_MS);
   setInterval(() => void pollChain(), READ_INTERVAL_MS);
   setInterval(() => applyPeers(), 250);
@@ -60,6 +63,24 @@ export function startOnchainVillage(localPos: LocalPos): void {
     // 퇴장 비컨 (best-effort)
     void sendBeacon(255);
   });
+}
+
+/** 모닥불 자동 의식: 앉아 있으면 화로에 모이고(gather), 닫힌 화로의 온기를 받는다 */
+async function hearthTick(): Promise<void> {
+  const s = useStore.getState();
+  const my = s.walletAddress;
+  if (!my || !s.selfSitting) return;
+  const st = await fetchHearth(my);
+  if (st.prevClaimable) {
+    await claimHearth(st.window - 1);
+    const id = useStore.getState().selfId;
+    if (id) {
+      useStore.getState().setEmote(id, "🔥");
+      const at = useStore.getState().emotes[id]?.at;
+      if (at) setTimeout(() => useStore.getState().clearEmote(id, at), 2600);
+    }
+  }
+  if (!st.joinedNow) await gatherHearth();
 }
 
 /** 내 장착 칭호·장신구를 스토어에 반영 — 자기 아바타 코스메틱용 */

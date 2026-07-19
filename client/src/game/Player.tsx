@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Group, Vector3 } from "three";
 import Avatar from "./Avatar";
-import { WORLD_RADIUS, PORTAL_POS } from "./Village";
+import { WORLD_RADIUS, PORTAL_POS, CAMPFIRE_POS } from "./Village";
+import { sendBeacon } from "../chain/presence";
 import { localPos, sendMove, sendEmote } from "../net/colyseus";
 import { useStore } from "../state/store";
 
@@ -24,6 +25,7 @@ export default function Player() {
   const selfColor = useStore((s) => s.selfColor);
   const selfHonor = useStore((s) => s.selfHonor);
   const selfTrinket = useStore((s) => s.selfTrinket);
+  const selfSitting = useStore((s) => s.selfSitting);
   const walletAddress = useStore((s) => s.walletAddress);
   const emote = useStore((s) => (s.selfId ? s.emotes[s.selfId] : undefined));
 
@@ -49,6 +51,12 @@ export default function Player() {
         // 길드 코업 던전 — 서버리스(데모)에선 완전 온체인으로 동작
         useStore.getState().setDungeonOpen(true);
       }
+      if (e.code === "KeyX" && useStore.getState().nearFire) {
+        // 모닥불 쬐기 — 앉음 상태는 비컨(코드 4)으로 전파된다
+        const next = !useStore.getState().selfSitting;
+        useStore.getState().setSelfSitting(next);
+        void sendBeacon(next ? 4 : 0, true);
+      }
     };
     const up = (e: KeyboardEvent) => keys.current.delete(e.code);
     const blur = () => keys.current.clear();
@@ -73,6 +81,10 @@ export default function Player() {
     if (k.has("KeyD") || k.has("ArrowRight")) dx += 1;
 
     const moving = dx !== 0 || dz !== 0;
+    if (moving && useStore.getState().selfSitting) {
+      // 움직이면 자동으로 일어난다
+      useStore.getState().setSelfSitting(false);
+    }
     if (moving) {
       const len = Math.hypot(dx, dz);
       localPos.x += (dx / len) * SPEED * dt;
@@ -104,6 +116,13 @@ export default function Player() {
       useStore.getState().setNearPortal(near);
     }
 
+    // campfire proximity
+    const nearFire =
+      Math.hypot(localPos.x - CAMPFIRE_POS[0], localPos.z - CAMPFIRE_POS[2]) < 3.2;
+    if (nearFire !== useStore.getState().nearFire) {
+      useStore.getState().setNearFire(nearFire);
+    }
+
     // throttled network send
     sendTimer.current += dt;
     if (sendTimer.current >= SEND_INTERVAL) {
@@ -132,6 +151,7 @@ export default function Player() {
         speedRef={speedRef}
         honor={selfHonor ?? undefined}
         trinket={selfTrinket ?? undefined}
+        sitting={selfSitting}
       />
     </group>
   );

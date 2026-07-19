@@ -9,6 +9,7 @@ import {
   openBoxOnChain,
   revealBoxOnChain,
   equipTrinketOnChain,
+  fetchHearth,
   type HonorProfile,
   type BoxProfile,
 } from "../chain/village";
@@ -21,6 +22,7 @@ export default function HonorsDialog() {
   const [box, setBox] = useState<BoxProfile | null>(null);
   const [boxBusy, setBoxBusy] = useState(false);
   const [lastKind, setLastKind] = useState<number | null>(null);
+  const [warmth, setWarmth] = useState<number | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +35,9 @@ export default function HonorsDialog() {
       .then(setProfile)
       .catch(() => setError("체인 조회 실패 — 잠시 후 다시 열어주세요."));
     void fetchBoxProfile(walletAddress).then(setBox).catch(() => {});
+    void fetchHearth(walletAddress)
+      .then((h) => setWarmth(h.warmth))
+      .catch(() => {});
   }, [open, walletAddress]);
 
   if (!open) return null;
@@ -111,6 +116,7 @@ export default function HonorsDialog() {
         <div className="gift-title">칭호 · 장신구</div>
         <div className="gift-sub">
           온체인 기록으로 증명하고, 장착하면 이름표에 배지가 붙습니다
+          {warmth !== null && warmth > 0 && <> · 🔥 온기 {warmth}</>}
         </div>
 
         {!walletAddress && <div className="gift-warn">지갑이 필요합니다.</div>}

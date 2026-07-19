@@ -32,6 +32,8 @@ interface AvatarProps {
   honor?: number;
   /** 장착한 랜덤박스 장신구 id — 반대쪽 어깨의 작은 모트로 렌더 */
   trinket?: number;
+  /** 모닥불에 앉아 있음 — 앉은 자세로 렌더 */
+  sitting?: boolean;
 }
 
 /** 장신구 코스메틱: 왼쪽 어깨 옆의 작은 모트 (부적보다 작고 빠르게 맴돈다) */
@@ -123,6 +125,7 @@ export default function Avatar({
   variant,
   honor,
   trinket,
+  sitting,
 }: AvatarProps) {
   const charm = honorCharmColor(honor);
   const mote = trinketColor(trinket);
@@ -141,6 +144,18 @@ export default function Avatar({
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
+    if (sitting) {
+      // 앉은 자세: 몸을 낮추고 다리를 앞으로
+      if (body.current) body.current.position.y = -0.34;
+      if (leftLeg.current) leftLeg.current.rotation.x = -1.5;
+      if (rightLeg.current) rightLeg.current.rotation.x = -1.5;
+      if (leftArm.current) leftArm.current.rotation.x = -0.3;
+      if (rightArm.current) {
+        rightArm.current.rotation.z = 0;
+        rightArm.current.rotation.x = -0.3;
+      }
+      return;
+    }
     const speed = Math.min(1, (speedRef.current ?? 0) / 6);
     const swing = Math.sin(t * 9) * speed;
 
