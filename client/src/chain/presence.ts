@@ -14,6 +14,7 @@ import { upidNameOf } from "../wallet/upid";
 import { POS_SCALE, selfPos } from "./core";
 import { HONOR_DEFS, equippedHonorOf } from "./honors";
 import { equippedTrinketOf } from "./boxes";
+import { wornPatternOf } from "./workshop";
 import { PURCHASED_EVENT } from "./ledger";
 
 const BEACON_INTERVAL_MS = 2000;
@@ -106,9 +107,10 @@ async function decoratePeer(addr: string): Promise<void> {
   if (decorated.has(addr)) return;
   decorated.add(addr);
   try {
-    const [equipped, trinket, upid] = await Promise.all([
+    const [equipped, trinket, wear, upid] = await Promise.all([
       equippedHonorOf(addr),
       equippedTrinketOf(addr),
+      wornPatternOf(addr),
       upidNameOf(addr),
     ]);
     const def = HONOR_DEFS.find((d) => d.id === equipped);
@@ -116,7 +118,13 @@ async function decoratePeer(addr: string): Promise<void> {
     const name = def ? `${def.emoji} ${base}` : base;
     const s = useStore.getState();
     const p = s.players[addr];
-    if (p && (p.name !== name || p.honor !== equipped || p.trinket !== trinket)) {
+    if (
+      p &&
+      (p.name !== name ||
+        p.honor !== equipped ||
+        p.trinket !== trinket ||
+        p.wear !== (wear ?? undefined))
+    ) {
       s.setPlayers({
         ...s.players,
         [addr]: {
@@ -124,6 +132,7 @@ async function decoratePeer(addr: string): Promise<void> {
           name,
           honor: equipped || undefined,
           trinket: trinket || undefined,
+          wear: wear ?? undefined,
         },
       });
     }

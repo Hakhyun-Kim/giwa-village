@@ -45,6 +45,9 @@ interface VillageStore {
   selfHonor: number | null;
   /** 내가 장착한 장신구 id (랜덤박스) */
   selfTrinket: number | null;
+  /** 내가 착용한 공방 문양 ("pixelsHex:palette") */
+  selfWear: string | null;
+  workshopOpen: boolean;
 
   setStatus: (s: ConnectionStatus) => void;
   setSelfId: (id: string | null) => void;
@@ -81,6 +84,8 @@ interface VillageStore {
   setLedgerOpen: (v: boolean) => void;
   setSelfHonor: (id: number | null) => void;
   setSelfTrinket: (id: number | null) => void;
+  setSelfWear: (w: string | null) => void;
+  setWorkshopOpen: (v: boolean) => void;
   patchDungeon: (d: Partial<DungeonView>) => void;
 }
 
@@ -117,6 +122,8 @@ export const useStore = create<VillageStore>((set) => ({
   ledgerOpen: false,
   selfHonor: null,
   selfTrinket: null,
+  selfWear: null,
+  workshopOpen: false,
 
   setStatus: (status) => set({ status }),
   setSelfId: (selfId) => set({ selfId }),
@@ -168,6 +175,8 @@ export const useStore = create<VillageStore>((set) => ({
   setLedgerOpen: (ledgerOpen) => set({ ledgerOpen }),
   setSelfHonor: (selfHonor) => set({ selfHonor }),
   setSelfTrinket: (selfTrinket) => set({ selfTrinket }),
+  setSelfWear: (selfWear) => set({ selfWear }),
+  setWorkshopOpen: (workshopOpen) => set({ workshopOpen }),
   patchDungeon: (d) =>
     set((s) => (s.dungeon ? { dungeon: { ...s.dungeon, ...d } } : s)),
 }));

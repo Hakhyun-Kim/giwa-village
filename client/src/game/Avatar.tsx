@@ -1,9 +1,10 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { Color, Group, Mesh } from "three";
+import { CanvasTexture, Color, Group, Mesh, NearestFilter } from "three";
 import { honorCharmColor } from "../chain/honors";
 import { trinketColor } from "../chain/boxes";
+import { patternCanvas } from "../chain/workshop";
 
 export interface AvatarVariant {
   hat: 0 | 1 | 2 | 3; // 0 없음, 1 갓, 2 패랭이, 3 두건
@@ -34,6 +35,8 @@ interface AvatarProps {
   trinket?: number;
   /** 모닥불에 앉아 있음 — 앉은 자세로 렌더 */
   sitting?: boolean;
+  /** 착용한 공방 문양 ("pixelsHex:palette") — 가슴팍에 렌더 */
+  wear?: string;
 }
 
 /** 장신구 코스메틱: 왼쪽 어깨 옆의 작은 모트 (부적보다 작고 빠르게 맴돈다) */
@@ -126,9 +129,17 @@ export default function Avatar({
   honor,
   trinket,
   sitting,
+  wear,
 }: AvatarProps) {
   const charm = honorCharmColor(honor);
   const mote = trinketColor(trinket);
+  const patternTex = useMemo(() => {
+    if (!wear) return null;
+    const [pixels, palette] = wear.split(":");
+    const tex = new CanvasTexture(patternCanvas(pixels, Number(palette), 8));
+    tex.magFilter = NearestFilter;
+    return tex;
+  }, [wear]);
   const body = useRef<Group>(null);
   const leftArm = useRef<Group>(null);
   const rightArm = useRef<Group>(null);
@@ -199,6 +210,13 @@ export default function Avatar({
             <meshStandardMaterial color="#222222" />
           </mesh>
         </group>
+        {/* 공방 문양 (가슴팍) */}
+        {patternTex && (
+          <mesh position={[0, 1.04, 0.33 * v.bodyWidth + 0.02]}>
+            <planeGeometry args={[0.4, 0.4]} />
+            <meshStandardMaterial map={patternTex} transparent />
+          </mesh>
+        )}
         <Hat type={v.hat} color={color} />
         {/* arms (pivot at shoulder) */}
         <group ref={leftArm} position={[-0.42 * v.bodyWidth, 1.32, 0]}>

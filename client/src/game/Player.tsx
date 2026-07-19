@@ -26,6 +26,7 @@ export default function Player() {
   const selfHonor = useStore((s) => s.selfHonor);
   const selfTrinket = useStore((s) => s.selfTrinket);
   const selfSitting = useStore((s) => s.selfSitting);
+  const selfWear = useStore((s) => s.selfWear);
   const walletAddress = useStore((s) => s.walletAddress);
   const emote = useStore((s) => (s.selfId ? s.emotes[s.selfId] : undefined));
 
@@ -152,6 +153,7 @@ export default function Player() {
         honor={selfHonor ?? undefined}
         trinket={selfTrinket ?? undefined}
         sitting={selfSitting}
+        wear={selfWear ?? undefined}
       />
     </group>
   );

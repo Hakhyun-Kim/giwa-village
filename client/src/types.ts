@@ -18,6 +18,8 @@ export interface PlayerInfo {
   trinket?: number;
   /** 모닥불에 앉아 있음 (비컨 상태) */
   sitting?: boolean;
+  /** 착용 중인 공방 문양 — "pixelsHex:palette" */
+  wear?: string;
 }
 
 export interface EmoteEvent {

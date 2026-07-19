@@ -41,6 +41,7 @@ const TARGETS = [
   },
   { file: "GiwaBoxes.sol", name: "GiwaBoxes", out: "boxes.ts", prefix: "BOXES" },
   { file: "GiwaHearth.sol", name: "GiwaHearth", out: "hearth.ts", prefix: "HEARTH" },
+  { file: "GiwaWorkshop.sol", name: "GiwaWorkshop", out: "workshop.ts", prefix: "WORKSHOP" },
 ];
 
 // 이미 배포된 주소 (부분 재배포 시 생성자 인자·유지용).

@@ -74,6 +74,7 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
         honor={info.honor}
         trinket={info.trinket}
         sitting={info.sitting}
+        wear={info.wear}
       />
     </group>
   );

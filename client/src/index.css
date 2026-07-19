@@ -896,3 +896,27 @@ body,
   white-space: nowrap;
   pointer-events: none;
 }
+
+.ws-editor { display: flex; gap: 12px; margin-top: 12px; }
+.ws-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 1px;
+  width: 176px;
+  height: 176px;
+  background: #2a3040;
+  border: 1px solid #2a3040;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ws-cell { border: none; padding: 0; cursor: crosshair; }
+.ws-side { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.ws-pens { display: flex; gap: 6px; }
+.ws-pen { width: 30px; height: 30px; border: 2px solid #2a3040; border-radius: 6px; cursor: pointer; }
+.ws-pen.on { border-color: #ffd66b; }
+.ws-swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+.ws-swatch { width: 100%; aspect-ratio: 1; border: 1px solid #2a3040; border-radius: 4px; cursor: pointer; }
+.ws-thumb {
+  width: 32px; height: 32px; border-radius: 6px; image-rendering: pixelated;
+  border: 1px solid #2a3040; background: #0f131c;
+}

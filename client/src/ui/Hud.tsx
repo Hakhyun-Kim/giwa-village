@@ -80,6 +80,12 @@ function StallButtons({ walletAddress }: { walletAddress: string }) {
       >
         🎖 칭호
       </button>
+      <button
+        className="hud-btn sub"
+        onClick={() => useStore.getState().setWorkshopOpen(true)}
+      >
+        🎨 공방
+      </button>
     </div>
   );
 }

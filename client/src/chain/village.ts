@@ -14,6 +14,7 @@ import { syncGuilds } from "./guilds";
 import { fetchHonors } from "./honors";
 import { equippedTrinketOf } from "./boxes";
 import { fetchHearth, gatherHearth, claimHearth } from "./hearth";
+import { wornPatternOf } from "./workshop";
 import {
   applyPeers,
   checkBeaconBudget,
@@ -31,6 +32,7 @@ export * from "./gifts";
 export * from "./offers";
 export * from "./boxes";
 export * from "./hearth";
+export * from "./workshop";
 export * from "./guilds";
 export * from "./honors";
 export * from "./presence";
@@ -96,6 +98,12 @@ export async function refreshSelfHonor(): Promise<void> {
   try {
     const t = await equippedTrinketOf(my);
     useStore.getState().setSelfTrinket(t || null);
+  } catch {
+    /* 다음 기회에 */
+  }
+  try {
+    const w = await wornPatternOf(my);
+    useStore.getState().setSelfWear(w);
   } catch {
     /* 다음 기회에 */
   }
