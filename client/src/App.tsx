@@ -16,6 +16,7 @@ import DungeonDialog from "./ui/DungeonDialog";
 import HonorsDialog from "./ui/HonorsDialog";
 import SellerLedgerDialog from "./ui/SellerLedgerDialog";
 import WorkshopDialog from "./ui/WorkshopDialog";
+import QuestLog from "./ui/QuestLog";
 import { joinVillage, leaveVillage } from "./net/colyseus";
 import { useStore } from "./state/store";
 import { colorFromString, loadBurner } from "./wallet/wallet";
@@ -93,6 +94,7 @@ export default function App() {
       <HonorsDialog />
       <SellerLedgerDialog />
       <WorkshopDialog />
+      <QuestLog />
     </div>
   );
 }
