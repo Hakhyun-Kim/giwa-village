@@ -380,7 +380,7 @@ async function run() {
     );
     if (nameInput) await typeInto(nameInput, "달님네 잡화점");
     await pace(400);
-    findButton("홍등")?.click();
+    findButton("등불")?.click();
     await pace(900);
     findButton("노점 개설")?.click();
     caption(

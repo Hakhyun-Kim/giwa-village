@@ -91,7 +91,7 @@ export const DEMO_STALLS: Stall[] = [
     x: 30.2,
     z: 3.1,
     items: [
-      { id: "s-74ff8183-0", name: "홍등", emoji: "🏮", priceEth: "0.001" },
+      { id: "s-74ff8183-0", name: "등불", emoji: "🏮", priceEth: "0.001" },
       { id: "s-74ff8183-1", name: "목검", emoji: "🗡️", priceEth: "0.003" },
     ],
     createdAt: 1784315578004,

@@ -7,7 +7,7 @@ import { DEMO } from "../config/giwa";
 const PRESET_GOODS = [
   { name: "할인쿠폰", emoji: "🎫" },
   { name: "목도리", emoji: "🧣" },
-  { name: "홍등", emoji: "🏮" },
+  { name: "등불", emoji: "🏮" },
   { name: "꼬치", emoji: "🍡" },
   { name: "목검", emoji: "🗡️" },
   { name: "랜덤박스", emoji: "🎁" },

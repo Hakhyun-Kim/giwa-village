@@ -83,7 +83,7 @@ roomA.send("stall:open", {
   title: "스모크 노점",
   items: [
     { name: "테스트쿠폰", emoji: "🎫", priceEth: PRICE },
-    { name: "홍등", emoji: "🏮", priceEth: "0.002" },
+    { name: "등불", emoji: "🏮", priceEth: "0.002" },
   ],
 });
 await sleep(500);

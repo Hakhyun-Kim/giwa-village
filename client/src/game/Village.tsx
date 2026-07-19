@@ -144,7 +144,7 @@ function Tree({
   );
 }
 
-/** 홍등 달린 등롱대 */
+/** 등불 달린 등롱대 */
 function Lantern({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>

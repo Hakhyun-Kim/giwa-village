@@ -29,7 +29,7 @@ const BOT_STALLS = [
   { title: "싸다싸 목도리", x: 11, z: 4, items: [{ name: "목도리", emoji: "🧣", priceEth: "0.0008" }] },
   { title: "달래네 꼬치", x: 13.5, z: -4, items: [{ name: "꼬치", emoji: "🍡", priceEth: "0.0005" }, { name: "랜덤박스", emoji: "🎁", priceEth: "0.002" }] },
   { title: "곰배 엿가락", x: 24, z: 4.5, items: [{ name: "엿가락", emoji: "🍬", priceEth: "0.0004" }] },
-  { title: "오씨 방물잡화", x: 30, z: 3.5, items: [{ name: "홍등", emoji: "🏮", priceEth: "0.001" }, { name: "목검", emoji: "🗡️", priceEth: "0.003" }] },
+  { title: "오씨 방물잡화", x: 30, z: 3.5, items: [{ name: "등불", emoji: "🏮", priceEth: "0.001" }, { name: "목검", emoji: "🗡️", priceEth: "0.003" }] },
 ];
 
 const EMOTES = ["👋", "😄", "🙌", "🍚", "☀️"];
