@@ -73,6 +73,17 @@
   a { color: #a8802c; }
   footer { text-align: center; color: #9a917e; font-size: 12px; padding: 24px 0 40px; }
   .gold { color: #a8802c; font-weight: 700; }
+  .svg-wrap {
+    background: #2e3138; border-radius: 14px; padding: 18px 16px; margin-top: 12px;
+    overflow-x: auto;
+  }
+  .svg-wrap svg { display: block; width: 100%; min-width: 640px; height: auto; }
+  .scale-box {
+    background: #fff; border: 1px solid #e3ded2; border-left: 3px solid #d9a441;
+    border-radius: 12px; padding: 16px 18px; margin-top: 12px; font-size: 13.5px;
+  }
+  .scale-box ul { padding-left: 20px; margin-top: 6px; }
+  .scale-box li { margin: 5px 0; }
 </style>
 </head>
 <body>
@@ -100,81 +111,201 @@
     설계 원칙은 하나입니다 — <b>서버는 공간만 담당하고, 가치는 전부 체인 위에서 움직인다.</b>
   </p>
 
-  <h2><span class="n">1</span>시스템 아키텍처</h2>
-  <div class="diagram">
-    <div class="node">
-      <b>클라이언트 (브라우저)</b>
-      React Three Fiber 3D 마을<br/>viem 지갑·컨트랙트 호출<br/>Colyseus.js 실시간 동기화
-    </div>
-    <div class="arrow">⇄<small>WebSocket 15Hz</small></div>
-    <div class="node">
-      <b>Colyseus 룸 서버</b>
-      아바타 위치·이모트 중계<br/>노점 레지스트리(영속)<br/>이름 중복 해소·유휴 정리
-    </div>
-    <div class="arrow">⇄<small>JSON-RPC</small></div>
-    <div class="node chain">
-      <b>GIWA Sepolia (L2)</b>
-      GiwaMarketV2 (상거래)<br/>DojangScroll (신원 인증)<br/>UPNameRegistry (이름)
-    </div>
+  <h2><span class="n">1</span>시스템 아키텍처 — 서버리스 풀온체인</h2>
+  <p style="font-size:14px">
+    게임 서버가 <b>없습니다</b>. 브라우저가 GIWA 체인과 직접 읽고 씁니다. 거래·소유·기록은
+    컨트랙트가 들고, 실시간 위치만 저장 없는 이벤트(비컨)로 흘립니다. 그래서 두 방문자는
+    서버 없이 서로를 보고 거래합니다.
+  </p>
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 340" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Malgun Gothic, sans-serif">
+      <defs>
+        <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#d9a441"/>
+        </marker>
+      </defs>
+      <!-- 브라우저 A -->
+      <rect x="24" y="60" width="190" height="120" rx="12" fill="#3b4048" stroke="#4a5160"/>
+      <text x="119" y="88" fill="#ffd66b" font-size="14" font-weight="700" text-anchor="middle">브라우저 A (viem)</text>
+      <text x="119" y="112" fill="#cfd6e2" font-size="11.5" text-anchor="middle">React Three Fiber 3D</text>
+      <text x="119" y="130" fill="#cfd6e2" font-size="11.5" text-anchor="middle">읽기: 폴링 · 쓰기: 지갑 서명</text>
+      <text x="119" y="150" fill="#cfd6e2" font-size="11.5" text-anchor="middle">데드레커닝 렌더</text>
+      <text x="119" y="168" fill="#8fe8a0" font-size="11" text-anchor="middle">tx 직렬화 큐(nonce 안전)</text>
+      <!-- 브라우저 B -->
+      <rect x="24" y="210" width="190" height="86" rx="12" fill="#3b4048" stroke="#4a5160"/>
+      <text x="119" y="238" fill="#ffd66b" font-size="14" font-weight="700" text-anchor="middle">브라우저 B</text>
+      <text x="119" y="262" fill="#cfd6e2" font-size="11.5" text-anchor="middle">다른 방문자 — 같은 체인을</text>
+      <text x="119" y="280" fill="#cfd6e2" font-size="11.5" text-anchor="middle">폴링해 서로를 본다</text>
+      <!-- 체인 패널 -->
+      <rect x="470" y="26" width="326" height="288" rx="12" fill="#2b2f36" stroke="#d9a441"/>
+      <text x="633" y="50" fill="#d9a441" font-size="14" font-weight="700" text-anchor="middle">GIWA Sepolia · 컨트랙트 8종 (Verified)</text>
+      <g font-size="11.5" fill="#eef2f8">
+        <rect x="486" y="62" width="140" height="34" rx="7" fill="#3b4048"/><text x="556" y="83" text-anchor="middle">MarketV3 · 노점/쿠폰</text>
+        <rect x="640" y="62" width="140" height="34" rx="7" fill="#3b4048"/><text x="710" y="83" text-anchor="middle">Guilds · 던전</text>
+        <rect x="486" y="104" width="140" height="34" rx="7" fill="#3b4048"/><text x="556" y="125" text-anchor="middle">Offers · 흥정</text>
+        <rect x="640" y="104" width="140" height="34" rx="7" fill="#3b4048"/><text x="710" y="125" text-anchor="middle">Honors · 칭호</text>
+        <rect x="486" y="146" width="140" height="34" rx="7" fill="#3b4048"/><text x="556" y="167" text-anchor="middle">Boxes · 랜덤박스</text>
+        <rect x="640" y="146" width="140" height="34" rx="7" fill="#3b4048"/><text x="710" y="167" text-anchor="middle">Workshop · 문양</text>
+        <rect x="486" y="188" width="140" height="34" rx="7" fill="#3b4048"/><text x="556" y="209" text-anchor="middle">Hearth · 모닥불</text>
+        <rect x="640" y="188" width="140" height="34" rx="7" fill="#2f3d4a"/><text x="710" y="209" text-anchor="middle" fill="#8fe8e0">Presence · 비컨</text>
+      </g>
+      <line x1="486" y1="238" x2="780" y2="238" stroke="#4a5160" stroke-dasharray="3 3"/>
+      <text x="633" y="258" fill="#9aa2ae" font-size="11" text-anchor="middle">읽기 전용 연동 (외부 발행)</text>
+      <g font-size="11.5" fill="#eef2f8">
+        <rect x="486" y="270" width="140" height="30" rx="7" fill="#33383f"/><text x="556" y="289" text-anchor="middle">DojangScroll · 인증</text>
+        <rect x="640" y="270" width="140" height="30" rx="7" fill="#33383f"/><text x="710" y="289" text-anchor="middle">UP.ID · 이름</text>
+      </g>
+      <!-- 화살표 -->
+      <path d="M214 108 L466 108" stroke="#d9a441" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+      <text x="340" y="100" fill="#d9a441" font-size="11" text-anchor="middle">쓰기 tx (서명)</text>
+      <path d="M466 140 L214 140" stroke="#7db7ff" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+      <text x="340" y="156" fill="#7db7ff" font-size="11" text-anchor="middle">읽기 · 이벤트 로그 폴링</text>
+      <path d="M214 252 C 360 252, 380 210, 466 200" stroke="#8fe8e0" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+      <text x="330" y="240" fill="#8fe8e0" font-size="11" text-anchor="middle">2초 비컨 (위치+속도)</text>
+    </svg>
   </div>
-  <p style="margin-top:10px; font-size:13.5px; color:#6b7280">
-    ※ 결제·소유·인증은 클라이언트가 체인과 <b>직접</b> 통신합니다. 서버는 자금·키를
-    일절 다루지 않는 비수탁(non-custodial) 구조이며, 서버가 꺼져도 자산은 안전합니다.
-    정적 데모 모드에서는 서버 없이 NPC를 로컬 시뮬레이션하고 온체인 기능은 동일하게 동작합니다.
+  <p style="margin-top:6px; font-size:13px; color:#6b7280">
+    ※ 자금·키는 어떤 서버도 다루지 않는 비수탁 구조. 선택적 Colyseus 서버는 성능(위치 릴레이·읽기 캐시)
+    용도로만 붙일 수 있고, 없어도 마을은 돕니다 (<a href="#scale">스케일 로드맵</a> 참고).
   </p>
 
-  <h2><span class="n">2</span>온체인 컴포넌트</h2>
+  <h2><span class="n">2</span>온체인 컴포넌트 (8종 · 전부 Verified)</h2>
   <table>
-    <tr><th>컨트랙트</th><th>역할</th><th>주소 (GIWA Sepolia)</th></tr>
-    <tr>
-      <td><b>GiwaMarketV2</b><br/>(자체 개발·Verified)</td>
-      <td>노점 상거래 레이어 — ① 아이템 리스팅과 <b>가격 체인 강제</b>
-        ② 대금 <b>에스크로</b> 보관(구매자 확정 또는 24시간 후 자동 정산)
-        ③ 구매 즉시 <b>ERC-1155 쿠폰 토큰</b> 민팅 ④ Purchased/Settled 이벤트 영수증</td>
-      <td><a href="https://sepolia-explorer.giwa.io/address/0x67cddd9be658dd334730e34c3791959a6681ad67" class="addr">0x67cddd…ad67</a></td>
-    </tr>
-    <tr>
-      <td><b>DojangScroll</b><br/>(GIWA 생태계)</td>
-      <td>업비트 코리아가 발행하는 신원 어테스테이션을 <code>isVerified(주소, 발행자ID)</code>로
-        조회 → 마을에서 <span class="gold">Dojang 인증 상인</span> 뱃지 표시</td>
-      <td><span class="addr">0xd5077b…17B9</span></td>
-    </tr>
-    <tr>
-      <td><b>UPNameRegistry</b><br/>(GIWA 생태계)</td>
-      <td>Upbit Web3 Names(ERC-721) — <code>hasActiveName → ownedTokenId → getLabel</code>
-        역방향 조회로 주소 대신 이름을 이름표·상점에 표시</td>
-      <td><span class="addr">0x091D00…9628</span></td>
-    </tr>
+    <tr><th>컨트랙트</th><th>역할</th><th>주소</th></tr>
+    <tr><td><b>GiwaMarketV3</b></td><td>노점 레지스트리(개설+가격 단일 tx)·에스크로(분쟁/환불)·ERC-1155 쿠폰(선물·소각)</td>
+      <td><a class="addr" href="https://sepolia-explorer.giwa.io/address/0x1f34506cda6619fc3124d68742a8fd5e7ba436e2">0x1f3450…36e2</a></td></tr>
+    <tr><td><b>GiwaGuilds</b></td><td>길드·백층 던전 — 주차 blockhash 시드, <code>settleRun</code> 재계산 검증</td>
+      <td><a class="addr" href="https://sepolia-explorer.giwa.io/address/0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638">0x65e4de…7638</a></td></tr>
+    <tr><td><b>GiwaPresence</b></td><td>저장 없는 위치+속도 비컨 이벤트 → 클라 데드레커닝</td>
+      <td><a class="addr" href="https://sepolia-explorer.giwa.io/address/0x4d600672cefae3c8462f3d9feb2cb739001e7a93">0x4d6006…7a93</a></td></tr>
+    <tr><td><b>GiwaHonors</b></td><td>소울바운드 칭호 5종 — 다른 컨트랙트 상태로 자격 검증·장착</td>
+      <td><a class="addr" href="https://sepolia-explorer.giwa.io/address/0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f">0x7e230f…a57f</a></td></tr>
+    <tr><td><b>GiwaOffers</b></td><td>흥정 에스크로 — 수락 시 MarketV3 조합해 buy→confirm→쿠폰 전달 한 tx</td>
+      <td><a class="addr" href="https://sepolia-explorer.giwa.io/address/0x534a29c47667b54eab6995517705cfbc423bb909">0x534a29…b909</a></td></tr>
+    <tr><td><b>GiwaBoxes</b></td><td>랜덤박스(무료·블록해시 확정)·소울바운드 장신구 8종</td>
+      <td><a class="addr" href="https://sepolia-explorer.giwa.io/address/0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e">0xeb0349…6b2e</a></td></tr>
+    <tr><td><b>GiwaHearth</b></td><td>모닥불 온기 — 10분 창에 2명↑ 모이면 claim, 장날 2배</td>
+      <td><a class="addr" href="https://sepolia-explorer.giwa.io/address/0xf780265d5f49abd8c7e5d18d81d33426f62f3365">0xf78026…3365</a></td></tr>
+    <tr><td><b>GiwaWorkshop</b></td><td>문양 공방(UGC) — 8×8 픽셀 온체인 등록·판매(창작자 직송)·착용</td>
+      <td><a class="addr" href="https://sepolia-explorer.giwa.io/address/0x664762337e529f853949a94e6ed50e6d8016c975">0x664762…c975</a></td></tr>
   </table>
+  <p style="margin-top:8px; font-size:13px; color:#6b7280">
+    각 컨트랙트는 클라이언트 <code>src/chain/&lt;모듈&gt;.ts</code>와 1:1로 대응합니다.
+    카탈로그: <a href="https://github.com/Hakhyun-Kim/giwa-village/blob/main/contracts/README.md">contracts/README.md</a>.
+    외부 발행 <b>DojangScroll</b>(신원 인증)·<b>UP.ID</b>(이름)는 읽기만 연동합니다.
+  </p>
 
-  <h2><span class="n">3</span>핵심 플로우: 노점 구매</h2>
-  <div class="flow">
-    <ol>
-      <li>손님이 노점 클릭 → 상품 선택 → <code>GiwaMarketV2.buy(판매자, 아이템ID)</code> 호출 (viem, 클라이언트 직접 서명)</li>
-      <li>컨트랙트가 리스팅 가격과 <b>정확히 일치하는 금액만</b> 수락 → 대금은 <b>에스크로에 보관</b></li>
-      <li>같은 트랜잭션에서 <b>ERC-1155 쿠폰 토큰</b>이 구매자 지갑으로 민팅 (tokenId = keccak(판매자, 아이템ID))</li>
-      <li>Purchased 이벤트가 온체인 영수증 — 클라이언트는 tx 해시만 서버에 전달, 서버는 형식 검증 후 판매 피드 브로드캐스트</li>
-      <li>구매자가 쿠폰함에서 <b>정산 확정</b> → <code>confirm()</code> → 판매자에게 대금 전달 (미확정 시 24시간 후 <code>release()</code> 가능)</li>
-    </ol>
-    GIWA의 1초 블록 덕분에 1~5단계가 <b>대화 템포(1~2초)</b> 안에 끝납니다 — "게임 속 상점"의 체감을 실제 온체인으로 구현한 핵심 근거입니다.
+  <h2><span class="n">3</span>핵심 플로우 — 그림으로</h2>
+
+  <p style="font-size:14px; margin-top:6px"><b>(a) 노점 구매 + 에스크로</b> — 가격은 체인이 강제하고, 대금은 확정까지 컨트랙트가 보관합니다.</p>
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 210" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Malgun Gothic, sans-serif">
+      <defs><marker id="ah2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c3423f"/></marker></defs>
+      <g text-anchor="middle" font-size="12.5">
+        <rect x="20"  y="30" width="150" height="150" rx="10" fill="#fff" stroke="#e3ded2"/><text x="95"  y="55" font-weight="700" fill="#2e3138">구매자</text>
+        <rect x="200" y="30" width="200" height="150" rx="10" fill="#2e3138"/><text x="300" y="55" font-weight="700" fill="#ffd66b">MarketV3.buyStall()</text>
+        <rect x="430" y="30" width="170" height="150" rx="10" fill="#2e3138"/><text x="515" y="55" font-weight="700" fill="#ffd66b">에스크로</text>
+        <rect x="630" y="30" width="170" height="150" rx="10" fill="#fff" stroke="#e3ded2"/><text x="715" y="55" font-weight="700" fill="#2e3138">판매자</text>
+      </g>
+      <g font-size="11" fill="#cfd6e2" text-anchor="middle">
+        <text x="300" y="80">가격 == 리스팅?</text><text x="300" y="98" fill="#8fe8a0">일치만 수락</text>
+        <text x="300" y="128">쿠폰(ERC-1155)</text><text x="300" y="145" fill="#ffd66b">즉시 구매자에 민팅</text>
+        <text x="515" y="86">대금 보관</text><text x="515" y="104">Purchased</text><text x="515" y="120" fill="#8fe8e0">이벤트=영수증</text>
+      </g>
+      <path d="M170 90 L196 90" stroke="#c3423f" stroke-width="1.6" marker-end="url(#ah2)"/>
+      <path d="M400 90 L426 90" stroke="#c3423f" stroke-width="1.6" marker-end="url(#ah2)"/>
+      <path d="M515 176 C 515 196, 300 196, 95 186" stroke="#7db7ff" stroke-width="1.6" fill="none" marker-end="url(#ah2)"/>
+      <text x="300" y="203" fill="#4a7db0" font-size="11" text-anchor="middle">구매자 confirm() → 대금이 판매자에게 (또는 24h 후 자동, 분쟁 시 7일·환불 가능)</text>
+    </svg>
   </div>
 
-  <h2><span class="n">4</span>공간 설계: 노점의 영속성</h2>
+  <p style="font-size:14px; margin-top:16px"><b>(b) 던전 — 로컬 즉시 플레이 + settleRun 재계산 검증</b></p>
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 200" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Malgun Gothic, sans-serif">
+      <defs><marker id="ah3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#d9a441"/></marker></defs>
+      <g text-anchor="middle">
+        <rect x="20" y="24" width="180" height="150" rx="10" fill="#2e3138"/><text x="110" y="48" fill="#ffd66b" font-size="13" font-weight="700">enterExpedition()</text>
+        <text x="110" y="74" fill="#cfd6e2" font-size="11.5">주차 시드 = 직전</text><text x="110" y="90" fill="#cfd6e2" font-size="11.5">blockhash (핀·검증가능)</text>
+        <text x="110" y="116" fill="#cfd6e2" font-size="11.5">원정 회차 +1</text><text x="110" y="136" fill="#8fe8a0" font-size="11">→ 회차별 맵 확정</text>
+        <rect x="280" y="24" width="230" height="150" rx="10" fill="#fff" stroke="#e3ded2"/><text x="395" y="48" fill="#2e3138" font-size="13" font-weight="700">클라이언트 로컬 플레이</text>
+        <text x="395" y="76" fill="#555" font-size="11.5">문 선택 → keccak(시드·길드·</text><text x="395" y="93" fill="#555" font-size="11.5">회차·스텝·문) 로 즉시 판정</text>
+        <text x="395" y="120" fill="#c3423f" font-size="11.5">함정=잠정층 상실 · 순풍=+2</text><text x="395" y="140" fill="#555" font-size="11.5">picks[] 누적 (tx 없음, 즉각)</text>
+        <rect x="590" y="24" width="210" height="150" rx="10" fill="#2e3138"/><text x="695" y="48" fill="#ffd66b" font-size="13" font-weight="700">settleRun(picks)</text>
+        <text x="695" y="76" fill="#cfd6e2" font-size="11.5">컨트랙트가 picks를</text><text x="695" y="93" fill="#cfd6e2" font-size="11.5">같은 해시로 재계산</text>
+        <text x="695" y="119" fill="#8fe8a0" font-size="11.5">함정 포함=거부</text><text x="695" y="139" fill="#8fe8e0" font-size="11.5">통과=길드 층수 확정</text>
+      </g>
+      <path d="M200 99 L276 99" stroke="#d9a441" stroke-width="1.6" marker-end="url(#ah3)"/>
+      <path d="M510 99 L586 99" stroke="#d9a441" stroke-width="1.6" marker-end="url(#ah3)"/>
+      <text x="238" y="90" fill="#a8802c" font-size="10.5" text-anchor="middle">시드</text>
+      <text x="548" y="90" fill="#a8802c" font-size="10.5" text-anchor="middle">귀환 1 tx</text>
+    </svg>
+  </div>
+  <p style="font-size:13px; color:#6b7280; margin-top:6px">
+    문을 열 때마다 tx를 보내지 않고 <b>귀환 한 번</b>으로 전 과정을 검증합니다 — 서버판보다 빠르고,
+    서버 없이도 트러스트리스. (결정론 결과의 한계는 <a href="./audit.html">AI Self-Audit</a>에 공개)
+  </p>
+
+  <p style="font-size:14px; margin-top:16px"><b>(c) 프레즌스 — 2초 비컨 + 데드레커닝</b></p>
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 150" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Malgun Gothic, sans-serif">
+      <text x="20" y="24" fill="#6b7280" font-size="12">A가 2초마다 (위치, 속도)를 비컨으로 발행 →  B는 마지막 비컨 + 속도×경과시간으로 <tspan fill="#a8802c" font-weight="700">예측 이동</tspan> (부드러운 걸음)</text>
+      <!-- timeline -->
+      <line x1="40" y1="95" x2="780" y2="95" stroke="#cbc6ba"/>
+      <g font-size="11" fill="#6b7280" text-anchor="middle">
+        <circle cx="120" cy="95" r="6" fill="#c3423f"/><text x="120" y="120">t0 비컨</text><text x="120" y="135" fill="#a8802c">실측 위치</text>
+        <circle cx="330" cy="95" r="4" fill="#d9a441"/><circle cx="450" cy="95" r="4" fill="#d9a441"/><circle cx="570" cy="95" r="4" fill="#d9a441"/>
+        <text x="450" y="120">예측(속도 외삽)</text>
+        <circle cx="700" cy="95" r="6" fill="#c3423f"/><text x="700" y="120">t0+2s 비컨</text><text x="700" y="135" fill="#8fe8a0">보정</text>
+      </g>
+      <path d="M126 95 Q 415 60, 694 95" stroke="#7db7ff" stroke-width="1.4" fill="none" stroke-dasharray="4 3"/>
+    </svg>
+  </div>
+  <p style="font-size:13px; color:#6b7280; margin-top:6px">
+    위치는 분쟁 가치가 없어 체인 <b>상태</b>로 두지 않습니다 — 저장 없는 이벤트라 비컨 1회 ≈ 2µETH.
+    악의적 좌표는 수신 시 월드 반경으로 클램프, 잔액 부족 시 자동 관전 모드(읽기는 무료).
+  </p>
+
+  <h2><span class="n">4</span>재미 설계 — 왜 다시 오는가</h2>
   <p style="font-size:14px">
-    노점은 주인이 접속을 끊어도 마을에 남습니다(레지스트리·가격 모두 온체인).
-    소셜 플랫폼의 최대 리스크인 콜드 스타트를 <b>유저 생성 콘텐츠(노점)</b>가 공간을
-    채우는 구조로 풉니다 — 동시접속이 적어도 저잣거리는 상점으로 북적입니다.
-    고전 MMO 저잣거리 문화의 구조적 재해석입니다.
+    지갑이 <b>기록</b>이라면 마을은 <b>장소</b>여야 합니다. 장소가 이기려면 세 가지가 필요합니다:
+    머무를 이유·만날 시간·자랑할 것. 네 가지 시스템이 이 축을 온체인으로 채웁니다.
+  </p>
+  <div class="cols">
+    <div class="card">
+      <b class="t">🔥 모닥불 (머무름)</b>
+      광장 모닥불에 <b>함께</b>(2명 이상) 앉으면 10분 창마다 온기가 쌓입니다.
+      혼자서는 안 됩니다 — "함께 있음"의 온체인 증명 (GiwaHearth).
+    </div>
+    <div class="card">
+      <b class="t">🏮 장날 (시간 약속)</b>
+      매주 토 21시(KST) 장날엔 온기 2배 — 컨트랙트가 요일을 판정합니다.
+      모두가 같은 시간에 모일 이유가 밀도를 만듭니다.
+    </div>
+    <div class="card">
+      <b class="t">🚩 길드 깃발 (소유)</b>
+      주간 등반 상위 길드의 깃발이 광장에 게양됩니다. 개인 배지를 넘어
+      공간에 보이는 순위 — 싸우고 자랑할 이유.
+    </div>
+    <div class="card">
+      <b class="t">🎨 문양 공방 (경제)</b>
+      유저가 8×8 문양을 그려 온체인 등록·판매·착용. 창작물 거래는
+      보상이 아니므로 안전선과 양립 — 경제의 상류가 생깁니다.
+    </div>
+  </div>
+  <p style="font-size:13.5px; color:#6b7280; margin-top:10px">
+    노점은 주인이 접속을 끊어도 마을에 남습니다(레지스트리·가격 모두 온체인) —
+    콜드 스타트를 <b>유저 생성 콘텐츠</b>가 공간을 채워 풉니다. 참고 결: 마비노기 모닥불(함께 있는
+    것 자체가 콘텐츠), 리니지 혈맹(소유의 정치), 로블록스/마크(플랫폼은 도구·유저는 콘텐츠).
   </p>
 
   <h2><span class="n">5</span>기술 스택 & 품질</h2>
   <div class="cols">
     <div class="card">
       <b class="t">스택</b>
-      클라이언트: React Three Fiber(three.js) · zustand · viem · Colyseus.js<br/>
-      서버: Node.js · Colyseus (15Hz 스냅샷, 하트비트 유휴 정리, 자동 재접속)<br/>
-      컨트랙트: Solidity 0.8.36 (ERC-1155 자체 구현 포함, 외부 의존성 0)<br/>
-      배포: GitHub Actions → GitHub Pages (정적 데모 모드)
+      클라이언트: React Three Fiber(three.js) · zustand · viem<br/>
+      컨트랙트: Solidity 0.8.36 · 8종 (ERC-1155 자체 구현 포함, 외부 의존성 0)<br/>
+      서버: <b>없음</b> (선택적 Colyseus는 성능 캐시용) · 배포: GitHub Actions → Pages<br/>
+      코드: <code>src/chain/&lt;모듈&gt;.ts</code>가 컨트랙트와 1:1 대응
     </div>
     <div class="card">
       <b class="t">검증</b>
@@ -205,15 +336,23 @@
     웹뷰 탑재가 가능한 구조.
   </p>
 
-  <h2><span class="n">7</span>TODO — 기술 확장 로드맵</h2>
+  <h2 id="scale"><span class="n">7</span>나중 작업 (P2) — 스케일 로드맵</h2>
   <p style="font-size:14px">
-    현재 아키텍처는 <b>"가치는 온체인, 존재감은 비컨"</b> — 게임 서버 0으로 동작한다.
-    다음 단계는 서버를 <b>신뢰가 아닌 성능</b>을 위해 다시 들이는 것이다.
+    현재 아키텍처는 <b>"가치는 온체인, 존재감은 비컨"</b> — 게임 서버 0으로 동작하고,
+    <b>수십 명 규모의 밀도 있는 광장</b>에 최적화돼 있다. 병목은 체인이 아니라 ① 공개 RPC 폴링
+    (유저 수 × 2.5초) ② 클라 렌더 O(N) ③ 전체 순회 뷰다. 다음 단계는 서버를
+    <b>신뢰가 아닌 성능</b>을 위해 되들이는 것이다.
   </p>
-  <ul style="font-size:14px; line-height:1.7">
+  <div class="scale-box">
+    <b>구역 샤딩 (세계관과 맞물리는 확장)</b> — 저잣거리를 여러 골목(비단골목·먹자골목…)으로
+    나누면 각 광장은 수십 명 밀도를 유지하면서 전체는 확장된다. 밀도 낮은 대광장보다 좁고
+    북적이는 골목이 사회적으로도 낫다. 아래 인덱서·하이브리드 릴레이와 함께 가면 수백~수천
+    동접 경로가 보인다. (메인넷 가스에서의 비컨 빈도 적응은 열린 문제)
+  </div>
+  <ul style="font-size:14px; line-height:1.7; margin-top:12px">
     <li><b>읽기 캐시/인덱서</b> — 접속자가 늘면 모든 클라이언트가 RPC를 직접 폴링하는
-      구조는 레이트리밋에 막힌다. 계획: 경량 인덱서(Cloudflare Worker 또는 기존
-      Colyseus 서버 재활용)가 노점·길드·비컨 이벤트를 구독·캐시하고, 클라이언트는
+      구조는 레이트리밋에 막힌다. 계획: 경량 인덱서(Cloudflare Worker 또는 Colyseus
+      서버)가 노점·길드·비컨 이벤트를 구독·캐시하고, 클라이언트는
       캐시를 우선 읽되 <b>캐시가 죽으면 자동으로 RPC 직접 폴링으로 폴백</b> —
       서버는 있으면 빠르고, 없어도 마을은 돈다.</li>
     <li><b>실시간 승격(하이브리드 프레즌스)</b> — 서버가 살아 있으면 이동·이모트를

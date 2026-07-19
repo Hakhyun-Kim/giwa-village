@@ -12,6 +12,7 @@ import {
   fetchHonors,
   honorWrite,
   fetchOffersFor,
+  sendBeacon,
 } from "../chain/village";
 
 const MIN_BALANCE_ETH = 0.002; // 구매 + 가스 여유
@@ -282,6 +283,43 @@ async function showOfferBeat(my: string) {
   useStore.getState().setLedgerOpen(false);
 }
 
+// ---- 공방·모닥불 비트 ----
+
+async function showWorkshopBeat() {
+  caption(
+    "🎨 <b>문양 공방</b> — 8×8 픽셀을 직접 그려 온체인에 등록하고 팝니다",
+    "유저 창작물이 마을 경제의 상류를 만듭니다",
+  );
+  useStore.getState().setWorkshopOpen(true);
+  await pace(2000);
+  findButton("문양 장터")?.click();
+  await pace(3000);
+  caption(
+    "🏬 다른 사람이 그린 문양을 사서 아바타에 답니다",
+    "판매 대금은 창작자에게 직접 전달됩니다",
+  );
+  await pace(3000);
+  useStore.getState().setWorkshopOpen(false);
+}
+
+async function showCampfireBeat() {
+  caption(
+    "🔥 <b>모닥불</b> — 함께 앉으면 온기가 쌓입니다 (혼자서는 안 됩니다)",
+    "매주 토 21시 장날엔 온기 2배 — 모두가 모일 시간",
+  );
+  // 모닥불(-9,0,9)로 걸어가 앉는다
+  await walk("KeyA", 1200);
+  await walk("KeyS", 1000);
+  const s = useStore.getState();
+  if (s.nearFire && !s.selfSitting) {
+    s.setSelfSitting(true);
+    void sendBeacon(4, true);
+  }
+  await pace(3500);
+  useStore.getState().setSelfSitting(false);
+  void sendBeacon(0, true);
+}
+
 // ---- 칭호 비트 ----
 
 async function showHonors(my: string) {
@@ -494,6 +532,16 @@ async function run() {
       if (aborted) throw err;
       console.warn("[showcase] 칭호 시연 생략:", err);
       useStore.getState().setHonorsOpen(false);
+    }
+
+    // 9) 문양 공방 (경제의 상류) + 모닥불 (머무름)
+    try {
+      await showWorkshopBeat();
+      await showCampfireBeat();
+    } catch (err) {
+      if (aborted) throw err;
+      console.warn("[showcase] 공방·모닥불 시연 생략:", err);
+      useStore.getState().setWorkshopOpen(false);
     }
 
     teardown(
