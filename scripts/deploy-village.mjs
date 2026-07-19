@@ -42,6 +42,27 @@ const TARGETS = [
   { file: "GiwaBoxes.sol", name: "GiwaBoxes", out: "boxes.ts", prefix: "BOXES" },
   { file: "GiwaHearth.sol", name: "GiwaHearth", out: "hearth.ts", prefix: "HEARTH" },
   { file: "GiwaWorkshop.sol", name: "GiwaWorkshop", out: "workshop.ts", prefix: "WORKSHOP" },
+  {
+    file: "GiwaBoss.sol",
+    name: "GiwaBoss",
+    out: "boss.ts",
+    prefix: "BOSS",
+    args: (deployed) => [deployed.GiwaGuilds, deployed.GiwaHearth],
+  },
+  {
+    file: "GiwaProfile.sol",
+    name: "GiwaProfile",
+    out: "profile.ts",
+    prefix: "PROFILE",
+    args: (deployed) => [
+      deployed.GiwaGuilds,
+      deployed.GiwaHonors,
+      deployed.GiwaBoxes,
+      deployed.GiwaHearth,
+      deployed.GiwaWorkshop,
+      deployed.GiwaBoss,
+    ],
+  },
 ];
 
 // 이미 배포된 주소 (부분 재배포 시 생성자 인자·유지용).
@@ -50,6 +71,11 @@ const deployed = {
   GiwaMarketV3: "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2",
   GiwaGuilds: "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638",
   GiwaPresence: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93",
+  GiwaHonors: "0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f",
+  GiwaOffers: "0x534a29c47667b54eab6995517705cfbc423bb909",
+  GiwaBoxes: "0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e",
+  GiwaHearth: "0xf780265d5f49abd8c7e5d18d81d33426f62f3365",
+  GiwaWorkshop: "0x664762337e529f853949a94e6ed50e6d8016c975",
 };
 const only = process.argv.slice(2);
 

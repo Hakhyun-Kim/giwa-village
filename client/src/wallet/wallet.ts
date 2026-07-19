@@ -10,6 +10,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { giwaSepolia, WS_URL } from "../config/giwa";
+import { useStore } from "../state/store";
 import { MARKET_ADDRESS, MARKET_ABI } from "../config/market";
 import {
   DOJANG_SCROLL_ADDRESS,
@@ -34,7 +35,10 @@ export let activeWalletClient: WalletClient | null = null;
  */
 let txChain: Promise<unknown> = Promise.resolve();
 export function queueTx<T>(fn: () => Promise<T>): Promise<T> {
-  const run = txChain.then(fn, fn);
+  useStore.getState().bumpPendingTx(1);
+  const run = txChain
+    .then(fn, fn)
+    .finally(() => useStore.getState().bumpPendingTx(-1));
   txChain = run.catch(() => {});
   return run;
 }

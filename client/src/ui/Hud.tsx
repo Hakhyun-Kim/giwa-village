@@ -6,14 +6,10 @@ import {
   shortAddress,
   colorFromString,
 } from "../wallet/wallet";
-import { joinVillage, closeStall } from "../net/colyseus";
+import { joinVillage } from "../net/colyseus";
 import { giwaSepolia, DEMO, FAUCET_URL } from "../config/giwa";
 import { loadCoupons } from "../state/coupons";
-import {
-  unlistOnMarket,
-  isDojangVerified,
-  fundBurnerFromInjected,
-} from "../wallet/wallet";
+import { isDojangVerified, fundBurnerFromInjected } from "../wallet/wallet";
 import { refreshBeaconBudget, marketDayLabel } from "../chain/village";
 import { useUpidName } from "../wallet/upid";
 
@@ -26,65 +22,60 @@ function StallButtons({ walletAddress }: { walletAddress: string }) {
   useStore((s) => s.couponsVersion);
   const couponCount = loadCoupons(walletAddress).length;
 
+  const [bagOpen, setBagOpen] = useState(false);
+
   return (
     <div className="hud-stall-btns">
-      {myStall && (
-        <button
-          className="hud-btn sub"
-          onClick={() => useStore.getState().setLedgerOpen(true)}
-        >
-          📒 장부
-        </button>
-      )}
-      {myStall ? (
-        <button
-          className="hud-btn sub"
-          onClick={() => {
-            closeStall();
-            // 같은 지갑 병렬 전송은 nonce 충돌 — 언리스팅도 순차로.
-            // 데모(서버리스) 모드는 closeStall이 온체인 폐점을 처리한다.
-            if (DEMO) return;
-            const items = [...myStall.items];
-            void (async () => {
-              for (const it of items) {
-                await unlistOnMarket(it.id).catch(() => {});
-              }
-            })();
-          }}
-        >
-          🧺 노점 닫기
-        </button>
-      ) : (
-        <button
-          className="hud-btn sub"
-          onClick={() => useStore.getState().setStallOpenDialog(true)}
-        >
-          🧺 노점 열기
-        </button>
-      )}
+      {/* 내 노점: 없으면 개설, 있으면 장부(닫기 포함) */}
       <button
         className="hud-btn sub"
-        onClick={() => useStore.getState().setCouponsOpen(true)}
+        onClick={() =>
+          myStall
+            ? useStore.getState().setLedgerOpen(true)
+            : useStore.getState().setStallOpenDialog(true)
+        }
       >
-        🎫 쿠폰함 {couponCount > 0 ? couponCount : ""}
+        🧺 {myStall ? "내 노점" : "노점 열기"}
       </button>
+      {/* 가방: 쿠폰·칭호/장신구·공방 통합 진입점 */}
+      <div className="hud-bag">
+        <button className="hud-btn sub" onClick={() => setBagOpen((v) => !v)}>
+          👜 가방 {couponCount > 0 ? couponCount : ""}
+        </button>
+        {bagOpen && (
+          <div className="hud-bag-menu" onMouseLeave={() => setBagOpen(false)}>
+            <button
+              onClick={() => {
+                setBagOpen(false);
+                useStore.getState().setCouponsOpen(true);
+              }}
+            >
+              🎫 쿠폰함 {couponCount > 0 ? `(${couponCount})` : ""}
+            </button>
+            <button
+              onClick={() => {
+                setBagOpen(false);
+                useStore.getState().setHonorsOpen(true);
+              }}
+            >
+              🎖 칭호 · 장신구
+            </button>
+            <button
+              onClick={() => {
+                setBagOpen(false);
+                useStore.getState().setWorkshopOpen(true);
+              }}
+            >
+              🎨 문양 공방
+            </button>
+          </div>
+        )}
+      </div>
       <button
         className="hud-btn sub"
         onClick={() => useStore.getState().setGuildOpen(true)}
       >
         🏯 길드
-      </button>
-      <button
-        className="hud-btn sub"
-        onClick={() => useStore.getState().setHonorsOpen(true)}
-      >
-        🎖 칭호
-      </button>
-      <button
-        className="hud-btn sub"
-        onClick={() => useStore.getState().setWorkshopOpen(true)}
-      >
-        🎨 공방
       </button>
     </div>
   );
@@ -146,6 +137,9 @@ export default function Hud() {
   const nearPortal = useStore((s) => s.nearPortal);
   const nearFire = useStore((s) => s.nearFire);
   const selfSitting = useStore((s) => s.selfSitting);
+  const nearBoss = useStore((s) => s.nearBoss);
+  const boss = useStore((s) => s.boss);
+  const pendingTx = useStore((s) => s.pendingTx);
   const [festival, setFestival] = useState(() => marketDayLabel());
 
   useEffect(() => {
@@ -217,6 +211,9 @@ export default function Hud() {
           {status === "connected" && ` · ${onlineCount}명`}
         </div>
         <div className="hud-festival">{festival}</div>
+        {pendingTx > 0 && (
+          <div className="hud-txchip">⛓ 체인 처리 중 {pendingTx > 1 ? pendingTx : ""}</div>
+        )}
         {DEMO && (
           <div className="hud-demo">
             기본 샘플 데모 · 온체인은 실동작
@@ -272,7 +269,11 @@ export default function Hud() {
       </div>
 
       <div className="hud-bottom">
-        {nearFire ? (
+        {nearBoss && boss && !boss.slain ? (
+          <div className="hud-card hud-prompt">
+            <b>R</b> — 도깨비 타격 (쿨다운 30초 · 함께 때려잡으세요)
+          </div>
+        ) : nearFire ? (
           <div className="hud-card hud-prompt">
             <b>X</b> — {selfSitting ? "일어나기" : "모닥불 쬐기 (함께 쬐면 온기가 쌓입니다)"}
           </div>

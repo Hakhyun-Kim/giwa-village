@@ -15,6 +15,7 @@ import { fetchHonors } from "./honors";
 import { equippedTrinketOf } from "./boxes";
 import { fetchHearth, gatherHearth, claimHearth } from "./hearth";
 import { wornPatternOf } from "./workshop";
+import { refreshBoss } from "./boss";
 import {
   applyPeers,
   checkBeaconBudget,
@@ -33,6 +34,7 @@ export * from "./offers";
 export * from "./boxes";
 export * from "./hearth";
 export * from "./workshop";
+export * from "./boss";
 export * from "./guilds";
 export * from "./honors";
 export * from "./presence";
@@ -57,6 +59,8 @@ export function startOnchainVillage(localPos: LocalPos): void {
   setInterval(() => void syncGuilds().catch(() => {}), GUILD_SYNC_MS);
   setInterval(() => void checkBeaconBudget(), 60000);
   setInterval(() => void hearthTick().catch(() => {}), 30000);
+  void refreshBoss();
+  setInterval(() => void refreshBoss(), 15000);
   setInterval(() => void sendBeacon(), BEACON_INTERVAL_MS);
   setInterval(() => void pollChain(), READ_INTERVAL_MS);
   setInterval(() => applyPeers(), 250);

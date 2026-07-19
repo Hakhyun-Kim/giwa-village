@@ -2,8 +2,9 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Group, Vector3 } from "three";
 import Avatar from "./Avatar";
-import { WORLD_RADIUS, PORTAL_POS, CAMPFIRE_POS } from "./Village";
+import { WORLD_RADIUS, PORTAL_POS, CAMPFIRE_POS, BOSS_POS } from "./Village";
 import { sendBeacon } from "../chain/presence";
+import { strikeBoss, refreshBoss } from "../chain/boss";
 import { localPos, sendMove, sendEmote } from "../net/colyseus";
 import { useStore } from "../state/store";
 
@@ -51,6 +52,21 @@ export default function Player() {
       if (e.code === "KeyF" && useStore.getState().nearPortal) {
         // 길드 코업 던전 — 서버리스(데모)에선 완전 온체인으로 동작
         useStore.getState().setDungeonOpen(true);
+      }
+      if (e.code === "KeyR" && useStore.getState().nearBoss) {
+        // 도깨비 타격 — 쿨다운·데미지는 컨트랙트가 판정
+        const b = useStore.getState().boss;
+        if (b && !b.slain && Date.now() / 1000 >= b.nextStrikeAt) {
+          const id = useStore.getState().selfId;
+          if (id) {
+            useStore.getState().setEmote(id, "💥");
+            const at = useStore.getState().emotes[id]?.at;
+            if (at) setTimeout(() => useStore.getState().clearEmote(id, at), 2000);
+          }
+          void strikeBoss()
+            .then(() => refreshBoss())
+            .catch(() => {});
+        }
       }
       if (e.code === "KeyX" && useStore.getState().nearFire) {
         // 모닥불 쬐기 — 앉음 상태는 비컨(코드 4)으로 전파된다
@@ -122,6 +138,13 @@ export default function Player() {
       Math.hypot(localPos.x - CAMPFIRE_POS[0], localPos.z - CAMPFIRE_POS[2]) < 3.2;
     if (nearFire !== useStore.getState().nearFire) {
       useStore.getState().setNearFire(nearFire);
+    }
+
+    // boss proximity
+    const nearBoss =
+      Math.hypot(localPos.x - BOSS_POS[0], localPos.z - BOSS_POS[2]) < 4.5;
+    if (nearBoss !== useStore.getState().nearBoss) {
+      useStore.getState().setNearBoss(nearBoss);
     }
 
     // throttled network send

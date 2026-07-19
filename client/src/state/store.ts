@@ -48,6 +48,11 @@ interface VillageStore {
   /** 내가 착용한 공방 문양 ("pixelsHex:palette") */
   selfWear: string | null;
   workshopOpen: boolean;
+  /** 도깨비 상태 (주간 보스) */
+  boss: { remaining: number; slain: boolean; myContrib: number; nextStrikeAt: number; trophies: number } | null;
+  nearBoss: boolean;
+  /** 전송 큐에서 처리 중인 tx 수 (HUD 칩) */
+  pendingTx: number;
 
   setStatus: (s: ConnectionStatus) => void;
   setSelfId: (id: string | null) => void;
@@ -86,6 +91,9 @@ interface VillageStore {
   setSelfTrinket: (id: number | null) => void;
   setSelfWear: (w: string | null) => void;
   setWorkshopOpen: (v: boolean) => void;
+  setBoss: (b: { remaining: number; slain: boolean; myContrib: number; nextStrikeAt: number; trophies: number } | null) => void;
+  setNearBoss: (v: boolean) => void;
+  bumpPendingTx: (delta: number) => void;
   patchDungeon: (d: Partial<DungeonView>) => void;
 }
 
@@ -124,6 +132,9 @@ export const useStore = create<VillageStore>((set) => ({
   selfTrinket: null,
   selfWear: null,
   workshopOpen: false,
+  boss: null,
+  nearBoss: false,
+  pendingTx: 0,
 
   setStatus: (status) => set({ status }),
   setSelfId: (selfId) => set({ selfId }),
@@ -177,6 +188,9 @@ export const useStore = create<VillageStore>((set) => ({
   setSelfTrinket: (selfTrinket) => set({ selfTrinket }),
   setSelfWear: (selfWear) => set({ selfWear }),
   setWorkshopOpen: (workshopOpen) => set({ workshopOpen }),
+  setBoss: (boss) => set({ boss }),
+  setNearBoss: (nearBoss) => set({ nearBoss }),
+  bumpPendingTx: (delta) => set((s) => ({ pendingTx: Math.max(0, s.pendingTx + delta) })),
   patchDungeon: (d) =>
     set((s) => (s.dungeon ? { dungeon: { ...s.dungeon, ...d } } : s)),
 }));

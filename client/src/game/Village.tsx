@@ -7,6 +7,7 @@ import { useStore } from "../state/store";
 export const WORLD_RADIUS = 55;
 export const PORTAL_POS: [number, number, number] = [0, 0, -30];
 export const CAMPFIRE_POS: [number, number, number] = [-9, 0, 9];
+export const BOSS_POS: [number, number, number] = [12, 0, 14];
 
 function mulberry32(seed: number) {
   let a = seed >>> 0;
@@ -285,6 +286,56 @@ function Campfire() {
   );
 }
 
+/** 주간 도깨비 — 마을 사람들이 함께 때려잡는 온체인 보스 (R로 타격) */
+function BossGoblin() {
+  const boss = useStore((s) => s.boss);
+  const body = useRef<Mesh>(null);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    if (body.current) {
+      body.current.position.y = 1.15 + Math.sin(t * 1.7) * 0.1;
+      body.current.rotation.y = Math.sin(t * 0.6) * 0.4;
+    }
+  });
+  if (!boss || boss.slain) return null;
+  const hpRatio = Math.max(0, Math.min(1, boss.remaining / 2000));
+  return (
+    <group position={BOSS_POS}>
+      {/* 몸통 */}
+      <mesh ref={body} position={[0, 1.15, 0]} castShadow>
+        <sphereGeometry args={[0.85, 16, 16]} />
+        <meshStandardMaterial color="#7a4a8f" emissive="#3a1a4a" emissiveIntensity={0.4} />
+      </mesh>
+      {/* 뿔 */}
+      <mesh position={[-0.3, 2.15, 0]} rotation={[0, 0, 0.35]} castShadow>
+        <coneGeometry args={[0.11, 0.5, 8]} />
+        <meshStandardMaterial color="#ffd66b" />
+      </mesh>
+      <mesh position={[0.3, 2.15, 0]} rotation={[0, 0, -0.35]} castShadow>
+        <coneGeometry args={[0.11, 0.5, 8]} />
+        <meshStandardMaterial color="#ffd66b" />
+      </mesh>
+      {/* 눈 */}
+      <mesh position={[-0.25, 1.3, 0.72]}>
+        <sphereGeometry args={[0.09, 8, 8]} />
+        <meshStandardMaterial color="#ff5a5a" emissive="#ff2a2a" emissiveIntensity={1.4} />
+      </mesh>
+      <mesh position={[0.25, 1.3, 0.72]}>
+        <sphereGeometry args={[0.09, 8, 8]} />
+        <meshStandardMaterial color="#ff5a5a" emissive="#ff2a2a" emissiveIntensity={1.4} />
+      </mesh>
+      <pointLight position={[0, 1.6, 0]} color="#b06cff" intensity={1.2} distance={6} />
+      <Html position={[0, 2.9, 0]} center distanceFactor={18} zIndexRange={[6, 0]}>
+        <div className="boss-tag">
+          <div className="boss-name">🧿 장터 도깨비 <span>주간 토벌</span></div>
+          <div className="boss-hp"><i style={{ width: `${hpRatio * 100}%` }} /></div>
+          <div className="boss-sub">{boss.remaining} / 2000 · 내 기여 {boss.myContrib}</div>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
 /** 광장 길드 깃발 — 이번 주 등반 상위 길드가 게양된다 (온체인 순위) */
 function GuildFlags() {
   const guilds = useStore((s) => s.guilds);
@@ -411,6 +462,7 @@ export default function Village() {
       ))}
 
       <Campfire />
+      <BossGoblin />
       <GuildFlags />
       <Lantern position={[7, 0, 7]} />
       <Lantern position={[-7, 0, 7]} />

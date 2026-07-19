@@ -920,3 +920,59 @@ body,
   width: 32px; height: 32px; border-radius: 6px; image-rendering: pixelated;
   border: 1px solid #2a3040; background: #0f131c;
 }
+
+.hud-txchip {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8fe8e0;
+}
+
+.hud-bag { position: relative; display: inline-block; }
+.hud-bag-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #161b26;
+  border: 1px solid #2a3040;
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 40;
+  min-width: 160px;
+}
+.hud-bag-menu button {
+  background: none;
+  border: none;
+  color: #eef2f8;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.hud-bag-menu button:hover { background: #1c2331; color: #ffd66b; }
+
+.boss-tag {
+  background: rgba(20, 24, 34, 0.88);
+  border: 1px solid rgba(255, 90, 90, 0.4);
+  border-radius: 10px;
+  padding: 6px 10px;
+  text-align: center;
+  min-width: 150px;
+  pointer-events: none;
+}
+.boss-name { color: #fff; font-size: 12px; font-weight: 700; }
+.boss-name span { color: #ff9d9d; font-size: 10px; font-weight: 400; margin-left: 4px; }
+.boss-hp {
+  margin-top: 4px;
+  height: 6px;
+  background: #2a3040;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.boss-hp i { display: block; height: 100%; background: linear-gradient(90deg, #ff5a5a, #ff9d4d); }
+.boss-sub { margin-top: 3px; color: #9aa7bd; font-size: 10px; }

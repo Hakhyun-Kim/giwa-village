@@ -8,8 +8,9 @@ import {
   type SellerSale,
   type StallOffer,
 } from "../chain/village";
-import { shortAddress } from "../wallet/wallet";
-import { giwaSepolia } from "../config/giwa";
+import { shortAddress, unlistOnMarket } from "../wallet/wallet";
+import { giwaSepolia, DEMO } from "../config/giwa";
+import { closeStall } from "../net/colyseus";
 
 /** 판매자 장부 — 내 노점의 온체인 판매·분쟁 목록 + 환불 */
 export default function SellerLedgerDialog() {
@@ -147,6 +148,31 @@ export default function SellerLedgerDialog() {
         {error && <div className="gift-warn">{error}</div>}
 
         <div className="gift-actions">
+          <button
+            className="gift-btn"
+            onClick={() => {
+              // 노점 폐점 — 서버 모드는 언리스팅도 순차 처리
+              const myStall = useStore
+                .getState()
+                .stalls.find(
+                  (st) =>
+                    !st.brand &&
+                    st.ownerAddress.toLowerCase() === walletAddress?.toLowerCase(),
+                );
+              closeStall();
+              if (!DEMO && myStall) {
+                const items = [...myStall.items];
+                void (async () => {
+                  for (const it of items) {
+                    await unlistOnMarket(it.id).catch(() => {});
+                  }
+                })();
+              }
+              close();
+            }}
+          >
+            🧺 노점 닫기
+          </button>
           <button className="gift-btn" onClick={close}>
             닫기
           </button>
