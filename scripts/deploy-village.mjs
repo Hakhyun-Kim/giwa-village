@@ -39,6 +39,7 @@ const TARGETS = [
     prefix: "OFFERS",
     args: (deployed) => [deployed.GiwaMarketV3],
   },
+  { file: "GiwaBoxes.sol", name: "GiwaBoxes", out: "boxes.ts", prefix: "BOXES" },
 ];
 
 // 이미 배포된 주소 (부분 재배포 시 생성자 인자·유지용).

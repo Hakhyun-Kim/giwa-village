@@ -13,6 +13,7 @@ import type { PlayerInfo } from "../types";
 import { upidNameOf } from "../wallet/upid";
 import { POS_SCALE, selfPos } from "./core";
 import { HONOR_DEFS, equippedHonorOf } from "./honors";
+import { equippedTrinketOf } from "./boxes";
 import { PURCHASED_EVENT } from "./ledger";
 
 const BEACON_INTERVAL_MS = 2000;
@@ -102,16 +103,25 @@ async function decoratePeer(addr: string): Promise<void> {
   if (decorated.has(addr)) return;
   decorated.add(addr);
   try {
-    const [equipped, upid] = await Promise.all([equippedHonorOf(addr), upidNameOf(addr)]);
+    const [equipped, trinket, upid] = await Promise.all([
+      equippedHonorOf(addr),
+      equippedTrinketOf(addr),
+      upidNameOf(addr),
+    ]);
     const def = HONOR_DEFS.find((d) => d.id === equipped);
     const base = upid ?? `나그네-${addr.slice(2, 6)}`;
     const name = def ? `${def.emoji} ${base}` : base;
     const s = useStore.getState();
     const p = s.players[addr];
-    if (p && (p.name !== name || p.honor !== equipped)) {
+    if (p && (p.name !== name || p.honor !== equipped || p.trinket !== trinket)) {
       s.setPlayers({
         ...s.players,
-        [addr]: { ...p, name, honor: equipped || undefined },
+        [addr]: {
+          ...p,
+          name,
+          honor: equipped || undefined,
+          trinket: trinket || undefined,
+        },
       });
     }
   } catch {

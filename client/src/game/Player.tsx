@@ -23,6 +23,7 @@ export default function Player() {
   const selfName = useStore((s) => s.selfName);
   const selfColor = useStore((s) => s.selfColor);
   const selfHonor = useStore((s) => s.selfHonor);
+  const selfTrinket = useStore((s) => s.selfTrinket);
   const walletAddress = useStore((s) => s.walletAddress);
   const emote = useStore((s) => (s.selfId ? s.emotes[s.selfId] : undefined));
 
@@ -130,6 +131,7 @@ export default function Player() {
         verified={!!walletAddress}
         speedRef={speedRef}
         honor={selfHonor ?? undefined}
+        trinket={selfTrinket ?? undefined}
       />
     </group>
   );

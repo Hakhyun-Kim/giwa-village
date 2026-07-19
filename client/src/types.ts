@@ -14,6 +14,8 @@ export interface PlayerInfo {
   color: number;
   /** 장착한 소울바운드 칭호 id — 아바타 코스메틱(부적) 렌더용 */
   honor?: number;
+  /** 장착한 랜덤박스 장신구 id — 두 번째 모트 렌더용 */
+  trinket?: number;
 }
 
 export interface EmoteEvent {

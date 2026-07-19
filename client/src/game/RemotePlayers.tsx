@@ -72,6 +72,7 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
         verified={giftable}
         speedRef={speedRef}
         honor={info.honor}
+        trinket={info.trinket}
       />
     </group>
   );

@@ -17,6 +17,7 @@ const TARGETS = [
   { file: "GiwaPresence.sol", name: "GiwaPresence", address: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93" },
   { file: "GiwaHonors.sol", name: "GiwaHonors", address: "0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f" },
   { file: "GiwaOffers.sol", name: "GiwaOffers", address: "0x534a29c47667b54eab6995517705cfbc423bb909" },
+  { file: "GiwaBoxes.sol", name: "GiwaBoxes", address: "0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e" },
 ];
 
 const ver = "v" + solc.version().replace(/\.Emscripten.*$/, "");

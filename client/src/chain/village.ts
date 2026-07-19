@@ -12,6 +12,7 @@ import { selfPos } from "./core";
 import { syncStalls } from "./stalls";
 import { syncGuilds } from "./guilds";
 import { fetchHonors } from "./honors";
+import { equippedTrinketOf } from "./boxes";
 import {
   applyPeers,
   checkBeaconBudget,
@@ -27,6 +28,7 @@ export * from "./stalls";
 export * from "./ledger";
 export * from "./gifts";
 export * from "./offers";
+export * from "./boxes";
 export * from "./guilds";
 export * from "./honors";
 export * from "./presence";
@@ -60,13 +62,19 @@ export function startOnchainVillage(localPos: LocalPos): void {
   });
 }
 
-/** 내 장착 칭호를 스토어에 반영 — 자기 아바타 코스메틱용 */
+/** 내 장착 칭호·장신구를 스토어에 반영 — 자기 아바타 코스메틱용 */
 export async function refreshSelfHonor(): Promise<void> {
   const my = useStore.getState().walletAddress;
   if (!my) return;
   try {
     const p = await fetchHonors(my);
     useStore.getState().setSelfHonor(p.equipped || null);
+  } catch {
+    /* 다음 기회에 */
+  }
+  try {
+    const t = await equippedTrinketOf(my);
+    useStore.getState().setSelfTrinket(t || null);
   } catch {
     /* 다음 기회에 */
   }
