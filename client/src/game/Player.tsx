@@ -5,6 +5,7 @@ import Avatar from "./Avatar";
 import { WORLD_RADIUS, PORTAL_POS, CAMPFIRE_POS, BOSS_POS } from "./Village";
 import { sendBeacon } from "../chain/presence";
 import { strikeBoss, refreshBoss } from "../chain/boss";
+import { touchInput } from "./touch";
 import { localPos, sendMove, sendEmote } from "../net/colyseus";
 import { useStore } from "../state/store";
 
@@ -96,8 +97,11 @@ export default function Player() {
     if (k.has("KeyS") || k.has("ArrowDown")) dz += 1;
     if (k.has("KeyA") || k.has("ArrowLeft")) dx -= 1;
     if (k.has("KeyD") || k.has("ArrowRight")) dx += 1;
+    // 모바일 가상 조이스틱 (아날로그)
+    dx += touchInput.x;
+    dz += touchInput.z;
 
-    const moving = dx !== 0 || dz !== 0;
+    const moving = Math.hypot(dx, dz) > 0.05;
     if (moving && useStore.getState().selfSitting) {
       // 움직이면 자동으로 일어난다
       useStore.getState().setSelfSitting(false);

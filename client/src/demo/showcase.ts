@@ -320,6 +320,24 @@ async function showCampfireBeat() {
   void sendBeacon(0, true);
 }
 
+async function showBossBeat() {
+  const boss = useStore.getState().boss;
+  if (!boss || boss.slain) return;
+  caption(
+    "🧿 광장의 <b>장터 도깨비</b> — 혼자선 못 잡습니다, 함께 때려야죠",
+    "주간 보스 · 데미지는 블록해시 롤 + 모닥불 온기 보정 · 장날 2배",
+  );
+  // 모닥불(-9,9) → 도깨비(12,14)로 이동
+  await walk("KeyD", 3400);
+  await walk("KeyS", 900);
+  await pace(800);
+  caption("💥 타격! — 내 기여도가 길드와 함께 체인에 쌓입니다");
+  const { strikeBoss, refreshBoss } = await import("../chain/boss");
+  await strikeBoss().catch(() => {});
+  await refreshBoss();
+  await pace(3200);
+}
+
 // ---- 칭호 비트 ----
 
 async function showHonors(my: string) {
@@ -534,13 +552,14 @@ async function run() {
       useStore.getState().setHonorsOpen(false);
     }
 
-    // 9) 문양 공방 (경제의 상류) + 모닥불 (머무름)
+    // 9) 문양 공방 (경제의 상류) + 모닥불 (머무름) + 도깨비 (동시성 코업)
     try {
       await showWorkshopBeat();
       await showCampfireBeat();
+      await showBossBeat();
     } catch (err) {
       if (aborted) throw err;
-      console.warn("[showcase] 공방·모닥불 시연 생략:", err);
+      console.warn("[showcase] 공방·모닥불·도깨비 시연 생략:", err);
       useStore.getState().setWorkshopOpen(false);
     }
 
