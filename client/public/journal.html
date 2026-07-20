@@ -1,0 +1,715 @@
+<title>기와장터 개발일지 — 43시간의 기록</title>
+<style>
+  :root {
+    --ink: #241F2E;
+    --ink-soft: #524B60;
+    --paper: #EFEAE1;
+    --surface: #F8F5EE;
+    --surface-2: #E7DFCD;
+    --hairline: #D8CFBB;
+    --gold: #B8790E;
+    --jade: #0E8C63;
+    --brick: #B5432A;
+    --violet: #7A4FB0;
+    --good: #2E8B57;
+    --warn: #C97A2B;
+    --critical: #B23B2E;
+    --glow: rgba(184, 121, 14, .28);
+    --shadow: rgba(36, 31, 46, .10);
+
+    --font-display: "Noto Serif KR", "Nanum Myeongjo", Batang, serif;
+    --font-body: "Pretendard Variable", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    --font-mono: "JetBrains Mono", "D2Coding", "SFMono-Regular", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #EDE7DA;
+      --ink-soft: #B4A99A;
+      --paper: #17141D;
+      --surface: #201B28;
+      --surface-2: #2B2434;
+      --hairline: #392F44;
+      --gold: #C79A3F;
+      --jade: #2FA37D;
+      --brick: #D07352;
+      --violet: #9678CC;
+      --good: #3FAE73;
+      --warn: #D99245;
+      --critical: #DD6B5A;
+      --glow: rgba(199, 154, 63, .30);
+      --shadow: rgba(0, 0, 0, .45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #EDE7DA; --ink-soft: #B4A99A; --paper: #17141D; --surface: #201B28;
+    --surface-2: #2B2434; --hairline: #392F44; --gold: #C79A3F; --jade: #2FA37D;
+    --brick: #D07352; --violet: #9678CC; --good: #3FAE73; --warn: #D99245;
+    --critical: #DD6B5A; --glow: rgba(199, 154, 63, .30); --shadow: rgba(0, 0, 0, .45);
+  }
+  :root[data-theme="light"] {
+    --ink: #241F2E; --ink-soft: #524B60; --paper: #EFEAE1; --surface: #F8F5EE;
+    --surface-2: #E7DFCD; --hairline: #D8CFBB; --gold: #B8790E; --jade: #0E8C63;
+    --brick: #B5432A; --violet: #7A4FB0; --good: #2E8B57; --warn: #C97A2B;
+    --critical: #B23B2E; --glow: rgba(184, 121, 14, .28); --shadow: rgba(36, 31, 46, .10);
+  }
+
+  * { box-sizing: border-box; }
+  html { background: var(--paper); }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--glow); }
+  a { color: var(--gold); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 120px; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative;
+    padding: 88px 24px 56px;
+    text-align: center;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 620px 320px at 50% 0%, var(--glow), transparent 70%);
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(32px, 5.4vw, 52px);
+    line-height: 1.28;
+    margin: 18px auto 14px;
+    max-width: 720px;
+    text-wrap: balance;
+    letter-spacing: -.01em;
+  }
+  .hero .lede {
+    max-width: 620px; margin: 0 auto; color: var(--ink-soft);
+    font-size: 17px; line-height: 1.8;
+  }
+  .hero .links { margin-top: 24px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .hero .links a {
+    color: var(--gold); text-decoration: none; font-size: 12.5px;
+    border: 1px solid var(--hairline); border-radius: 999px; padding: 6px 14px;
+    font-family: var(--font-mono);
+  }
+  .hero .links a:hover { background: var(--surface); }
+  .hero .byline {
+    margin-top: 20px; font-size: 13.5px; color: var(--ink-soft);
+    font-family: var(--font-mono);
+  }
+
+  /* ---------- section scaffolding ---------- */
+  section { margin-top: 76px; }
+  .kicker {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 8px;
+  }
+  h2.h {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(22px, 3vw, 28px); margin: 0 0 10px; text-wrap: balance;
+  }
+  .sub { color: var(--ink-soft); font-size: 15px; max-width: 62ch; margin: 0 0 28px; }
+
+  /* ---------- stat grid ---------- */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+    background: var(--hairline); border: 1px solid var(--hairline); border-radius: 14px;
+    overflow: hidden;
+  }
+  .stat { background: var(--surface); padding: 22px 18px; }
+  .stat .n {
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: 30px; font-weight: 700; color: var(--gold); line-height: 1.1;
+  }
+  .stat .l { margin-top: 6px; font-size: 12.5px; color: var(--ink-soft); }
+  @media (max-width: 720px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+  /* ---------- bar (time-of-day) chart ---------- */
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px;
+    padding: 28px 26px 20px;
+  }
+  .track-strip {
+    height: 8px; border-radius: 999px; margin-bottom: 22px;
+    background: linear-gradient(90deg,
+      #E8C888 0%, #C79A3F 10%, #6B5A8E 24%, #2E2650 38%, #1B1730 50%,
+      #2E2650 58%, #6B5A8E 70%, #C79A3F 84%, #E8C888 94%, #E8C888 100%);
+    opacity: .85;
+  }
+  svg text { font-family: var(--font-mono); fill: var(--ink-soft); }
+  .bar-rect { fill: var(--gold); transition: filter .15s ease; }
+  .bar-rect:hover { filter: brightness(1.12); cursor: pointer; }
+  .bar-rect.night { fill: var(--violet); }
+  .bar-val { font-size: 12px; fill: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .bar-lbl { font-size: 10.5px; }
+  .grid-line { stroke: var(--hairline); stroke-width: 1; }
+  .legend-row { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); }
+  .legend-row .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  .tooltip {
+    position: absolute; pointer-events: none; z-index: 40;
+    background: var(--ink); color: var(--paper);
+    font-family: var(--font-mono); font-size: 12px; line-height: 1.6;
+    padding: 8px 11px; border-radius: 8px; box-shadow: 0 8px 24px var(--shadow);
+    opacity: 0; transform: translate(-50%, -100%); transition: opacity .1s ease;
+    white-space: nowrap;
+  }
+  .tooltip.on { opacity: 1; }
+  .tooltip b { color: var(--gold); }
+
+  .chart-note { margin-top: 16px; font-size: 13px; color: var(--ink-soft); }
+
+  /* ---------- growth area chart ---------- */
+  .growth-wrap { position: relative; }
+  .growth-crosshair { stroke: var(--gold); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; }
+  .growth-dot { fill: var(--gold); opacity: 0; }
+  .growth-end-label { font-family: var(--font-mono); font-size: 13px; fill: var(--gold); font-weight: 700; }
+
+  /* ---------- category bars ---------- */
+  .cat-list { display: flex; flex-direction: column; gap: 14px; }
+  .cat-row { display: grid; grid-template-columns: 120px 1fr 46px; align-items: center; gap: 12px; }
+  .cat-row .cat-label { font-size: 13.5px; color: var(--ink); }
+  .cat-row .cat-track { height: 14px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .cat-row .cat-fill { height: 100%; border-radius: 999px; }
+  .cat-row .cat-n { font-family: var(--font-mono); font-size: 13px; text-align: right; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  /* ---------- ledger table ---------- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--hairline); border-radius: 14px; }
+  table.ledger { width: 100%; border-collapse: collapse; min-width: 640px; font-size: 13.5px; background: var(--surface); }
+  table.ledger th {
+    text-align: left; font-family: var(--font-mono); font-weight: 600; font-size: 11px;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft);
+    padding: 12px 16px; border-bottom: 1px solid var(--hairline); white-space: nowrap;
+  }
+  table.ledger td { padding: 12px 16px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+  table.ledger tr:last-child td { border-bottom: none; }
+  table.ledger td.mono { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+  table.ledger td.role { color: var(--ink-soft); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, var(--good) 16%, transparent);
+    color: var(--good); white-space: nowrap;
+  }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--good); }
+
+  /* ---------- audit table ---------- */
+  .sev { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 5px; white-space: nowrap; }
+  .sev.high { background: color-mix(in srgb, var(--critical) 16%, transparent); color: var(--critical); }
+  .sev.mid { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+  .sev.low { background: color-mix(in srgb, var(--jade) 16%, transparent); color: var(--jade); }
+
+  /* ---------- journal entries (prompt evolution) ---------- */
+  .journal { display: flex; flex-direction: column; }
+  .entry {
+    display: grid; grid-template-columns: 108px 1fr; gap: 22px;
+    padding: 26px 0; border-top: 1px solid var(--hairline);
+  }
+  .entry:last-child { padding-bottom: 0; }
+  .entry .stage {
+    font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft);
+    padding-top: 4px;
+  }
+  .entry .stage .num { display: block; font-size: 22px; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
+  .entry .tag {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .02em;
+    color: var(--violet); background: color-mix(in srgb, var(--violet) 14%, transparent);
+    padding: 3px 9px; border-radius: 999px; margin-bottom: 10px;
+  }
+  .entry .quote {
+    font-family: var(--font-display); font-size: 17.5px; line-height: 1.7;
+    color: var(--ink); border-left: 3px solid var(--gold); padding: 2px 0 2px 18px;
+    margin: 0 0 12px; text-wrap: balance;
+  }
+  .entry .note { font-size: 14.5px; color: var(--ink-soft); max-width: 62ch; }
+
+  /* ---------- closing ---------- */
+  .closing {
+    background: var(--surface); border: 1px solid var(--hairline); border-radius: 16px;
+    padding: 34px 30px;
+  }
+  .closing p { font-size: 15.5px; color: var(--ink-soft); max-width: 68ch; }
+  .closing p + p { margin-top: 14px; }
+  .closing strong { color: var(--ink); }
+  .next-list { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .next-list li {
+    font-size: 14px; color: var(--ink); padding-left: 20px; position: relative;
+  }
+  .next-list li::before {
+    content: "→"; position: absolute; left: 0; color: var(--gold); font-weight: 700;
+  }
+
+  footer.foot {
+    margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--hairline);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    font-size: 12px; color: var(--ink-soft); font-family: var(--font-mono);
+  }
+  footer.foot a { color: var(--ink-soft); }
+
+  @media (max-width: 640px) {
+    .entry { grid-template-columns: 1fr; gap: 6px; }
+    .entry .stage { display: flex; align-items: center; gap: 8px; }
+    .entry .stage .num { margin-bottom: 0; }
+  }
+</style>
+
+<div class="hero">
+  <span class="eyebrow"><span class="dot"></span>개발일지 · 기와장터 (GIWA Village)</span>
+  <h1 class="title">지갑 하나가 마을이 되기까지,<br>43시간의 기록</h1>
+  <p class="lede">
+    2026년 7월 18일 오후, 빈 저장소 하나로 시작해 7월 20일 오전까지 — 커밋 34개,
+    온체인 컨트랙트 10종. 이 문서는 그 사이 <b style="color:var(--ink)">무엇을 만들었는지</b>가 아니라
+    <b style="color:var(--ink)">어떤 질문들을 던지며 나아갔는지</b>를 실제 git 기록으로 되짚는다.
+  </p>
+  <div class="links">
+    <a href="https://hakhyun-kim.github.io/giwa-village/">🏮 라이브 데모</a>
+    <a href="./tech.html">기술 문서</a>
+    <a href="./audit.html">🔍 AI Self-Audit</a>
+    <a href="https://github.com/Hakhyun-Kim/giwa-village">GitHub 저장소</a>
+  </div>
+  <div class="byline">김학현 · Claude와의 페어 개발 세션 기록</div>
+</div>
+
+<div class="wrap">
+
+  <section>
+    <div class="kicker">한눈에</div>
+    <h2 class="h">숫자로 보는 43시간</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">34</div><div class="l">총 커밋 (공개 27 · 비공개 7)</div></div>
+      <div class="stat"><div class="n">10</div><div class="l">온체인 컨트랙트 · 전부 Verified</div></div>
+      <div class="stat"><div class="n">23,281</div><div class="l">누적 삽입 라인 (공개 저장소)</div></div>
+      <div class="stat"><div class="n">6 → 8</div><div class="l">서버리스 E2E 통과 (감사 전→후, /8)</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">활동 리듬</div>
+    <h2 class="h">두 번의 밤, 한 번의 아침</h2>
+    <p class="sub">
+      실제 커밋 시각을 3시간 단위 8개 구간으로 나눠 보면, 몰입이 언제 몰렸는지가 그대로 드러난다.
+      막대 위에 마우스를 올리면 구간별 세부 수치가 뜬다.
+    </p>
+    <div class="chart-card">
+      <div class="track-strip" aria-hidden="true"></div>
+      <div class="growth-wrap"><svg id="barChart" viewBox="0 0 900 260" style="width:100%;height:auto;overflow:visible"></svg></div>
+      <div class="legend-row">
+        <span><span class="sw" style="background:var(--gold)"></span>낮·저녁 시간대</span>
+        <span><span class="sw" style="background:var(--violet)"></span>자정 전후 (23시~새벽 1시)</span>
+      </div>
+      <p class="chart-note">
+        7/18 밤(21–24시)과 7/19 밤(21–23시) 두 번의 야간 몰입 구간이 뚜렷하다.
+        그 사이 새벽 1시부터 7시까지는 커밋이 없다 — 유일하게 완전히 빈 6시간, 짧은 휴식이다.
+        가장 큰 봉우리는 7/19 낮(12–15시) — 랜덤박스·모닥불·문양 공방 세 기능이 한 번에 쏟아진 구간.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">코드베이스</div>
+    <h2 class="h">코드가 자라난 모양</h2>
+    <p class="sub">
+      공개 저장소 27개 커밋의 누적 삽입 라인. 점을 지나가면 그 순간 무슨 커밋이었는지 뜬다.
+      초반의 급경사는 최초 스캐폴드(9,845줄)와 풀온체인 전환(+2,341줄) — 이후로는
+      완만하지만 꾸준한 계단이다.
+    </p>
+    <div class="chart-card">
+      <div class="growth-wrap"><svg id="growthChart" viewBox="0 0 900 320" style="width:100%;height:auto;overflow:visible"></svg></div>
+      <p class="chart-note">현재 코드베이스: 컨트랙트 1,601줄(Solidity 12개 파일, 현행 10종) · 클라이언트 11,060줄(56개 파일) · SDK 200줄 — 총 122개 파일 추적 중.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">무엇을 만들었나</div>
+    <h2 class="h">커밋 27개의 성격</h2>
+    <p class="sub">각 커밋을 네 갈래로 분류했다. 가장 큰 비중은 뜻밖에도 기능이 아니라 <b style="color:var(--ink)">문서·온보딩</b>이다 — 매 기능 뒤에 설명과 시연을 다시 맞추는 작업이 반복됐다는 뜻.</p>
+    <div class="chart-card">
+      <div class="cat-list" id="catList"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">온체인 원장</div>
+    <h2 class="h">컨트랙트 10종 배포 기록</h2>
+    <p class="sub">전부 GIWA Sepolia에 배포되고 Blockscout에서 소스 검증됨. 등장 순서는 기능이 확장된 순서와 같다.</p>
+    <div class="table-scroll">
+      <table class="ledger" id="ledgerTable">
+        <thead><tr><th>#</th><th>시각</th><th>컨트랙트</th><th>역할</th><th>상태</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">품질</div>
+    <h2 class="h">스스로 감사한 결과</h2>
+    <p class="sub">개발에 쓴 AI가 감사자로 전환해 코드를 다시 읽고 찾은 결함. 발견·수정·미해결 한계를 전부 공개했다 (<a href="./audit.html">audit.html</a>).</p>
+    <div class="table-scroll">
+      <table class="ledger">
+        <thead><tr><th>심각도</th><th>결함</th><th>조치</th></tr></thead>
+        <tbody>
+          <tr><td><span class="sev high">높음</span></td><td class="role">ERC-1155 스펙 위반 — batch 함수 누락</td><td class="role">복원·재배포</td></tr>
+          <tr><td><span class="sev high">높음</span></td><td class="role">던전 settleRun 권한 검증 누락</td><td class="role">입장자 기록·검증 추가</td></tr>
+          <tr><td><span class="sev high">높음</span></td><td class="role">비컨-거래 tx nonce 경합 (실측 소실)</td><td class="role">지갑 쓰기 직렬화 큐 도입</td></tr>
+          <tr><td><span class="sev mid">중간</span></td><td class="role">결정론 던전 결과의 오프라인 탐색 가능성</td><td class="role">구조적 한계로 문서화</td></tr>
+          <tr><td><span class="sev low">낮음</span></td><td class="role">비컨 좌표 무검증</td><td class="role">월드 반경 클램프</td></tr>
+          <tr><td><span class="sev low">낮음</span></td><td class="role">자체 도입 RPC 배칭이 GIWA 노드에서 거부됨</td><td class="role">롤백·금지 주석</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">핵심 · 프롬프트의 진화</div>
+    <h2 class="h">무엇을 배웠는가</h2>
+    <p class="sub">
+      이 문서의 진짜 요지는 커밋이 아니라 <b style="color:var(--ink)">질문이 달라진 방식</b>이다.
+      아래는 실제로 오간 요청을 시간순 그대로 발췌한 것 — 각 단계가 드러내는 감각을 짧게 덧붙였다.
+    </p>
+    <div class="journal">
+
+      <article class="entry">
+        <div class="stage"><span class="num">01</span>07/18 저녁</div>
+        <div>
+          <span class="tag">신뢰 기반 위임</span>
+          <p class="quote">"다음 할 거 진행해줘"</p>
+          <p class="note">아직은 "무엇을 만들지"가 아니라 "무엇부터 할지"를 묻는 단계. 저장된 우선순위를 믿고 큰 그림을 맡기며 시작했다.</p>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="stage"><span class="num">02</span>07/18 밤</div>
+        <div>
+          <span class="tag">관찰 가능한 증거</span>
+          <p class="quote">"실시간으로 키조작 없이 서버/클라이언트 열고, 상점 열고 등등 작업 → 테스터가 별다른 설명 없이 보고만 있어도 필요한 작업을 바로 하게"</p>
+          <p class="note">말로 된 결과 보고가 아니라, 무조작으로 굴러가는 걸 직접 보고 싶다는 요구. 이후 모든 기능에 자동 시연(showcase)·E2E 검증이 따라붙는 습관의 출발점.</p>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="stage"><span class="num">03</span>07/19 새벽</div>
+        <div>
+          <span class="tag">제품 경계·리스크 감각</span>
+          <p class="quote">"audit 을 스스로 한다고 생각하고 코드 보고 한번 수정필요하면 해줘. tech 문서등에서는 라그나로크 언급할 필요없을듯 … 업비트와 협업이 필요하거나 서버가 필요한 부분은 배제하려고 해. 외부 의존도를 줄여서 최대한 개발"</p>
+          <p class="note">기능을 더 얹는 게 아니라 무엇을 <i>하지 않을지</i>를 먼저 그었다. 자체 감사, 상표/IP 리스크, 외부 의존성 — 서로 다른 세 종류의 리스크를 한 호흡에 짚어낸 지점.</p>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="stage"><span class="num">04</span>07/19 낮</div>
+        <div>
+          <span class="tag">시스템을 직접 설계</span>
+          <p class="quote">"위치는 1초에 1번 정도 받아서 방향 예측해서 움직여 보면 어떨까? 대충 어느 상점으로 향한다는 걸로 받아도 좋고."</p>
+          <p class="note">이건 요청이 아니라 설계다 — 멀티플레이어 게임의 표준 기법인 데드레커닝(위치 예측 보간)을 스스로 제시했다. 온체인 제약(가스비·트랜잭션 빈도) 위에서 20년 게임엔진 경력이 정확히 재조준된 순간.</p>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="stage"><span class="num">05</span>07/19 낮</div>
+        <div>
+          <span class="tag">비교 설계 · 제품 비평</span>
+          <p class="quote">"왜 지갑에서 친구 목록 대신 여기에 와서 즐기고 놀고 하는지 … 마비노기 모닥불 같은 예시도 검토해주고 … 리니지 온라인 … 로블록스나, 마인크래프트 추가로 더 필요한 내용들도 검토해줘"</p>
+          <p class="note">기능이 아니라 "왜 다시 오는가"를 물었다. 세대가 다른 MMO 넷을 온체인이라는 새 제약 위에 겹쳐 놓고 재미의 근원을 해부 — 결과로 모닥불·장날·길드 깃발·도깨비 토벌이 나왔다.</p>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="stage"><span class="num">06</span>07/19 저녁</div>
+        <div>
+          <span class="tag">인프라 재정의</span>
+          <p class="quote">"길드시스템을 좀 더 확장해서 온체인 저장되어있으니까 외부에서도 길드원들의 정보를 읽을 수 있는등 확장 가능한 시스템으로 … 시스템적인 구현 SDK 구현에 가까울수도"</p>
+          <p class="note">온체인 저장이 곧 "누구나 읽을 수 있다"는 함의를 스스로 도출하고, 정확한 이름(SDK)까지 붙였다. GiwaProfile 애그리게이터와 <span style="font-family:var(--font-mono);font-size:.9em">@giwa-village/sdk</span>로 이어졌다.</p>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="stage"><span class="num">07</span>07/19 밤</div>
+        <div>
+          <span class="tag">정보 설계 · UX 감각</span>
+          <p class="quote">"UI 등이 편리한지, 줄일부분은 없는지 … RPG 의 퀘스트 형식 어떨까?"</p>
+          <p class="note">기능이 쌓이며 생긴 진입장벽(HUD 7버튼)을 스스로 감지하고, 익숙한 UX 어휘로 구체적 해법을 제시했다. HUD는 4버튼으로, 온보딩은 촌장의 부탁 7단계 퀘스트로 정리됐다.</p>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="stage"><span class="num">08</span>지금</div>
+        <div>
+          <span class="tag">회고 · 지도 갱신 습관</span>
+          <p class="quote">"문서 정리된 건지? 아니면 정리해줘~" — 그리고 "내가 어떻게 공부하고, 학습하고, 결과적으로 좋아졌는지 중점"</p>
+          <p class="note">코드보다 지도(문서)가 먼저 낡지 않았는지 확인하는 습관, 그리고 그 과정 자체를 되짚어보려는 습관. 이 문서 자체가 그 여덟 번째 단계다.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="kicker">맺음</div>
+    <div class="closing">
+      <p>
+        43시간 동안 바뀐 것은 코드량이 아니라 <strong>질문의 위치</strong>다. 초반엔 "다음에 뭘 할까"를
+        맡겼고, 중반엔 "이건 하지 말자"는 경계를 그었고, 후반엔 "이게 왜 재밌어야 하는가"를
+        스스로 따졌다. 라그나로크에서 시작해 마비노기·리니지·로블록스를 가로지른 검토,
+        그리고 온체인 저장이 SDK가 된다는 통찰은 20년 게임엔진 경력이 새로운 제약(가스비,
+        소울바운드, 서버 없는 신뢰) 위에서 다시 작동한 결과였다.
+      </p>
+      <p>다음 장은 이미 정해져 있다:</p>
+      <ul class="next-list">
+        <li>다가오는 토요일 21시(KST) — 장날 실전에서 온기·도깨비 데미지 2배가 라이브로 도는지 확인</li>
+        <li>RPC 읽기 캐시·인덱서·구역 샤딩 (기술 문서 §7 스케일 로드맵)</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>기와장터 개발일지 · 실제 git 기록 기반 · <a href="https://github.com/Hakhyun-Kim/giwa-village">GitHub</a></span>
+    <span id="genTime"></span>
+  </footer>
+</div>
+
+<div class="tooltip" id="tip"></div>
+
+<script>
+(function () {
+  "use strict";
+  var tip = document.getElementById("tip");
+  function showTip(x, y, html) {
+    tip.innerHTML = html;
+    tip.style.left = x + "px";
+    tip.style.top = (y - 12) + "px";
+    tip.classList.add("on");
+  }
+  function hideTip() { tip.classList.remove("on"); }
+
+  /* ---------------- bar chart: commits by 3h window ---------------- */
+  var barData = [
+    { label: "7/18 오후", sub: "15–18시", n: 3, night: false },
+    { label: "7/18 저녁", sub: "18–21시", n: 6, night: false },
+    { label: "7/18 밤",   sub: "21–24시", n: 5, night: true },
+    { label: "7/19 새벽", sub: "00–01시", n: 2, night: true },
+    { label: "7/19 아침", sub: "07–09시", n: 4, night: false },
+    { label: "7/19 낮",   sub: "12–15시", n: 8, night: false },
+    { label: "7/19 밤",   sub: "21–23시", n: 4, night: true },
+    { label: "7/20 오전", sub: "10–11시", n: 2, night: false }
+  ];
+  (function renderBars() {
+    var svg = document.getElementById("barChart");
+    var W = 900, H = 260, padL = 34, padR = 10, padT = 20, padB = 44;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxN = Math.max.apply(null, barData.map(function (d) { return d.n; }));
+    var n = barData.length;
+    var gap = 14;
+    var bw = (plotW - gap * (n - 1)) / n;
+    var ns = "http://www.w3.org/2000/svg";
+    function el(tag, attrs) {
+      var e = document.createElementNS(ns, tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+    [0, 2, 4, 6, 8].forEach(function (v) {
+      var y = padT + plotH - (v / maxN) * plotH;
+      svg.appendChild(el("line", { x1: padL, x2: W - padR, y1: y, y2: y, class: "grid-line" }));
+      var t = el("text", { x: padL - 8, y: y + 4, "text-anchor": "end", "font-size": 10.5 });
+      t.textContent = v;
+      svg.appendChild(t);
+    });
+    barData.forEach(function (d, i) {
+      var x = padL + i * (bw + gap);
+      var h = (d.n / maxN) * plotH;
+      var y = padT + plotH - h;
+      var rect = el("rect", {
+        x: x, y: y, width: bw, height: Math.max(h, 3), rx: 6,
+        class: "bar-rect" + (d.night ? " night" : "")
+      });
+      svg.appendChild(rect);
+      var val = el("text", { x: x + bw / 2, y: y - 8, "text-anchor": "middle", class: "bar-val" });
+      val.textContent = d.n;
+      svg.appendChild(val);
+      var lbl = el("text", { x: x + bw / 2, y: padT + plotH + 18, "text-anchor": "middle", class: "bar-lbl" });
+      lbl.textContent = d.label;
+      svg.appendChild(lbl);
+      var sub = el("text", { x: x + bw / 2, y: padT + plotH + 32, "text-anchor": "middle", class: "bar-lbl", opacity: .7 });
+      sub.textContent = d.sub;
+      svg.appendChild(sub);
+
+      rect.addEventListener("mouseenter", function (ev) {
+        var r = svg.getBoundingClientRect();
+        var scale = r.width / W;
+        var px = r.left + (x + bw / 2) * scale + window.scrollX;
+        var py = r.top + y * scale + window.scrollY;
+        showTip(px, py, "<b>" + d.label + " (" + d.sub + ")</b><br>커밋 " + d.n + "개" + (d.night ? "<br>야간 몰입 구간" : ""));
+      });
+      rect.addEventListener("mouseleave", hideTip);
+    });
+  })();
+
+  /* ---------------- growth area chart: cumulative insertions ---------------- */
+  var growth = [
+    [9845, "74d2032", "07-18 15:46", "최초 스캐폴드"],
+    [10967, "1d46842", "07-18 15:57", "MarketV2: 에스크로+쿠폰"],
+    [11175, "5287064", "07-18 17:57", "기술 문서 원페이저"],
+    [11176, "442073a", "07-18 18:32", "gitignore 정리"],
+    [11205, "3c85df2", "07-18 19:43", "nonce 순차화"],
+    [11261, "5957aa8", "07-18 19:43", "포셋 자동 오픈"],
+    [11328, "9bf6795", "07-18 19:52", "머신 공유 버너"],
+    [12913, "e1f57cc", "07-18 20:43", "쇼케이스+길드+던전"],
+    [15254, "0dd4d4e", "07-18 22:22", "풀온체인 서버리스 전환"],
+    [15352, "5907168", "07-18 22:42", "지갑 충전"],
+    [15370, "384a266", "07-18 22:52", "영상+RPC 최적화"],
+    [16099, "287ff55", "07-18 23:04", "칭호+분쟁 처리"],
+    [16512, "a606d72", "07-18 23:25", "장부+소각+등반왕"],
+    [16838, "27c11da", "07-19 00:22", "셀프 감사"],
+    [17910, "3d49cb4", "07-19 07:27", "모듈 분리+감사 문서"],
+    [18150, "1914415", "07-19 07:56", "쿠폰 선물"],
+    [18938, "8a5d057", "07-19 08:09", "온체인 흥정"],
+    [18944, "f3acc29", "07-19 12:25", "명칭 정리"],
+    [19476, "ea8624d", "07-19 12:45", "랜덤박스"],
+    [20082, "593da90", "07-19 13:48", "모닥불+장날+깃발"],
+    [21082, "b28f36c", "07-19 14:06", "문양 공방"],
+    [21406, "2650798", "07-19 14:23", "문서 대개편"],
+    [21406, "51615a2", "07-19 14:27", "시연 영상"],
+    [22779, "4c711d2", "07-19 21:49", "HUD+도깨비+SDK"],
+    [23035, "791d883", "07-19 22:02", "퀘스트 온보딩"],
+    [23229, "e88e5ce", "07-19 22:13", "모바일 조작"],
+    [23281, "86bee8f", "07-20 10:27", "문서 정리 (현재)"]
+  ];
+  (function renderGrowth() {
+    var svg = document.getElementById("growthChart");
+    var W = 900, H = 320, padL = 56, padR = 20, padT = 24, padB = 30;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxV = growth[growth.length - 1][0];
+    var n = growth.length;
+    var ns = "http://www.w3.org/2000/svg";
+    function el(tag, attrs) {
+      var e = document.createElementNS(ns, tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+    function xAt(i) { return padL + (i / (n - 1)) * plotW; }
+    function yAt(v) { return padT + plotH - (v / maxV) * plotH; }
+
+    [0, 5000, 10000, 15000, 20000].forEach(function (v) {
+      var y = yAt(v);
+      svg.appendChild(el("line", { x1: padL, x2: W - padR, y1: y, y2: y, class: "grid-line" }));
+      var t = el("text", { x: padL - 10, y: y + 4, "text-anchor": "end", "font-size": 10.5 });
+      t.textContent = v.toLocaleString();
+      svg.appendChild(t);
+    });
+
+    var gradId = "areaGrad";
+    var defs = el("defs", {});
+    var grad = el("linearGradient", { id: gradId, x1: 0, y1: 0, x2: 0, y2: 1 });
+    grad.appendChild(el("stop", { offset: "0%", "stop-color": "var(--gold)", "stop-opacity": .32 }));
+    grad.appendChild(el("stop", { offset: "100%", "stop-color": "var(--gold)", "stop-opacity": 0 }));
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+
+    var linePts = growth.map(function (d, i) { return xAt(i) + "," + yAt(d[0]); }).join(" ");
+    var areaPts = "M" + xAt(0) + "," + yAt(0) + " L" + linePts.split(" ").join(" L") +
+      " L" + xAt(n - 1) + "," + (padT + plotH) + " L" + xAt(0) + "," + (padT + plotH) + " Z";
+    svg.appendChild(el("path", { d: areaPts, fill: "url(#" + gradId + ")", stroke: "none" }));
+    svg.appendChild(el("polyline", { points: linePts, fill: "none", stroke: "var(--gold)", "stroke-width": 2 }));
+
+    var endX = xAt(n - 1), endY = yAt(growth[n - 1][0]);
+    svg.appendChild(el("circle", { cx: endX, cy: endY, r: 4.5, fill: "var(--gold)" }));
+    var endLbl = el("text", { x: endX - 8, y: endY - 12, "text-anchor": "end", class: "growth-end-label" });
+    endLbl.textContent = "23,281줄";
+    svg.appendChild(endLbl);
+
+    var crosshair = el("line", { x1: 0, x2: 0, y1: padT, y2: padT + plotH, class: "growth-crosshair" });
+    svg.appendChild(crosshair);
+    var hoverDot = el("circle", { r: 5, class: "growth-dot" });
+    svg.appendChild(hoverDot);
+
+    var hitRect = el("rect", { x: padL, y: padT, width: plotW, height: plotH, fill: "transparent" });
+    svg.appendChild(hitRect);
+
+    hitRect.addEventListener("mousemove", function (ev) {
+      var r = svg.getBoundingClientRect();
+      var scale = r.width / W;
+      var mx = (ev.clientX - r.left) / scale;
+      var idx = Math.round(((mx - padL) / plotW) * (n - 1));
+      idx = Math.max(0, Math.min(n - 1, idx));
+      var d = growth[idx];
+      var px = xAt(idx), py = yAt(d[0]);
+      crosshair.setAttribute("x1", px); crosshair.setAttribute("x2", px);
+      crosshair.setAttribute("opacity", 1);
+      hoverDot.setAttribute("cx", px); hoverDot.setAttribute("cy", py); hoverDot.setAttribute("opacity", 1);
+      var tx = r.left + px * scale + window.scrollX;
+      var ty = r.top + py * scale + window.scrollY;
+      showTip(tx, ty, "<b>" + d[2] + "</b> · " + d[3] + "<br>누적 " + d[0].toLocaleString() + "줄 <span style='opacity:.6'>(" + d[1] + ")</span>");
+    });
+    hitRect.addEventListener("mouseleave", function () {
+      crosshair.setAttribute("opacity", 0);
+      hoverDot.setAttribute("opacity", 0);
+      hideTip();
+    });
+  })();
+
+  /* ---------------- category bars ---------------- */
+  var cats = [
+    { label: "UX · 온보딩", n: 9, color: "var(--violet)" },
+    { label: "온체인 인프라", n: 8, color: "var(--brick)" },
+    { label: "거래 · 경제", n: 7, color: "var(--gold)" },
+    { label: "코업 · 소셜", n: 3, color: "var(--jade)" }
+  ];
+  (function renderCats() {
+    var wrap = document.getElementById("catList");
+    var max = Math.max.apply(null, cats.map(function (c) { return c.n; }));
+    cats.forEach(function (c) {
+      var row = document.createElement("div");
+      row.className = "cat-row";
+      row.innerHTML =
+        '<div class="cat-label">' + c.label + "</div>" +
+        '<div class="cat-track"><div class="cat-fill" style="width:' + (c.n / max * 100) + "%;background:" + c.color + ';"></div></div>' +
+        '<div class="cat-n">' + c.n + "</div>";
+      wrap.appendChild(row);
+    });
+  })();
+
+  /* ---------------- contract ledger ---------------- */
+  var ledger = [
+    [1, "07-18 15:57", "GiwaMarketV2", "에스크로 + ERC-1155 쿠폰 (초기 버전)"],
+    [2, "07-18 22:22", "GiwaMarketV3", "노점 레지스트리 + 에스크로 + 쿠폰 (현행)"],
+    [3, "07-18 22:22", "GiwaGuilds", "길드 · 백층 던전 (블록해시 시드)"],
+    [4, "07-18 22:22", "GiwaPresence", "저장 없는 위치+속도 비컨"],
+    [5, "07-18 23:04", "GiwaHonors", "소울바운드 칭호 5종"],
+    [6, "07-19 08:09", "GiwaOffers", "흥정 에스크로"],
+    [7, "07-19 12:45", "GiwaBoxes", "랜덤박스 · 소울바운드 장신구 8종"],
+    [8, "07-19 13:48", "GiwaHearth", "모닥불 온기 · 장날"],
+    [9, "07-19 14:06", "GiwaWorkshop", "문양 공방 UGC"],
+    [10, "07-19 21:49", "GiwaBoss", "주간 도깨비 토벌"],
+    [11, "07-19 21:49", "GiwaProfile", "소셜 프로필 애그리게이터 (SDK 진입점)"]
+  ];
+  (function renderLedger() {
+    var tbody = document.querySelector("#ledgerTable tbody");
+    ledger.forEach(function (row) {
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td class=\"mono\">" + row[0] + "</td>" +
+        "<td class=\"mono\">" + row[1] + "</td>" +
+        "<td><strong>" + row[2] + "</strong></td>" +
+        "<td class=\"role\">" + row[3] + "</td>" +
+        "<td><span class=\"pill\">Verified</span></td>";
+      tbody.appendChild(tr);
+    });
+  })();
+
+  document.getElementById("genTime").textContent =
+    "생성 2026-07-20";
+})();
+</script>
