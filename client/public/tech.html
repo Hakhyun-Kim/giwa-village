@@ -137,17 +137,19 @@
       <text x="119" y="262" fill="#cfd6e2" font-size="11.5" text-anchor="middle">다른 방문자 — 같은 체인을</text>
       <text x="119" y="280" fill="#cfd6e2" font-size="11.5" text-anchor="middle">폴링해 서로를 본다</text>
       <!-- 체인 패널 -->
-      <rect x="470" y="26" width="326" height="288" rx="12" fill="#2b2f36" stroke="#d9a441"/>
-      <text x="633" y="50" fill="#d9a441" font-size="14" font-weight="700" text-anchor="middle">GIWA Sepolia · 컨트랙트 8종 (Verified)</text>
+      <rect x="470" y="12" width="326" height="316" rx="12" fill="#2b2f36" stroke="#d9a441"/>
+      <text x="633" y="34" fill="#d9a441" font-size="14" font-weight="700" text-anchor="middle">GIWA Sepolia · 컨트랙트 10종 (Verified)</text>
       <g font-size="11.5" fill="#eef2f8">
-        <rect x="486" y="62" width="140" height="34" rx="7" fill="#3b4048"/><text x="556" y="83" text-anchor="middle">MarketV3 · 노점/쿠폰</text>
-        <rect x="640" y="62" width="140" height="34" rx="7" fill="#3b4048"/><text x="710" y="83" text-anchor="middle">Guilds · 던전</text>
-        <rect x="486" y="104" width="140" height="34" rx="7" fill="#3b4048"/><text x="556" y="125" text-anchor="middle">Offers · 흥정</text>
-        <rect x="640" y="104" width="140" height="34" rx="7" fill="#3b4048"/><text x="710" y="125" text-anchor="middle">Honors · 칭호</text>
-        <rect x="486" y="146" width="140" height="34" rx="7" fill="#3b4048"/><text x="556" y="167" text-anchor="middle">Boxes · 랜덤박스</text>
-        <rect x="640" y="146" width="140" height="34" rx="7" fill="#3b4048"/><text x="710" y="167" text-anchor="middle">Workshop · 문양</text>
-        <rect x="486" y="188" width="140" height="34" rx="7" fill="#3b4048"/><text x="556" y="209" text-anchor="middle">Hearth · 모닥불</text>
-        <rect x="640" y="188" width="140" height="34" rx="7" fill="#2f3d4a"/><text x="710" y="209" text-anchor="middle" fill="#8fe8e0">Presence · 비컨</text>
+        <rect x="486" y="44" width="140" height="30" rx="7" fill="#3b4048"/><text x="556" y="63" text-anchor="middle">MarketV3 · 노점/쿠폰</text>
+        <rect x="640" y="44" width="140" height="30" rx="7" fill="#3b4048"/><text x="710" y="63" text-anchor="middle">Guilds · 던전</text>
+        <rect x="486" y="80" width="140" height="30" rx="7" fill="#3b4048"/><text x="556" y="99" text-anchor="middle">Offers · 흥정</text>
+        <rect x="640" y="80" width="140" height="30" rx="7" fill="#3b4048"/><text x="710" y="99" text-anchor="middle">Honors · 칭호</text>
+        <rect x="486" y="116" width="140" height="30" rx="7" fill="#3b4048"/><text x="556" y="135" text-anchor="middle">Boxes · 랜덤박스</text>
+        <rect x="640" y="116" width="140" height="30" rx="7" fill="#3b4048"/><text x="710" y="135" text-anchor="middle">Workshop · 문양</text>
+        <rect x="486" y="152" width="140" height="30" rx="7" fill="#3b4048"/><text x="556" y="171" text-anchor="middle">Hearth · 모닥불</text>
+        <rect x="640" y="152" width="140" height="30" rx="7" fill="#3b4048"/><text x="710" y="171" text-anchor="middle">Boss · 도깨비</text>
+        <rect x="486" y="188" width="140" height="30" rx="7" fill="#3d3a2c"/><text x="556" y="207" text-anchor="middle" fill="#ffd66b">Profile · SDK 집계</text>
+        <rect x="640" y="188" width="140" height="30" rx="7" fill="#2f3d4a"/><text x="710" y="207" text-anchor="middle" fill="#8fe8e0">Presence · 비컨</text>
       </g>
       <line x1="486" y1="238" x2="780" y2="238" stroke="#4a5160" stroke-dasharray="3 3"/>
       <text x="633" y="258" fill="#9aa2ae" font-size="11" text-anchor="middle">읽기 전용 연동 (외부 발행)</text>
@@ -169,7 +171,7 @@
     용도로만 붙일 수 있고, 없어도 마을은 돕니다 (<a href="#scale">스케일 로드맵</a> 참고).
   </p>
 
-  <h2><span class="n">2</span>온체인 컴포넌트 (8종 · 전부 Verified)</h2>
+  <h2><span class="n">2</span>온체인 컴포넌트 (10종 · 전부 Verified)</h2>
   <table>
     <tr><th>컨트랙트</th><th>역할</th><th>주소</th></tr>
     <tr><td><b>GiwaMarketV3</b></td><td>노점 레지스트리(개설+가격 단일 tx)·에스크로(분쟁/환불)·ERC-1155 쿠폰(선물·소각)</td>
@@ -295,6 +297,16 @@
       유저가 8×8 문양을 그려 온체인 등록·판매·착용. 창작물 거래는
       보상이 아니므로 안전선과 양립 — 경제의 상류가 생깁니다.
     </div>
+    <div class="card">
+      <b class="t">🧿 도깨비 토벌 (함께 싸울 상대)</b>
+      광장의 주간 보스를 함께 때려잡습니다 — 데미지는 블록해시 롤+온기 보정,
+      장날 2배. 개인·길드 기여가 온체인에 쌓이고 소울바운드 전리품을 받습니다.
+    </div>
+    <div class="card">
+      <b class="t">🏮 촌장의 부탁 (온보딩)</b>
+      첫 방문 7단계 RPG 퀘스트가 걷기→노점 구경→모닥불→ETH 받기→첫 구매를
+      촌장의 대사로 안내합니다. 모바일은 가상 조이스틱으로 조작.
+    </div>
   </div>
   <p style="font-size:13.5px; color:#6b7280; margin-top:10px">
     노점은 주인이 접속을 끊어도 마을에 남습니다(레지스트리·가격 모두 온체인) —
@@ -307,7 +319,7 @@
     <div class="card">
       <b class="t">스택</b>
       클라이언트: React Three Fiber(three.js) · zustand · viem<br/>
-      컨트랙트: Solidity 0.8.36 · 8종 (ERC-1155 자체 구현 포함, 외부 의존성 0)<br/>
+      컨트랙트: Solidity 0.8.36 · 10종 (ERC-1155 자체 구현 포함, 외부 의존성 0)<br/>
       서버: <b>없음</b> (선택적 Colyseus는 성능 캐시용) · 배포: GitHub Actions → Pages<br/>
       코드: <code>src/chain/&lt;모듈&gt;.ts</code>가 컨트랙트와 1:1 대응
     </div>
