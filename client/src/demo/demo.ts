@@ -6,6 +6,7 @@ import { useStore, remoteTargets } from "../state/store";
 import { FAUCET_URL } from "../config/giwa";
 import { adoptLocalBurner, colorFromString } from "../wallet/wallet";
 import { DEMO_STALLS, DEMO_NPCS } from "./demoData";
+import { randomLine } from "./personas";
 import { startOnchainVillage } from "../chain/village";
 import type { PlayerInfo, Stall } from "../types";
 
@@ -27,6 +28,14 @@ function timedEmote(id: string, icon: string, ms = 2200) {
   s.setEmote(id, icon);
   const at = useStore.getState().emotes[id]?.at;
   if (at) setTimeout(() => useStore.getState().clearEmote(id, at), ms);
+}
+
+/** 페르소나 한마디 — 읽을 시간이 있어야 하므로 이모트보다 오래 띄운다 */
+function timedSay(id: string, text: string, ms = 4200) {
+  const s = useStore.getState();
+  s.setSay(id, text);
+  const at = useStore.getState().says[id]?.at;
+  if (at) setTimeout(() => useStore.getState().clearSay(id, at), ms);
 }
 
 export async function startDemo(localPos: LocalPos): Promise<void> {
@@ -137,6 +146,12 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
     const n = npcs[Math.floor(Math.random() * npcs.length)];
     timedEmote(n.id, EMOTES[Math.floor(Math.random() * EMOTES.length)]);
   }, 9000);
+
+  // 페르소나 한마디 — 이모트와 어긋나게 돌려 광장이 시끄러워지지 않게 한다
+  setInterval(() => {
+    const i = Math.floor(Math.random() * npcs.length);
+    timedSay(npcs[i].id, randomLine(DEMO_NPCS[i]));
+  }, 13000);
 
   // 풀온체인 레이어: 노점·길드·던전·프레즌스를 체인에서 직접 읽고 쓴다
   startOnchainVillage(localPos);

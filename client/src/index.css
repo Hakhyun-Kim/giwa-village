@@ -227,6 +227,24 @@ body,
   user-select: none;
 }
 
+/* 주민 페르소나 한마디 — 이름표보다 한 톤 밝은 한지 느낌 */
+.speech-bubble {
+  max-width: 190px;
+  padding: 5px 9px;
+  border-radius: 10px;
+  background: rgba(248, 243, 230, 0.94);
+  color: #2e2a24;
+  border: 1px solid rgba(120, 100, 70, 0.35);
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
+  pointer-events: none;
+  user-select: none;
+  animation: emote-pop 0.25s ease-out;
+}
+
 @keyframes emote-pop {
   from {
     transform: scale(0.3);
@@ -884,6 +902,38 @@ body,
   margin-top: 4px;
   font-size: 11.5px;
   color: #ffd66b;
+}
+
+.hud-ambient {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  font-size: 11px;
+  color: #b9c2d4;
+}
+
+.hud-sound {
+  /* .hud는 pointer-events:none이라 클릭을 받으려면 여기서 되살려야 한다 */
+  pointer-events: auto;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #b9c2d4;
+  border-radius: 6px;
+  padding: 2px 7px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.hud-sound:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hud-sound.on {
+  color: #ffd66b;
+  border-color: rgba(255, 214, 107, 0.45);
+  background: rgba(255, 214, 107, 0.12);
 }
 
 .flag-label {

@@ -12,6 +12,8 @@ import { loadCoupons } from "../state/coupons";
 import { isDojangVerified, fundBurnerFromInjected } from "../wallet/wallet";
 import { refreshBeaconBudget, marketDayLabel } from "../chain/village";
 import { useUpidName } from "../wallet/upid";
+import { currentDaylight } from "../game/daylight";
+import { ambiencePreference, setAmbience } from "../audio/ambience";
 
 function StallButtons({ walletAddress }: { walletAddress: string }) {
   const myStall = useStore((s) =>
@@ -141,11 +143,39 @@ export default function Hud() {
   const boss = useStore((s) => s.boss);
   const pendingTx = useStore((s) => s.pendingTx);
   const [festival, setFestival] = useState(() => marketDayLabel());
+  const [phase, setPhase] = useState(() => currentDaylight().label);
+  const [soundOn, setSoundOn] = useState(false);
 
   useEffect(() => {
-    const id = setInterval(() => setFestival(marketDayLabel()), 60000);
+    const id = setInterval(() => {
+      setFestival(marketDayLabel());
+      setPhase(currentDaylight().label);
+    }, 60000);
     return () => clearInterval(id);
   }, []);
+
+  // 지난 방문에 켜 뒀다면 상태를 복원한다. 다만 자동재생 정책상 소리는
+  // 사용자가 화면을 한 번 건드린 뒤에야 날 수 있어, 첫 입력까지 기다린다.
+  useEffect(() => {
+    if (!ambiencePreference()) return;
+    setSoundOn(true);
+    const start = () => {
+      void setAmbience(true);
+      window.removeEventListener("pointerdown", start);
+      window.removeEventListener("keydown", start);
+    };
+    window.addEventListener("pointerdown", start);
+    window.addEventListener("keydown", start);
+    return () => {
+      window.removeEventListener("pointerdown", start);
+      window.removeEventListener("keydown", start);
+    };
+  }, []);
+
+  async function toggleSound() {
+    const next = !soundOn;
+    setSoundOn(await setAmbience(next));
+  }
   const selfDojang = useStore((s) => s.selfDojang);
   const myUpid = useUpidName(walletAddress);
   const [busy, setBusy] = useState(false);
@@ -211,6 +241,16 @@ export default function Hud() {
           {status === "connected" && ` · ${onlineCount}명`}
         </div>
         <div className="hud-festival">{festival}</div>
+        <div className="hud-ambient">
+          <span title="마을 시각은 한국 시간(KST)을 따릅니다">🕰 {phase}</span>
+          <button
+            className={`hud-sound${soundOn ? " on" : ""}`}
+            onClick={toggleSound}
+            title={soundOn ? "풍류 끄기" : "풍류 켜기 (즉석 생성 국악풍 배경음)"}
+          >
+            {soundOn ? "🎵" : "🔇"} 풍류
+          </button>
+        </div>
         {pendingTx > 0 && (
           <div className="hud-txchip">⛓ 체인 처리 중 {pendingTx > 1 ? pendingTx : ""}</div>
         )}

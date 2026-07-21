@@ -98,17 +98,6 @@ export const DEMO_STALLS: Stall[] = [
   },
 ];
 
-export interface DemoNpc {
-  name: string;
-  address: string;
-  home: [number, number];
-}
-
-export const DEMO_NPCS: DemoNpc[] = [
-  { name: "보부상 두칠", address: "0xd3371DcdF259B196367e0DAa4B6770834913557b", home: [11.1, 4.5] },
-  { name: "주모 향단", address: "0xd3A7310471c3713291fF8AEc006B3BDE1037a623", home: [13.5, -2.9] },
-  { name: "떡장수 순이", address: "0xdEAA766E462e7959670a72461df4D7BC9FCbD408", home: [23.3, 5.9] },
-  { name: "방물장수 오씨", address: "0x74Ff8183A7D88F3A653Dd339f41D50a79dADa8aE", home: [30.2, 4.1] },
-  { name: "나그네 바람", address: "0xbe35Ff65F89EE3a22ceCF6c391F436F877c31d4f", home: [0, -8] },
-  { name: "길손 새벽", address: "0xd6fDE8B7D6de3D3297154F26A6811Cf24A7d2024", home: [-6, 6] },
-];
+// 주민 명단은 data/npcs.json이 단일 소스다 — 상인 봇도 같은 파일을 읽는다.
+export type { Persona as DemoNpc } from "./personas";
+export { PERSONAS as DEMO_NPCS } from "./personas";

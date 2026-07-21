@@ -1,7 +1,12 @@
-// 테스트 지갑 잔액 리포트 + 포셋 클레임 도우미.
-// --open 시 Google Cloud Sepolia 포셋을 열고 대상 주소를 클립보드에 복사한다
+// 테스트 지갑 · 상인 봇 지갑 잔액 리포트 + 포셋 클레임 도우미.
+// --open 시 포셋 페이지를 열고 대상 주소를 클립보드에 복사한다
 // (클레임 클릭은 사용자가 직접 — 포셋 자동 클레임은 하지 않는다).
-// Usage: node scripts/faucet-check.mjs [--open] [--slot A]
+//
+// Usage:
+//   node scripts/faucet-check.mjs                    # 테스트 지갑 A~D 리포트
+//   node scripts/faucet-check.mjs --bots             # + 상인 봇 지갑 리포트
+//   node scripts/faucet-check.mjs --open --slot A    # Sepolia(L1) 포셋 열기
+//   node scripts/faucet-check.mjs --open --bot hyangdan   # GIWA(L2) 포셋 열기
 import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -18,12 +23,20 @@ const SEPOLIA_RPC =
 const L1_LOW = parseEther("0.011"); // 브리지 1회분(0.01) + 가스
 const L2_LOW = parseEther("0.001");
 
+const GIWA_FAUCET = "https://faucet.giwa.io";
+
 const OPEN = process.argv.includes("--open");
 const slotArg = process.argv[process.argv.indexOf("--slot") + 1];
 const TARGET_SLOT =
   process.argv.includes("--slot") && /^[a-dA-D]$/.test(slotArg ?? "")
     ? slotArg.toUpperCase()
     : "A";
+// --bot <npcId|index> 를 주면 상인 봇 지갑을 대상으로 GIWA(L2) 포셋을 연다.
+// 봇은 L1을 거칠 이유가 없다 — 흥정 수락 tx 가스만 있으면 되므로 L2에 바로 받는다.
+const botArg = process.argv.includes("--bot")
+  ? process.argv[process.argv.indexOf("--bot") + 1]
+  : null;
+const SHOW_BOTS = process.argv.includes("--bots") || botArg !== null;
 
 const giwaSepolia = defineChain({
   id: 91342,
@@ -97,17 +110,73 @@ for (const w of wallets) {
   }
 }
 
+// ── 상인 봇 지갑 (L2 가스만 필요) ──────────────────────────────────────────
+// 봇은 흥정 수락 tx를 자기 지갑으로 보내므로 잔액 0이면 조용히 아무것도 못 한다.
+
+const bots = [];
+if (SHOW_BOTS) {
+  const botsFile = path.resolve(ROOT, ".botwallets.json");
+  const npcsFile = path.resolve(ROOT, "data", "npcs.json");
+  if (!fs.existsSync(botsFile)) {
+    console.log("\n`.botwallets.json`이 없습니다 — `npm run playtest` 최초 실행 시 생성됩니다.");
+  } else {
+    const botWallets = JSON.parse(fs.readFileSync(botsFile, "utf8"));
+    const npcs = fs.existsSync(npcsFile)
+      ? JSON.parse(fs.readFileSync(npcsFile, "utf8")).npcs.filter((n) => n.class === "merchant")
+      : [];
+    console.log("\n상인 봇 지갑 (GIWA L2 가스)\n");
+    console.log("id          이름            주소             GIWA(L2)");
+    for (const n of npcs) {
+      const w = botWallets[n.walletIndex];
+      if (!w) continue;
+      let bal = null;
+      try {
+        bal = await l2.getBalance({ address: w.address });
+      } catch {}
+      bots.push({ ...n, address: w.address, balance: bal });
+      console.log(
+        `  ${n.id.padEnd(10)} ${n.name.padEnd(13)} ${w.address.slice(0, 6)}…${w.address.slice(-4)}   ` +
+          (bal === null ? "조회실패" : formatEther(bal)),
+      );
+      if (bal !== null && bal < L2_LOW) {
+        advice.push(`[${n.id}] ${n.name} 가스 부족 → 흥정 수락 tx를 보낼 수 없습니다`);
+      }
+    }
+  }
+}
+
 if (advice.length) {
   console.log("\n조언:");
   for (const a of advice) console.log("  " + a);
+  if (bots.some((b) => b.balance !== null && b.balance < L2_LOW)) {
+    const funded = wallets.find((w) => w.slot === "A");
+    console.log(
+      `  ↳ 포셋은 주소당 24시간 제한이 있습니다. 슬롯 A(${funded?.slot ?? "A"})에 L2 잔액이 있으면\n` +
+        "    포셋 대신 거기서 바로 보내는 편이 빠릅니다 — 상인 1명당 0.002면 충분합니다.",
+    );
+  }
 }
 
 if (OPEN) {
-  const target = wallets.find((w) => w.slot === TARGET_SLOT);
+  // --bot 이 있으면 봇 지갑 + GIWA(L2) 포셋, 없으면 기존대로 슬롯 + Sepolia(L1) 포셋
+  const bot = botArg
+    ? bots.find((b) => b.id === botArg || String(b.walletIndex) === botArg)
+    : null;
+  if (botArg && !bot) {
+    console.error(
+      `\n--bot ${botArg} 를 찾지 못했습니다. 가능한 값: ${bots.map((b) => b.id).join(", ")}`,
+    );
+    process.exit(1);
+  }
+
+  const target = bot ?? wallets.find((w) => w.slot === TARGET_SLOT);
+  const label = bot ? `${bot.name} (${bot.id})` : `슬롯 ${TARGET_SLOT}`;
+  const url = bot ? GIWA_FAUCET : GOOGLE_FAUCET;
   const copied = copyToClipboard(target.address);
-  console.log(`\n[open] Google Sepolia 포셋을 엽니다 → 슬롯 ${TARGET_SLOT} 대상`);
-  console.log(`  주소${copied ? "가 클립보드에 복사되었습니다" : ": " + target.address}`);
+
+  console.log(`\n[open] ${bot ? "GIWA(L2)" : "Google Sepolia(L1)"} 포셋을 엽니다 → ${label} 대상`);
+  console.log(`  주소${copied ? "가 클립보드에 복사되었습니다" : ""}: ${target.address}`);
   console.log("  포셋 페이지에서 Ctrl+V 로 붙여넣고 클레임 버튼만 누르면 됩니다.");
-  console.log("  받은 뒤 GIWA로 옮기기: npm run bridge -- " + TARGET_SLOT + " 0.01");
-  openBrowser(GOOGLE_FAUCET);
+  if (!bot) console.log("  받은 뒤 GIWA로 옮기기: npm run bridge -- " + TARGET_SLOT + " 0.01");
+  openBrowser(url);
 }

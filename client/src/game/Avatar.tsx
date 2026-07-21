@@ -26,6 +26,8 @@ interface AvatarProps {
   color: number;
   name: string;
   emote?: string;
+  /** 페르소나 한마디 — 이모트와 달리 텍스트 말풍선으로 뜬다 */
+  say?: string;
   verified?: boolean;
   speedRef: React.RefObject<number>;
   variant?: AvatarVariant;
@@ -123,6 +125,7 @@ export default function Avatar({
   color,
   name,
   emote,
+  say,
   verified,
   speedRef,
   variant,
@@ -259,6 +262,13 @@ export default function Avatar({
       {emote && (
         <Html position={[0, 3.05, 0]} center distanceFactor={14} zIndexRange={[20, 0]}>
           <div className="emote-bubble">{emote}</div>
+        </Html>
+      )}
+
+      {/* 이모트가 떠 있으면 그 위로 비켜 준다 */}
+      {say && !emote && (
+        <Html position={[0, 3.0, 0]} center distanceFactor={14} zIndexRange={[19, 0]}>
+          <div className="speech-bubble">{say}</div>
         </Html>
       )}
     </group>

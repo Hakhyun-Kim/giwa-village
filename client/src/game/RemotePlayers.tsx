@@ -18,6 +18,7 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
   const speedRef = useRef(0);
   const initialized = useRef(false);
   const emote = useStore((s) => s.emotes[id]);
+  const say = useStore((s) => s.says[id]);
   const giftable = !!info.address;
   // UP.ID 이름이 있으면 서버 이름 대신 표시
   const upidName = useUpidName(info.address || null);
@@ -69,6 +70,7 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
         color={info.color}
         name={upidName ?? info.name}
         emote={emote?.icon}
+        say={say?.icon}
         verified={giftable}
         speedRef={speedRef}
         honor={info.honor}

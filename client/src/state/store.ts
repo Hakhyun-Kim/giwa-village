@@ -16,6 +16,8 @@ interface VillageStore {
   onlineCount: number;
   players: Record<string, PlayerInfo>;
   emotes: Record<string, EmoteEvent>;
+  /** 주민이 흘리는 한마디 (이모트와 별도 채널 — 말풍선으로 렌더) */
+  says: Record<string, EmoteEvent>;
   walletAddress: string | null;
   walletKind: "injected" | "burner" | null;
   walletSlot: string | null;
@@ -61,6 +63,8 @@ interface VillageStore {
   removePlayer: (id: string) => void;
   setEmote: (id: string, icon: string) => void;
   clearEmote: (id: string, at: number) => void;
+  setSay: (id: string, text: string) => void;
+  clearSay: (id: string, at: number) => void;
   setWallet: (
     address: string | null,
     kind?: "injected" | "burner",
@@ -103,6 +107,7 @@ export const useStore = create<VillageStore>((set) => ({
   onlineCount: 0,
   players: {},
   emotes: {},
+  says: {},
   walletAddress: null,
   walletKind: null,
   walletSlot: null,
@@ -155,6 +160,15 @@ export const useStore = create<VillageStore>((set) => ({
       const emotes = { ...s.emotes };
       delete emotes[id];
       return { emotes };
+    }),
+  setSay: (id, text) =>
+    set((s) => ({ says: { ...s.says, [id]: { icon: text, at: Date.now() } } })),
+  clearSay: (id, at) =>
+    set((s) => {
+      if (s.says[id]?.at !== at) return s;
+      const says = { ...s.says };
+      delete says[id];
+      return { says };
     }),
   setWallet: (walletAddress, kind, slot) =>
     set({

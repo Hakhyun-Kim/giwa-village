@@ -1,8 +1,9 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import type { Mesh, PointLight } from "three";
 import { useStore } from "../state/store";
+import { currentDaylight, type DaylightState } from "./daylight";
 
 export const WORLD_RADIUS = 55;
 export const PORTAL_POS: [number, number, number] = [0, 0, -30];
@@ -149,8 +150,8 @@ function Tree({
   );
 }
 
-/** 등불 달린 등롱대 */
-function Lantern({ position }: { position: [number, number, number] }) {
+/** 등불 달린 등롱대 — 해가 지면 불이 들어온다 */
+function Lantern({ position, glow }: { position: [number, number, number]; glow: number }) {
   return (
     <group position={position}>
       <mesh position={[0, 1.5, 0]} castShadow>
@@ -159,12 +160,23 @@ function Lantern({ position }: { position: [number, number, number] }) {
       </mesh>
       <mesh position={[0, 2.85, 0]}>
         <sphereGeometry args={[0.26, 12, 12]} />
-        <meshStandardMaterial color="#e04b3a" emissive="#ff6a4a" emissiveIntensity={0.9} />
+        <meshStandardMaterial
+          color="#e04b3a"
+          emissive="#ff6a4a"
+          emissiveIntensity={0.9 + glow * 1.4}
+        />
       </mesh>
       <mesh position={[0, 2.62, 0]}>
         <cylinderGeometry args={[0.1, 0.14, 0.12, 8]} />
-        <meshStandardMaterial color="#ffd98a" emissive="#ffca5f" emissiveIntensity={0.6} />
+        <meshStandardMaterial
+          color="#ffd98a"
+          emissive="#ffca5f"
+          emissiveIntensity={0.6 + glow * 1.6}
+        />
       </mesh>
+      {glow > 0.05 && (
+        <pointLight position={[0, 2.8, 0]} color="#ffb45c" intensity={glow * 2.6} distance={11} />
+      )}
     </group>
   );
 }
@@ -368,7 +380,22 @@ function GuildFlags() {
   );
 }
 
+/**
+ * 실시간 조명 상태. 매 프레임이 아니라 30초마다 갱신한다 —
+ * 조명은 분 단위로만 눈에 띄게 변하므로 리렌더를 아낄 수 있다.
+ */
+function useDaylight(): DaylightState {
+  const [light, setLight] = useState(() => currentDaylight());
+  useEffect(() => {
+    const id = setInterval(() => setLight(currentDaylight()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return light;
+}
+
 export default function Village() {
+  const sun = useDaylight();
+
   // 한옥 링 — 동쪽(식당가)과 북쪽(포털 길)은 비워둔다
   const hanoks = useMemo(() => {
     const rand = mulberry32(20260718);
@@ -414,13 +441,14 @@ export default function Village() {
 
   return (
     <group>
-      <color attach="background" args={["#a8c6e4"]} />
-      <fog attach="fog" args={["#a8c6e4", 45, 110]} />
+      <color attach="background" args={[sun.sky]} />
+      <fog attach="fog" args={[sun.sky, 45, 110]} />
 
-      <ambientLight intensity={0.55} />
+      <ambientLight intensity={sun.ambient} />
       <directionalLight
-        position={[25, 40, 20]}
-        intensity={1.15}
+        position={sun.sunPosition}
+        intensity={sun.sunIntensity}
+        color={sun.sunColor}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -464,12 +492,12 @@ export default function Village() {
       <Campfire />
       <BossGoblin />
       <GuildFlags />
-      <Lantern position={[7, 0, 7]} />
-      <Lantern position={[-7, 0, 7]} />
-      <Lantern position={[7, 0, -7]} />
-      <Lantern position={[-7, 0, -7]} />
-      <Lantern position={[12, 0, 3]} />
-      <Lantern position={[30, 0, -1]} />
+      <Lantern position={[7, 0, 7]} glow={sun.lantern} />
+      <Lantern position={[-7, 0, 7]} glow={sun.lantern} />
+      <Lantern position={[7, 0, -7]} glow={sun.lantern} />
+      <Lantern position={[-7, 0, -7]} glow={sun.lantern} />
+      <Lantern position={[12, 0, 3]} glow={sun.lantern} />
+      <Lantern position={[30, 0, -1]} glow={sun.lantern} />
 
       <Billboard
         position={[-3.4, 0, -22]}

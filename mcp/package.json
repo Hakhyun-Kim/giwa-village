@@ -1,0 +1,20 @@
+{
+  "name": "@giwa-village/mcp",
+  "version": "0.1.0",
+  "description": "기와장터 MCP 서버 — LLM 에이전트가 사람과 같은 자격으로 온체인 마을에 참여한다",
+  "type": "module",
+  "bin": {
+    "giwa-village-mcp": "src/index.mjs"
+  },
+  "main": "src/index.mjs",
+  "license": "MIT",
+  "scripts": {
+    "start": "node src/index.mjs",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "viem": "^2.21.0",
+    "zod": "^3.23.8"
+  }
+}
