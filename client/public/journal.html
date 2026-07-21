@@ -1,4 +1,4 @@
-<title>기와장터 개발일지 — 43시간의 기록</title>
+<title>기와장터 개발일지 — 70시간의 기록</title>
 <style>
   :root {
     --ink: #241F2E;
@@ -269,9 +269,9 @@
 
 <div class="hero">
   <span class="eyebrow"><span class="dot"></span>개발일지 · 기와장터 (GIWA Village)</span>
-  <h1 class="title">지갑 하나가 마을이 되기까지,<br>43시간의 기록</h1>
+  <h1 class="title">지갑 하나가 마을이 되기까지,<br>70시간의 기록</h1>
   <p class="lede">
-    2026년 7월 18일 오후, 빈 저장소 하나로 시작해 7월 20일 오전까지 — 커밋 34개,
+    2026년 7월 18일 오후, 빈 저장소 하나로 시작해 7월 21일 오후까지 — 커밋 42개,
     온체인 컨트랙트 10종. 이 문서는 그 사이 <b style="color:var(--ink)">무엇을 만들었는지</b>가 아니라
     <b style="color:var(--ink)">어떤 질문들을 던지며 나아갔는지</b>를 실제 git 기록으로 되짚는다.
   </p>
@@ -288,12 +288,12 @@
 
   <section>
     <div class="kicker">한눈에</div>
-    <h2 class="h">숫자로 보는 43시간</h2>
+    <h2 class="h">숫자로 보는 70시간</h2>
     <div class="stats">
-      <div class="stat"><div class="n">34</div><div class="l">총 커밋 (공개 27 · 비공개 7)</div></div>
+      <div class="stat"><div class="n">42</div><div class="l">총 커밋 (공개 32 · 비공개 10)</div></div>
       <div class="stat"><div class="n">10</div><div class="l">온체인 컨트랙트 · 전부 Verified</div></div>
-      <div class="stat"><div class="n">23,281</div><div class="l">누적 삽입 라인 (공개 저장소)</div></div>
-      <div class="stat"><div class="n">6 → 8</div><div class="l">서버리스 E2E 통과 (감사 전→후, /8)</div></div>
+      <div class="stat"><div class="n">28,422</div><div class="l">누적 삽입 라인 (공개 저장소)</div></div>
+      <div class="stat"><div class="n">25</div><div class="l">가스 없이 도는 로직 테스트 (CI 포함)</div></div>
     </div>
   </section>
 
@@ -315,6 +315,9 @@
         7/18 밤(21–24시)과 7/19 밤(21–23시) 두 번의 야간 몰입 구간이 뚜렷하다.
         그 사이 새벽 1시부터 7시까지는 커밋이 없다 — 유일하게 완전히 빈 6시간, 짧은 휴식이다.
         가장 큰 봉우리는 7/19 낮(12–15시) — 랜덤박스·모닥불·문양 공방 세 기능이 한 번에 쏟아진 구간.
+        7/20·7/21은 리듬이 확연히 다르다. 하루 18개까지 갔던 커밋이 6개·4개로 줄었는데,
+        같은 기간 삽입 라인은 5,100줄 넘게 늘었다 — 커밋 하나가 무거워졌다는 뜻이다.
+        기능을 쌓는 단계에서 <b style="color:var(--ink)">기반을 다지는 단계</b>로 넘어간 흔적.
       </p>
     </div>
   </section>
@@ -323,7 +326,7 @@
     <div class="kicker">코드베이스</div>
     <h2 class="h">코드가 자라난 모양</h2>
     <p class="sub">
-      공개 저장소 27개 커밋의 누적 삽입 라인. 점을 지나가면 그 순간 무슨 커밋이었는지 뜬다.
+      공개 저장소 32개 커밋의 누적 삽입 라인. 점을 지나가면 그 순간 무슨 커밋이었는지 뜬다.
       초반의 급경사는 최초 스캐폴드(9,845줄)와 풀온체인 전환(+2,341줄) — 이후로는
       완만하지만 꾸준한 계단이다.
     </p>
@@ -335,7 +338,7 @@
 
   <section>
     <div class="kicker">무엇을 만들었나</div>
-    <h2 class="h">커밋 27개의 성격</h2>
+    <h2 class="h">커밋 32개의 성격</h2>
     <p class="sub">각 커밋을 네 갈래로 분류했다. 가장 큰 비중은 뜻밖에도 기능이 아니라 <b style="color:var(--ink)">문서·온보딩</b>이다 — 매 기능 뒤에 설명과 시연을 다시 맞추는 작업이 반복됐다는 뜻.</p>
     <div class="chart-card">
       <div class="cat-list" id="catList"></div>
@@ -446,11 +449,43 @@
       </article>
 
       <article class="entry">
-        <div class="stage"><span class="num">08</span>지금</div>
+        <div class="stage"><span class="num">08</span>07/20</div>
         <div>
           <span class="tag">회고 · 지도 갱신 습관</span>
           <p class="quote">"문서 정리된 건지? 아니면 정리해줘~" — 그리고 "내가 어떻게 공부하고, 학습하고, 결과적으로 좋아졌는지 중점"</p>
           <p class="note">코드보다 지도(문서)가 먼저 낡지 않았는지 확인하는 습관, 그리고 그 과정 자체를 되짚어보려는 습관. 이 문서 자체가 그 여덟 번째 단계다.</p>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="stage"><span class="num">09</span>07/21 오전</div>
+        <div>
+          <span class="tag">외부 참조 · 취사선택</span>
+          <p class="quote">"최근에 이런 걸 만들었는데, 참고해서 giwa 에 넣을만한 게 있을까? 분석하고 리스트로 정리해줘."</p>
+          <p class="note">
+            남이 만든 것을 가져와 <b style="color:var(--ink)">그대로 따라 하지 않고 무엇이 이 마을에 맞는지 골라내는</b> 단계.
+            여기서 나온 가장 큰 수확은 기능이 아니라 관점이었다 — 다른 곳에서 "에이전트와 사람을 동등하게 대한다"가
+            <b style="color:var(--ink)">설계 목표</b>라면, 지갑과 서명만으로 들어오는 이 마을에서는 그게
+            이미 <b style="color:var(--ink)">구조적 성질</b>이라는 것. 특권 API를 안 만든 게 아니라 만들 자리가 없다.
+            그 관점 위에 MCP 서버와 자기 지갑을 든 LLM 상인 NPC를 얹었고, 값은 모델이 제안하되
+            하한선은 코드가 강제하도록 안전선을 코드 쪽에 두었다.
+          </p>
+        </div>
+      </article>
+
+      <article class="entry">
+        <div class="stage"><span class="num">10</span>지금</div>
+        <div>
+          <span class="tag">제약을 설계로 바꾸기</span>
+          <p class="quote">"테스트 가스비를 쓰니까 테스트가 어려운 면이 있는데 … 가스비 없는 로컬 서버 테스트 / 가스비 있는 테스트 이렇게 나누어주고 … local giwa backend 설정등이 가능한가?"</p>
+          <p class="note">
+            포셋이 24시간에 0.005 ETH라는 제약을 불평이 아니라 <b style="color:var(--ink)">테스트 설계 문제</b>로 바꿔 물었다.
+            답은 로컬 EVM 노드를 <b style="color:var(--ink)">GIWA와 같은 chain-id(91342)로</b> 띄우는 것 —
+            코드의 체인 가드가 그대로 통과하니 프로덕션과 같은 경로로 도는 진짜 E2E인데 가스만 무한하다.
+            (GIWA 자체 노드는 500GB로 실제 테스트넷을 동기화하는 구조라 개발용으로는 맞지 않았다.)
+            결과적으로 검증 25건이 체인 없이 1초 안에 돌고, 컨트랙트 E2E도 무료가 됐다.
+            "어떻게 만들까"에서 <b style="color:var(--ink)">"어떻게 계속 확인할까"</b>로 질문이 옮겨간 지점이다.
+          </p>
         </div>
       </article>
 
@@ -461,16 +496,23 @@
     <div class="kicker">맺음</div>
     <div class="closing">
       <p>
-        43시간 동안 바뀐 것은 코드량이 아니라 <strong>질문의 위치</strong>다. 초반엔 "다음에 뭘 할까"를
+        70시간 동안 바뀐 것은 코드량이 아니라 <strong>질문의 위치</strong>다. 초반엔 "다음에 뭘 할까"를
         맡겼고, 중반엔 "이건 하지 말자"는 경계를 그었고, 후반엔 "이게 왜 재밌어야 하는가"를
         스스로 따졌다. 라그나로크에서 시작해 마비노기·리니지·로블록스를 가로지른 검토,
         그리고 온체인 저장이 SDK가 된다는 통찰은 20년 게임엔진 경력이 새로운 제약(가스비,
         소울바운드, 서버 없는 신뢰) 위에서 다시 작동한 결과였다.
       </p>
+      <p>
+        마지막 하루가 특히 그랬다. 남이 만든 것을 보고 <strong>베낄 것과 골라낼 것을 구분</strong>했고,
+        포셋 제약을 불평 대신 <strong>테스트 설계 문제</strong>로 바꿔 물었다. 기능을 쌓는 속도는
+        느려졌지만 커밋 하나의 무게는 늘었다 — 만드는 단계에서 <strong>지탱하는 단계</strong>로
+        넘어가는 구간이 git 기록에 그대로 남았다.
+      </p>
       <p>다음 장은 이미 정해져 있다:</p>
       <ul class="next-list">
         <li>다가오는 토요일 21시(KST) — 장날 실전에서 온기·도깨비 데미지 2배가 라이브로 도는지 확인</li>
         <li>RPC 읽기 캐시·인덱서·구역 샤딩 (기술 문서 §7 스케일 로드맵)</li>
+        <li>로컬 체인 테스트를 컨트랙트 2종에서 10종 전체로 넓히기 — 이제 가스가 들지 않으므로</li>
       </ul>
     </div>
   </section>
@@ -504,7 +546,8 @@
     { label: "7/19 아침", sub: "07–09시", n: 4, night: false },
     { label: "7/19 낮",   sub: "12–15시", n: 8, night: false },
     { label: "7/19 밤",   sub: "21–23시", n: 4, night: true },
-    { label: "7/20 오전", sub: "10–11시", n: 2, night: false }
+    { label: "7/20 낮",   sub: "10–18시", n: 6, night: false },
+    { label: "7/21 낮",   sub: "11–15시", n: 4, night: false }
   ];
   (function renderBars() {
     var svg = document.getElementById("barChart");
@@ -585,7 +628,12 @@
     [22779, "4c711d2", "07-19 21:49", "HUD+도깨비+SDK"],
     [23035, "791d883", "07-19 22:02", "퀘스트 온보딩"],
     [23229, "e88e5ce", "07-19 22:13", "모바일 조작"],
-    [23281, "86bee8f", "07-20 10:27", "문서 정리 (현재)"]
+    [23281, "86bee8f", "07-20 10:27", "문서 정리"],
+    [24000, "4b0aa3c", "07-20 12:34", "개발일지 게시"],
+    [24009, "6d93592", "07-20 17:08", "README 배지"],
+    [27542, "769c609", "07-21 11:37", "에이전트 레이어"],
+    [28373, "3971101", "07-21 12:29", "테스트 3단 분리"],
+    [28422, "a313cf1", "07-21 14:00", "기술 문서 갱신 (현재)"]
   ];
   (function renderGrowth() {
     var svg = document.getElementById("growthChart");
@@ -627,7 +675,7 @@
     var endX = xAt(n - 1), endY = yAt(growth[n - 1][0]);
     svg.appendChild(el("circle", { cx: endX, cy: endY, r: 4.5, fill: "var(--gold)" }));
     var endLbl = el("text", { x: endX - 8, y: endY - 12, "text-anchor": "end", class: "growth-end-label" });
-    endLbl.textContent = "23,281줄";
+    endLbl.textContent = "28,422줄";
     svg.appendChild(endLbl);
 
     var crosshair = el("line", { x1: 0, x2: 0, y1: padT, y2: padT + plotH, class: "growth-crosshair" });
@@ -662,10 +710,11 @@
 
   /* ---------------- category bars ---------------- */
   var cats = [
-    { label: "UX · 온보딩", n: 9, color: "var(--violet)" },
+    { label: "문서 · UX · 온보딩", n: 12, color: "var(--violet)" },
     { label: "온체인 인프라", n: 8, color: "var(--brick)" },
     { label: "거래 · 경제", n: 7, color: "var(--gold)" },
-    { label: "코업 · 소셜", n: 3, color: "var(--jade)" }
+    { label: "코업 · 소셜", n: 3, color: "var(--jade)" },
+    { label: "에이전트 · 테스트", n: 2, color: "var(--warn)" }
   ];
   (function renderCats() {
     var wrap = document.getElementById("catList");
