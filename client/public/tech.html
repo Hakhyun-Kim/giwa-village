@@ -343,9 +343,11 @@
     </div>
     <div class="card">
       <b class="t">검증</b>
-      E2E 스모크 테스트 6종 — 실시간 동기화 / 선물 실전송 / 노점 서버 플로우 /
-      <b>컨트랙트 실거래</b>(에스크로 보관·쿠폰 민팅·가격 강제 revert·이중 정산 거부) /
-      Dojang 조회 / UP.ID 조회. 모든 주장에 온체인 트랜잭션 증거가 있습니다.
+      테스트를 <b>가스 드는 것과 안 드는 것으로 3단 분리</b>
+      (<a href="#testing">바로 아래</a>) — 로직 25건은 체인 없이, 컨트랙트 E2E는
+      로컬 체인에서, 실거래는 꼭 필요할 때만.
+      실시간 동기화·선물 실전송·에스크로·쿠폰 민팅·가격 강제 revert·이중 정산 거부·
+      Dojang·UP.ID까지 모든 주장에 온체인 트랜잭션 증거가 있습니다.
     </div>
     <div class="card">
       <b class="t">신뢰 설계</b>
@@ -358,6 +360,50 @@
       거래 대상은 코스메틱·쿠폰 등 재화만 (금융상품·오더북 없음) ·
       포지셔닝은 게임이 아닌 아바타 소셜 플랫폼
     </div>
+  </div>
+
+  <div class="scale-box" id="testing">
+    <b>테스트 전략: 가스가 드는 검증을 맨 마지막 한 겹으로</b> —
+    포셋이 주소당 24시간 0.005 ETH라, 실거래로만 테스트하면 개발이 포셋 속도에 묶입니다.
+    그래서 <b>규칙으로 검증할 수 있는 것은 전부 공짜로 옮기고</b>, 가스는 로컬에서
+    흉내 낼 수 없는 것에만 씁니다.
+    <table style="margin-top:10px">
+      <tr><th>계층</th><th>검증 대상</th><th>가스</th><th>시간</th></tr>
+      <tr>
+        <td><code>npm test</code></td>
+        <td>흥정 하한선 강제·경계값·주민 데이터 정합성·야간 조명 하한·HUD 함정 (25건)</td>
+        <td><b>0</b> — 체인 없음</td><td>1초 미만</td>
+      </tr>
+      <tr>
+        <td><code>npm run test:local</code></td>
+        <td>컨트랙트 배포 → 노점 개설 → 흥정 → 봇 수락 → 정산 전 구간</td>
+        <td><b>0</b> — 로컬 체인</td><td>~10초</td>
+      </tr>
+      <tr>
+        <td><code>npm run test:chain</code></td>
+        <td>실제 배포본 10종 생존·Dojang·UP.ID (읽기 전용, <code>--yes</code> 필요)</td>
+        <td>0 — 읽기만</td><td>~10초</td>
+      </tr>
+      <tr>
+        <td>개별 스모크</td>
+        <td>실거래가 정말 필요한 검증 (에스크로 실결제 등)</td>
+        <td><b>든다</b></td><td>분 단위</td>
+      </tr>
+    </table>
+    <p style="margin-top:10px">
+      로컬 계층의 핵심은 <b>anvil을 chain-id 91342(GIWA Sepolia와 동일)로 띄운다</b>는 점입니다.
+      코드의 체인 가드가 그대로 통과하고 같은 컨트랙트를 컴파일·배포해 같은 봇 코드를 돌리므로,
+      코드 경로가 프로덕션과 동일한 <b>진짜 E2E</b>입니다 — 가스만 무한할 뿐입니다.
+      (GIWA 자체 노드는 500GB NVMe로 실제 테스트넷을 동기화하는 구조라 개발용 devnet으로는
+      맞지 않고, 같은 체인이라 가스도 그대로 듭니다.)
+    </p>
+    <p style="margin-top:8px">
+      안전 불변식은 <code>scripts/lib/haggle.mjs</code> 한 곳에 모아 봇과 테스트가 공유합니다.
+      <code>enforce()</code>가 최종 관문이라 <b>모델이 "공짜로 드릴게요"를 반환해도 차단</b>되고,
+      그 케이스가 테스트에 들어 있습니다. 테스트가 실제로 회귀를 잡는지도 확인했습니다 —
+      과거에 겪었던 HUD <code>pointer-events</code> 버그를 다시 심으면 테스트가 실패합니다.
+      CI는 빌드 전에 <code>npm test</code>를 돌립니다.
+    </p>
   </div>
 
   <h2><span class="n">6</span>GIWA Tech Use — 사용 중인 체인 기능</h2>
