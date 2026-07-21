@@ -22,7 +22,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # --omit=optional 금지: rolldown 네이티브 바인딩이 optional이라 빌드가 깨진다
       - run: npm ci
+      - run: npm test
       - run: npm run build -w client
         env:
           VITE_DEMO: "1"

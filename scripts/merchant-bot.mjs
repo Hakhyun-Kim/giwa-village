@@ -27,18 +27,25 @@ import {
   parseAbi,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { BAND, classify, decideDeterministic, enforce } from "./lib/haggle.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CHAIN_ID = 91342;
-const MARKET = "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2";
-const OFFERS = "0x534a29c47667b54eab6995517705cfbc423bb909";
-const EXPLORER = "https://sepolia-explorer.giwa.io";
+// 주소·RPC는 환경변수로 덮어쓸 수 있다 — 로컬 체인(anvil)에 배포해 무가스로
+// 같은 코드를 검증하기 위한 것. 아무것도 주지 않으면 현행 GIWA Sepolia 배포본.
+const MARKET = process.env.GIWA_MARKET_ADDRESS || "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2";
+const OFFERS = process.env.GIWA_OFFERS_ADDRESS || "0x534a29c47667b54eab6995517705cfbc423bb909";
+const RPC_URL = process.env.GIWA_RPC_URL || "https://sepolia-rpc.giwa.io";
+// 로컬 체인(anvil)에서는 익스플로러가 없으므로 tx 해시만 찍는다 —
+// 로컬에서 도는 tx를 공개 익스플로러 링크로 보여 주면 헷갈린다.
+const IS_LOCAL = /127\.0\.0\.1|localhost/.test(RPC_URL);
+const txLink = (hash) => (IS_LOCAL ? `tx ${hash} (로컬)` : `https://sepolia-explorer.giwa.io/tx/${hash}`);
 
 const giwaSepolia = defineChain({
   id: CHAIN_ID,
   name: "GIWA Sepolia",
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-  rpcUrls: { default: { http: ["https://sepolia-rpc.giwa.io"] } },
+  rpcUrls: { default: { http: [RPC_URL] } },
   testnet: true,
 });
 
@@ -76,7 +83,7 @@ const MODEL = process.env.GIWA_MERCHANT_MODEL || "claude-opus-4-8";
 
 const publicClient = createPublicClient({
   chain: giwaSepolia,
-  transport: http(process.env.GIWA_RPC_URL || undefined),
+  transport: http(RPC_URL),
 });
 
 // ── 페르소나 · 지갑 ────────────────────────────────────────────────────────
@@ -162,16 +169,6 @@ async function askLlm(npc, ctx) {
   return { accept: !!parsed.accept, line: String(parsed.line ?? "").slice(0, 60) };
 }
 
-/** 모델이 없거나 실패했을 때의 규칙: 하한선 위 절반을 넘으면 받는다. */
-function decideDeterministic(npc, ctx) {
-  const midpoint = npc.floorRatio + (1 - npc.floorRatio) / 2;
-  const accept = ctx.ratio >= midpoint;
-  return {
-    accept,
-    line: accept ? "그 값이면 가져가시오." : "그건 좀 과하오, 조금만 더 얹으시오.",
-  };
-}
-
 // ── 체인 ───────────────────────────────────────────────────────────────────
 
 async function listPriceOf(seller, itemName) {
@@ -190,7 +187,7 @@ async function acceptOffer(npc, id) {
   const wallet = createWalletClient({
     account: npc.account,
     chain: giwaSepolia,
-    transport: http(process.env.GIWA_RPC_URL || undefined),
+    transport: http(RPC_URL),
   });
   const hash = await wallet.writeContract({
     address: OFFERS,
@@ -233,7 +230,7 @@ async function tick(npc) {
       continue;
     }
 
-    const floor = (listPrice * BigInt(Math.round(npc.floorRatio * 1000))) / 1000n;
+    const { band, floor } = classify(offer.amount, listPrice, npc.floorRatio);
     const ratio = Number(offer.amount) / Number(listPrice);
     const ctx = {
       itemName: offer.itemName,
@@ -245,15 +242,13 @@ async function tick(npc) {
 
     // ── 코드가 강제하는 구간: 모델을 부르지 않는다 ──
     let decision;
-    let source;
-    if (offer.amount >= listPrice) {
+    let source = band;
+    if (band === BAND.ABOVE_LIST) {
       decision = { accept: true, line: "고맙소, 바로 드리리다." };
-      source = "정가 이상";
-    } else if (offer.amount < floor) {
+    } else if (band === BAND.BELOW_FLOOR) {
       decision = { accept: false, line: "그 값엔 못 파오." };
-      source = "하한선 미만";
     } else {
-      // ── 밴드 안: 모델이 판단 (실패하면 결정론 폴백) ──
+      // ── 흥정 구간: 모델이 판단 (실패하면 결정론 폴백) ──
       try {
         decision = await askLlm(npc, ctx);
         source = decision ? "LLM" : "결정론";
@@ -262,7 +257,13 @@ async function tick(npc) {
         decision = null;
         source = "결정론(폴백)";
       }
-      if (!decision) decision = decideDeterministic(npc, ctx);
+      if (!decision) decision = decideDeterministic(ratio, npc.floorRatio);
+    }
+
+    // 어떤 경로로 왔든 마지막 관문을 통과시킨다
+    decision = enforce(decision, offer.amount, listPrice, npc.floorRatio);
+    if (decision.blocked) {
+      console.error(`  [${npc.name}] #${id} 하한선 위반 수락 시도 차단 — 버그입니다`);
     }
 
     lastSeenBuyer.set(key, Date.now());
@@ -274,18 +275,13 @@ async function tick(npc) {
 
     if (!decision.accept) continue;
 
-    // 마지막 방어선: 어떤 경로로 왔든 하한선 아래면 절대 체결하지 않는다.
-    if (offer.amount < floor) {
-      console.error(`  [${npc.name}] #${id} 하한선 위반 수락 시도 차단 — 버그입니다`);
-      continue;
-    }
     if (DRY_RUN) {
       console.log(`  [${npc.name}] --dry-run: tx 생략`);
       continue;
     }
     try {
       const { hash, status } = await acceptOffer(npc, id);
-      console.log(`  [${npc.name}] 체결 ${status} — ${EXPLORER}/tx/${hash}`);
+      console.log(`  [${npc.name}] 체결 ${status} — ${txLink(hash)}`);
       accepted++;
     } catch (err) {
       console.error(`  [${npc.name}] #${id} 체결 실패: ${err.shortMessage ?? err.message}`);

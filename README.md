@@ -175,6 +175,45 @@ Sepolia ETH는 [Google Cloud Faucet](https://cloud.google.com/application/web3/f
 [PoW Faucet](https://sepolia-faucet.pk910.de/)(브라우저 채굴, 무제한)에서 확보.
 L1StandardBridge(`0x77b2…A7E7`)로 전송하면 1~3분 뒤 L2 잔액에 반영된다.
 
+### 테스트 — 가스를 쓰는 것과 안 쓰는 것을 나눈다
+
+포셋이 주소당 24시간 0.005 ETH라, 테스트를 실거래로만 하면 금방 막힌다.
+그래서 **가스가 드는 검증은 마지막 한 겹으로 밀어 두고**, 나머지는 전부 공짜로 돌린다.
+
+| 명령 | 무엇을 | 가스 | 걸리는 시간 |
+|---|---|---|---|
+| `npm test` | 로직·데이터·조명 하한·HUD 함정 | **0** (체인 없음) | 1초 미만 |
+| `npm run test:local` | 컨트랙트 배포 → 노점 → 흥정 → 봇 수락 전 구간 | **0** (로컬 anvil) | ~10초 |
+| `npm run test:chain -- --yes` | 실제 배포본·GIWA 네이티브 연동 확인 | 읽기만 (0) | ~10초 |
+| `npm run market-smoke` 등 | 실거래가 꼭 필요한 검증 | **든다** | 분 단위 |
+
+```bash
+npm test              # 저장할 때마다 돌려도 되는 계층
+npm run test:local    # 컨트랙트를 건드렸으면 여기까지
+npm run test:chain -- --yes   # 배포 전 최종 확인
+```
+
+**`npm test`** — 체인도 지갑도 네트워크도 쓰지 않는다. 흥정 하한선 강제(모델이
+헐값 수락을 반환해도 차단되는지), 주민 데이터 정합성, 야간 조명이 읽을 수 있는
+밝기인지, HUD 버튼의 `pointer-events` 누락까지 25건을 검사한다. CI에서도 돈다.
+
+**`npm run test:local`** — anvil을 **chain-id 91342(GIWA Sepolia와 동일)**로 띄우고
+실제 컨트랙트를 컴파일·배포한 뒤, 상인 봇을 그대로 실행한다. 체인 가드가 통과하고
+코드 경로가 프로덕션과 같으므로 진짜 E2E다. 가스만 무한할 뿐.
+
+> anvil은 **일부러 의존성에 넣지 않았다.** Windows에서 postinstall이 깨지고,
+> optional로 두면 `--omit=optional`을 쓸 수밖에 없는데 그러면 rolldown 네이티브
+> 바인딩까지 빠져 배포 빌드가 깨진다. 없으면 `test:local`이 설치 방법만 안내하고
+> 종료하므로 아무것도 망가지지 않는다. 쓰려면 한 줄:
+>
+> ```bash
+> npm i @foundry-rs/anvil --ignore-scripts --no-save
+> ```
+
+**실거래가 정말 필요할 때만** 기존 스모크(`market-smoke`, `gift`, `stall-smoke`)를
+쓴다. GIWA 고유 연동(Dojang·UP.ID)은 로컬에서 흉내 낼 수 없으므로 `test:chain`이
+그 부분만 읽기로 확인한다.
+
 ### AI 에이전트로 마을 돌리기
 
 **LLM 상인 NPC** — 상인이 자기 지갑으로 들어온 흥정을 판단한다.
