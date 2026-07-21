@@ -197,6 +197,9 @@ npm run test:chain -- --yes   # 배포 전 최종 확인
 헐값 수락을 반환해도 차단되는지), 주민 데이터 정합성, 야간 조명이 읽을 수 있는
 밝기인지, HUD 버튼의 `pointer-events` 누락까지 25건을 검사한다. CI에서도 돈다.
 
+<img src="client/public/test-logic.svg" alt="npm test 실행 결과 — 로직 25건 통과, 가스 0" width="480">
+
+
 **`npm run test:local`** — anvil을 **chain-id 91342(GIWA Sepolia와 동일)**로 띄우고
 컨트랙트 10종을 전부 컴파일·배포한 뒤 마을의 주요 흐름을 돌린다. 체인 가드가 통과하고
 코드 경로가 프로덕션과 같으므로 진짜 E2E다 — 가스만 무한할 뿐.
@@ -210,6 +213,11 @@ npm run test:chain -- --yes   # 배포 전 최종 확인
 > **장날(토 21시 KST) 온기 2배**, 도깨비 타격 쿨다운 30초, 모닥불 10분 창이 닫힌 뒤에야
 > 수령 가능. 덤으로 컨트랙트(Solidity)와 클라이언트(TS)의 장날 판정이 표본 64개에서
 > 일치하는지도 대조한다 — 어긋나면 HUD는 "장날!"인데 실제로는 2배가 아닌 상태가 된다.
+
+실제 실행 결과 (`node scripts/render-run.mjs`로 자동 생성 — 손으로 쓴 게 아니라
+그때 그 실행의 출력이다):
+
+![npm run test:local 실행 결과 — 컨트랙트 10종 49건 통과, 테스트넷 가스 0](client/public/test-local.svg)
 
 > anvil은 **일부러 의존성에 넣지 않았다.** Windows에서 postinstall이 깨지고,
 > optional로 두면 `--omit=optional`을 쓸 수밖에 없는데 그러면 rolldown 네이티브

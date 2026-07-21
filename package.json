@@ -15,6 +15,7 @@
     "test:local": "node scripts/test-local.mjs",
     "test:chain": "node scripts/test-chain.mjs",
     "market-day": "node scripts/market-day-check.mjs",
+    "render-tests": "node scripts/render-run.mjs client/public/test-logic.svg \"npm test — 로직 검증 · 체인 없음\" -- npm test && node scripts/render-run.mjs client/public/test-local.svg \"npm run test:local — 컨트랙트 10종 · 테스트넷 가스 0\" -- npm run test:local",
     "smoke": "node scripts/sync-smoke.mjs",
     "gift": "node scripts/gift-smoke.mjs",
     "bots": "node scripts/bots.mjs",

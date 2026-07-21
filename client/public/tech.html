@@ -406,6 +406,20 @@
       표본 64개에서 일치하는지 대조합니다. 어긋나면 HUD는 "장날!"인데 실제로는 2배가
       아닌 상태가 되는데, 그 불일치는 실시간 관찰로는 주 1회 1시간만 확인할 수 있습니다.
     </p>
+    <details style="margin-top:12px">
+      <summary style="cursor:pointer; font-size:13px; color:#c3423f">
+        실제 실행 결과 보기 — <code>npm run test:local</code> (컨트랙트 10종 · 49건 · 가스 0)
+      </summary>
+      <p style="font-size:12.5px; color:#6b7280; margin:8px 0">
+        아래 이미지는 <code>scripts/render-run.mjs</code>가 실행 출력을 그대로 SVG로 렌더한 것입니다 —
+        손으로 옮겨 적은 게 아니라 그때 그 실행의 표준출력입니다.
+      </p>
+      <div style="overflow-x:auto">
+        <img src="./test-local.svg" alt="npm run test:local 실행 결과 — 컨트랙트 10종 49건 통과"
+             style="max-width:100%; height:auto; border-radius:12px; border:1px solid #e3ded2"/>
+      </div>
+    </details>
+
     <p style="margin-top:8px">
       안전 불변식은 <code>scripts/lib/haggle.mjs</code> 한 곳에 모아 봇과 테스트가 공유합니다.
       <code>enforce()</code>가 최종 관문이라 <b>모델이 "공짜로 드릴게요"를 반환해도 차단</b>되고,

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="910" viewBox="0 0 560 910" role="img" aria-label="npm test — 로직 검증 · 체인 없음 실행 결과">
+  <rect width="560" height="910" rx="12" fill="#17141D"/>
+  <rect width="560" height="34" rx="12" fill="#241F2E"/>
+  <rect y="22" width="560" height="12" fill="#241F2E"/>
+  <circle cx="20" cy="17" r="5" fill="#DD6B5A"/>
+  <circle cx="38" cy="17" r="5" fill="#D99245"/>
+  <circle cx="56" cy="17" r="5" fill="#3FAE73"/>
+  <g font-family="D2Coding, 'JetBrains Mono', Consolas, 'SFMono-Regular', 'Noto Sans KR', monospace" font-size="12">
+    <text x="76" y="21" fill="#8E8478">npm test — 로직 검증 · 체인 없음</text>
+  </g>
+  <g font-family="D2Coding, 'JetBrains Mono', Consolas, 'SFMono-Regular', 'Noto Sans KR', monospace" font-size="13.5" xml:space="preserve">
+  <text x="22.0" y="52" fill="#C79A3F" font-weight="600">흥정 밴드 — 값은 모델이 제안하고 하한선은 코드가 강제한다</text>
+  <text x="38.3" y="73" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="73" fill="#EDE7DA">정가 이상이면 모델을 부르지 않고 수락 구간</text>
+  <text x="38.3" y="94" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="94" fill="#EDE7DA">하한선 미만이면 모델을 부르지 않고 거절 구간</text>
+  <text x="38.3" y="115" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="115" fill="#EDE7DA">하한선 정확히 위는 흥정 구간 (경계 포함)</text>
+  <text x="38.3" y="136" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="136" fill="#EDE7DA">정가 1 wei 아래는 흥정 구간 (경계)</text>
+  <text x="38.3" y="157" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="157" fill="#EDE7DA">하한선 계산이 bigint로 유지된다 (부동소수 누수 없음)</text>
+  <text x="22.0" y="178" fill="#B4A99A"></text>
+  <text x="22.0" y="199" fill="#C79A3F" font-weight="600">최종 관문 — 어떤 경로로 온 결정이든 하한선을 넘을 수 없다</text>
+  <text x="38.3" y="220" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="220" fill="#EDE7DA">모델이 헐값 수락을 반환해도 차단된다</text>
+  <text x="38.3" y="241" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="241" fill="#EDE7DA">모델이 0원 수락을 반환해도 차단된다</text>
+  <text x="38.3" y="262" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="262" fill="#EDE7DA">정당한 수락은 통과한다</text>
+  <text x="38.3" y="283" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="283" fill="#EDE7DA">거절은 언제나 그대로 거절이다</text>
+  <text x="22.0" y="304" fill="#B4A99A"></text>
+  <text x="22.0" y="325" fill="#C79A3F" font-weight="600">결정론 판단 — 모델이 없을 때의 규칙</text>
+  <text x="38.3" y="346" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="346" fill="#EDE7DA">하한선과 정가의 중간을 넘으면 수락</text>
+  <text x="38.3" y="367" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="367" fill="#EDE7DA">중간 미만이면 거절</text>
+  <text x="38.3" y="388" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="388" fill="#EDE7DA">모든 상인의 하한선에서 결정론 판단이 하한선을 넘지 않는다</text>
+  <text x="22.0" y="409" fill="#B4A99A"></text>
+  <text x="22.0" y="430" fill="#C79A3F" font-weight="600">주민 데이터 — data/npcs.json</text>
+  <text x="38.3" y="451" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="451" fill="#EDE7DA">모든 주민에 필수 필드가 있다</text>
+  <text x="38.3" y="472" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="472" fill="#EDE7DA">id가 중복되지 않는다</text>
+  <text x="38.3" y="493" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="493" fill="#EDE7DA">주소가 유효한 형식이고 중복되지 않는다</text>
+  <text x="38.3" y="514" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="514" fill="#EDE7DA">상인은 floorRatio와 stall을 가진다</text>
+  <text x="38.3" y="535" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="535" fill="#EDE7DA">주민이 마을 반경(55) 안에 산다</text>
+  <text x="38.3" y="556" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="556" fill="#EDE7DA">walletIndex가 .botwallets.json 주소와 일치한다 (있을 때만)</text>
+  <text x="22.0" y="577" fill="#B4A99A"></text>
+  <text x="22.0" y="598" fill="#C79A3F" font-weight="600">주야 사이클 — 밤에도 읽을 수 있어야 한다</text>
+  <text x="38.3" y="619" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="619" fill="#EDE7DA">키프레임을 읽어냈다</text>
+  <text x="38.3" y="640" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="640" fill="#EDE7DA">주변광이 어느 시각에도 0.3 아래로 내려가지 않는다</text>
+  <text x="38.3" y="661" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="661" fill="#EDE7DA">햇빛(달빛)이 어느 시각에도 0.3 아래로 내려가지 않는다</text>
+  <text x="38.3" y="682" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="682" fill="#EDE7DA">한낮이 한밤보다 확실히 밝다</text>
+  <text x="38.3" y="703" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="703" fill="#EDE7DA">한밤에 등불이 켜지고 한낮에 꺼진다</text>
+  <text x="38.3" y="724" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="724" fill="#EDE7DA">쇼케이스는 한낮으로 고정된다 (데모 영상 보호)</text>
+  <text x="22.0" y="745" fill="#B4A99A"></text>
+  <text x="22.0" y="766" fill="#C79A3F" font-weight="600">HUD — .hud는 pointer-events:none 이라 버튼마다 되살려야 한다</text>
+  <text x="22.0" y="787" fill="#B4A99A">     검사한 버튼 클래스: hud-btn, hud-sound</text>
+  <text x="38.3" y="808" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="808" fill="#EDE7DA">HUD의 &lt;button&gt;에 붙은 클래스가 pointer-events:auto 를 가진다</text>
+  <text x="22.0" y="829" fill="#B4A99A"></text>
+  <text x="22.0" y="850" fill="#392F44">──────────────────────────────────────────────────</text>
+  <text x="22.0" y="871" fill="#3FAE73" font-weight="700">전부 통과 (25건) · 가스 0</text>
+  </g>
+</svg>
