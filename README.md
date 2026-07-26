@@ -3,13 +3,13 @@
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-풀온체인_서버리스-B8790E?style=for-the-badge)](https://hakhyun-kim.github.io/giwa-village/)
 [![Tech Docs](https://img.shields.io/badge/📄_기술_문서-아키텍처-3b4048?style=for-the-badge)](https://hakhyun-kim.github.io/giwa-village/tech.html)
 [![AI Audit](https://img.shields.io/badge/🔍_AI_Self--Audit-공개_감사_기록-3b4048?style=for-the-badge)](https://hakhyun-kim.github.io/giwa-village/audit.html)
-[![Dev Journal](https://img.shields.io/badge/📓_개발일지-43시간의_기록-3b4048?style=for-the-badge)](https://hakhyun-kim.github.io/giwa-village/journal.html)
+[![Dev Journal](https://img.shields.io/badge/📓_개발일지-70시간의_기록-3b4048?style=for-the-badge)](https://hakhyun-kim.github.io/giwa-village/journal.html)
 
 GIWA 체인 위의 **한옥 저잣거리** — 지갑으로 접속해 아바타로 마을을 돌아다니고,
 노점을 열어 장사하고, 다른 주민에게 실제 ETH를 선물하고, 던전 포털로 미니게임에
 입장하는 "지갑을 공간으로" 만드는 실험. 고전 MMO 저잣거리(노점) 문화의 온체인 재해석.
 
-**📓 [개발일지](https://hakhyun-kim.github.io/giwa-village/journal.html) — 커밋 34개·43시간을 실제 git 기록으로 되짚은 기록.**
+**📓 [개발일지](https://hakhyun-kim.github.io/giwa-village/journal.html) — 커밋 42개·70시간을 실제 git 기록으로 되짚은 기록.**
 [![기와장터 개발일지 미리보기](media/journal-preview.png)](https://hakhyun-kim.github.io/giwa-village/journal.html)
 
 > 🌐 **[라이브 데모](https://hakhyun-kim.github.io/giwa-village/)는 풀온체인 서버리스입니다** —
