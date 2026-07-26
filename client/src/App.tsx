@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
+import { AdaptiveDpr } from "@react-three/drei";
 import Village from "./game/Village";
 import Player from "./game/Player";
 import RemotePlayers from "./game/RemotePlayers";
@@ -77,7 +78,16 @@ export default function App() {
 
   return (
     <div className="app">
-      <Canvas shadows camera={{ position: [0, 9.5, 11.5], fov: 50 }}>
+      {/* 자동 품질 조절: 프레임이 밀리면 AdaptiveDpr이 해상도를 스스로 낮춘다.
+          저사양 기기·CI 소프트웨어 렌더러에서도 마을이 멈추지 않게 하는 장치이고,
+          렌더 전용이라 온체인 동작과 판정에는 영향이 없다. */}
+      <Canvas
+        shadows
+        camera={{ position: [0, 9.5, 11.5], fov: 50 }}
+        dpr={[1, 2]}
+        performance={{ min: 0.5 }}
+      >
+        <AdaptiveDpr pixelated />
         <Village />
         <Portal />
         <Stalls />

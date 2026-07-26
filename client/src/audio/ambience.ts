@@ -10,17 +10,7 @@
 // 나지 않고, 데모 영상 녹화에도 영향을 주지 않아야 하기 때문. HUD의 토글로
 // 켜면 그 선택만 localStorage에 남는다.
 
-const STORAGE_KEY = "giwa-ambience";
-
-/** 평조(平調) 5음 — 황종·태주·중려·임종·남려에 해당하는 반음 간격 */
-const PENTATONIC = [0, 2, 5, 7, 9];
-const ROOT_HZ = 261.63; // C4
-
-function noteHz(degree: number): number {
-  const octave = Math.floor(degree / PENTATONIC.length);
-  const step = PENTATONIC[((degree % PENTATONIC.length) + PENTATONIC.length) % PENTATONIC.length];
-  return ROOT_HZ * Math.pow(2, octave + step / 12);
-}
+import { createAudioCtx, noteHz, setSoundPreference, soundPreference } from "./audio";
 
 function rand(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -149,13 +139,9 @@ export function isAmbienceOn(): boolean {
   return running;
 }
 
-/** 사용자가 저장해 둔 선택 (기본값 = 꺼짐) */
+/** 사용자가 저장해 둔 선택 (기본값 = 꺼짐) — 효과음도 같은 선택을 따른다 */
 export function ambiencePreference(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === "1";
-  } catch {
-    return false;
-  }
+  return soundPreference();
 }
 
 /**
@@ -163,11 +149,7 @@ export function ambiencePreference(): boolean {
  * 자동재생 정책 때문에 그 밖에서는 AudioContext가 suspended로 남는다.
  */
 export async function setAmbience(on: boolean): Promise<boolean> {
-  try {
-    localStorage.setItem(STORAGE_KEY, on ? "1" : "0");
-  } catch {
-    /* 시크릿 모드 등 — 저장 실패는 무시하고 이번 세션만 적용 */
-  }
+  setSoundPreference(on);
 
   if (!on) {
     running = false;
@@ -183,9 +165,8 @@ export async function setAmbience(on: boolean): Promise<boolean> {
   }
 
   if (!ctx) {
-    const Ctor = window.AudioContext ?? (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctor) return false;
-    ctx = new Ctor();
+    ctx = createAudioCtx();
+    if (!ctx) return false;
     master = ctx.createGain();
     master.connect(ctx.destination);
   }

@@ -25,6 +25,16 @@ jobs:
       # --omit=optional 금지: rolldown 네이티브 바인딩이 optional이라 빌드가 깨진다
       - run: npm ci
       - run: npm test
+
+      # 부팅 스모크 = 배포 게이트. 첫 방문자 동선을 실제 브라우저로 밟아 보고,
+      # 실패하면 여기서 멈춰 깨진 데모가 올라가지 않게 한다.
+      # 스모크는 base 없이 빌드한 산출물로 돌린다 (프리뷰가 "/" 로 서빙되도록).
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build -w client
+        env:
+          VITE_DEMO: "1"
+      - run: npm run smoke:boot
+
       - run: npm run build -w client
         env:
           VITE_DEMO: "1"

@@ -246,7 +246,11 @@ export default function Hud() {
           <button
             className={`hud-sound${soundOn ? " on" : ""}`}
             onClick={toggleSound}
-            title={soundOn ? "풍류 끄기" : "풍류 켜기 (즉석 생성 국악풍 배경음)"}
+            title={
+              soundOn
+                ? "풍류 끄기"
+                : "풍류 켜기 (즉석 생성 국악풍 배경음 + 거래·타격 효과음)"
+            }
           >
             {soundOn ? "🎵" : "🔇"} 풍류
           </button>

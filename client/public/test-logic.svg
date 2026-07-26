@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="560" height="910" viewBox="0 0 560 910" role="img" aria-label="npm test — 로직 검증 · 체인 없음 실행 결과">
-  <rect width="560" height="910" rx="12" fill="#17141D"/>
-  <rect width="560" height="34" rx="12" fill="#241F2E"/>
-  <rect y="22" width="560" height="12" fill="#241F2E"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="589" height="1099" viewBox="0 0 589 1099" role="img" aria-label="npm test — 로직 검증 · 체인 없음 실행 결과">
+  <rect width="589" height="1099" rx="12" fill="#17141D"/>
+  <rect width="589" height="34" rx="12" fill="#241F2E"/>
+  <rect y="22" width="589" height="12" fill="#241F2E"/>
   <circle cx="20" cy="17" r="5" fill="#DD6B5A"/>
   <circle cx="38" cy="17" r="5" fill="#D99245"/>
   <circle cx="56" cy="17" r="5" fill="#3FAE73"/>
@@ -43,11 +43,20 @@
   <text x="38.3" y="703" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="703" fill="#EDE7DA">한밤에 등불이 켜지고 한낮에 꺼진다</text>
   <text x="38.3" y="724" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="724" fill="#EDE7DA">쇼케이스는 한낮으로 고정된다 (데모 영상 보호)</text>
   <text x="22.0" y="745" fill="#B4A99A"></text>
-  <text x="22.0" y="766" fill="#C79A3F" font-weight="600">HUD — .hud는 pointer-events:none 이라 버튼마다 되살려야 한다</text>
-  <text x="22.0" y="787" fill="#B4A99A">     검사한 버튼 클래스: hud-btn, hud-sound</text>
-  <text x="38.3" y="808" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="808" fill="#EDE7DA">HUD의 &lt;button&gt;에 붙은 클래스가 pointer-events:auto 를 가진다</text>
-  <text x="22.0" y="829" fill="#B4A99A"></text>
-  <text x="22.0" y="850" fill="#392F44">──────────────────────────────────────────────────</text>
-  <text x="22.0" y="871" fill="#3FAE73" font-weight="700">전부 통과 (25건) · 가스 0</text>
+  <text x="22.0" y="766" fill="#C79A3F" font-weight="600">던전 문 확률 — 컨트랙트·서버·클라이언트가 같은 표를 본다</text>
+  <text x="22.0" y="787" fill="#B4A99A">     safe&lt;154 · bonus&lt;192 · trap≥192 (of 256)</text>
+  <text x="38.3" y="808" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="808" fill="#EDE7DA">세 구현의 경계값이 같다</text>
+  <text x="22.0" y="829" fill="#B4A99A">     손익분기 3.59층에서 귀환이 유리해진다</text>
+  <text x="38.3" y="850" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="850" fill="#EDE7DA">귀환할지 더 오를지가 진짜 선택이다 (탐욕이 늘 옳으면 결정이 아니다)</text>
+  <text x="22.0" y="871" fill="#B4A99A"></text>
+  <text x="22.0" y="892" fill="#C79A3F" font-weight="600">에셋 0 — 그래픽도 소리도 코드로 만든다</text>
+  <text x="38.3" y="913" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="913" fill="#EDE7DA">소스 트리에 반입한 이미지·오디오·모델 파일이 없다</text>
+  <text x="22.0" y="934" fill="#B4A99A"></text>
+  <text x="22.0" y="955" fill="#C79A3F" font-weight="600">HUD — .hud는 pointer-events:none 이라 버튼마다 되살려야 한다</text>
+  <text x="22.0" y="976" fill="#B4A99A">     검사한 버튼 클래스: hud-btn, hud-sound</text>
+  <text x="38.3" y="997" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="997" fill="#EDE7DA">HUD의 &lt;button&gt;에 붙은 클래스가 pointer-events:auto 를 가진다</text>
+  <text x="22.0" y="1018" fill="#B4A99A"></text>
+  <text x="22.0" y="1039" fill="#392F44">──────────────────────────────────────────────────</text>
+  <text x="22.0" y="1060" fill="#3FAE73" font-weight="700">전부 통과 (28건) · 가스 0</text>
   </g>
 </svg>

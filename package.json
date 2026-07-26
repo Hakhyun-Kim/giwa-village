@@ -14,6 +14,7 @@
     "test": "node scripts/test-logic.mjs",
     "test:local": "node scripts/test-local.mjs",
     "test:chain": "node scripts/test-chain.mjs",
+    "smoke:boot": "node scripts/smoke-boot.mjs",
     "market-day": "node scripts/market-day-check.mjs",
     "render-tests": "node scripts/render-run.mjs client/public/test-logic.svg \"npm test — 로직 검증 · 체인 없음\" -- npm test && node scripts/render-run.mjs client/public/test-local.svg \"npm run test:local — 컨트랙트 10종 · 테스트넷 가스 0\" -- npm run test:local",
     "smoke": "node scripts/sync-smoke.mjs",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "playwright": "^1.62.0",
     "solc": "^0.8.36"
   },
   "//anvil": "로컬 무가스 테스트(npm run test:local)용 anvil은 일부러 의존성에 넣지 않는다. Windows에서 postinstall이 깨지고, 배포 CI에는 불필요하며, optional로 두면 --omit=optional을 쓸 수밖에 없는데 그러면 rolldown 네이티브 바인딩까지 빠져 빌드가 깨진다. 설치: npm i @foundry-rs/anvil --ignore-scripts --no-save",

@@ -182,22 +182,25 @@ L1StandardBridge(`0x77b2…A7E7`)로 전송하면 1~3분 뒤 L2 잔액에 반영
 
 | 명령 | 무엇을 | 가스 | 걸리는 시간 |
 |---|---|---|---|
-| `npm test` | 로직·데이터·조명 하한·HUD 함정 (25건) | **0** (체인 없음) | 1초 미만 |
+| `npm test` | 로직·데이터·조명 하한·밸런스 표 대조·HUD 함정 (28건) | **0** (체인 없음) | 1초 미만 |
 | `npm run test:local` | **컨트랙트 10종 전체** + 장날·쿨다운 시간 여행 (49건) | **0** (로컬 anvil) | ~5초 |
+| `npm run smoke:boot` | 실브라우저로 **첫 방문자 동선** 부팅 검사 | **0** (읽기만) | ~30초 |
 | `npm run test:chain -- --yes` | 실제 배포본·GIWA 네이티브 연동 확인 | 읽기만 (0) | ~10초 |
 | `npm run market-smoke` 등 | 실거래가 꼭 필요한 검증 | **든다** | 분 단위 |
 
 ```bash
 npm test              # 저장할 때마다 돌려도 되는 계층
 npm run test:local    # 컨트랙트를 건드렸으면 여기까지
+npm run smoke:boot    # 데모를 배포하기 전 (CI가 자동으로 돌린다)
 npm run test:chain -- --yes   # 배포 전 최종 확인
 ```
 
 **`npm test`** — 체인도 지갑도 네트워크도 쓰지 않는다. 흥정 하한선 강제(모델이
 헐값 수락을 반환해도 차단되는지), 주민 데이터 정합성, 야간 조명이 읽을 수 있는
-밝기인지, HUD 버튼의 `pointer-events` 누락까지 25건을 검사한다. CI에서도 돈다.
+밝기인지, 던전 문 확률이 컨트랙트·서버·클라이언트 세 곳에서 같은지, HUD 버튼의
+`pointer-events` 누락까지 28건을 검사한다. CI에서도 돈다.
 
-<img src="client/public/test-logic.svg" alt="npm test 실행 결과 — 로직 25건 통과, 가스 0" width="480">
+<img src="client/public/test-logic.svg" alt="npm test 실행 결과 — 로직 28건 통과, 가스 0" width="480">
 
 
 **`npm run test:local`** — anvil을 **chain-id 91342(GIWA Sepolia와 동일)**로 띄우고
@@ -227,6 +230,18 @@ npm run test:chain -- --yes   # 배포 전 최종 확인
 > ```bash
 > npm i @foundry-rs/anvil --ignore-scripts --no-save
 > ```
+
+**`npm run smoke:boot`** — 여기까지는 전부 "규칙이 맞나"를 봤다면, 이건 **마을이
+실제로 뜨는가**를 본다. `VITE_DEMO=1`로 빌드한 산출물을 진짜 크롬으로 열어서
+캔버스 부팅 → 노점·주민 등장 → 촌장의 부탁(온보딩) 노출 → 풍류 토글까지 밟고,
+미처리 예외와 콘솔 에러가 하나라도 있으면 실패한다. **GitHub Actions에서 배포 앞에
+붙어 있어서, 깨진 데모는 애초에 올라가지 않는다.**
+
+> 요령 둘. **빈 localStorage(첫 방문자)로 연다** — 개발자 브라우저에는 온보딩
+> 진행 기록이 남아 있어, 그대로 검사하면 "처음 온 사람에게만 나는 문제"를 영영
+> 못 잡는다. 그리고 **공개 테스트넷 RPC에서 온 에러는 일부러 걸러낸다** — 남의
+> 레이트리밋으로 게이트가 빨간불이 되면 사람은 곧 그것을 무시하게 되고,
+> 그 순간 게이트는 죽은 장치다.
 
 **실거래가 정말 필요할 때만** 기존 스모크(`market-smoke`, `gift`, `stall-smoke`)를
 쓴다. GIWA 고유 연동(Dojang·UP.ID)은 로컬에서 흉내 낼 수 없으므로 `test:chain`이
@@ -366,6 +381,11 @@ node scripts/dojang-smoke.mjs  # Dojang isVerified 조회 경로 확인
 - [x] 소셜 프로필 애그리게이터(GiwaProfile) + 외부 소비용 SDK([sdk/](sdk/README.md))
 - [x] RPG 퀘스트식 온보딩(촌장의 부탁 7단계) + HUD 통합(4버튼)·tx 진행 칩
 - [x] 모바일 터치 조작 (가상 조이스틱 + 상황별 액션 버튼)
+- [x] 효과음 — 파일 0개, 배경음과 같은 평조 어휘 (전송 성공/실패·타격·온기 수령)
+- [x] 게임필 — 도깨비 타격 섬광·화면 흔들림·떠오르는 숫자·잔상 체력바
+      (새 메시·파티클 0개 · `prefers-reduced-motion` 존중)
+- [x] 부팅 스모크 배포 게이트 + 자동화 훅 (`?rafshim` · `window.__giwa`)
+- [ ] 일일 장터 기록 — 로컬 무가스 주행을 콘텐츠로 (설계: [CLAUDE.md §8](CLAUDE.md))
 - [ ] RPC 읽기 캐시/인덱서·구역 샤딩 (다수 동시 접속 대비 — [기술 문서 §7](https://hakhyun-kim.github.io/giwa-village/tech.html#scale))
 - [ ] 실브랜드 기프티콘 API 연동
 

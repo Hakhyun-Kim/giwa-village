@@ -11,6 +11,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { giwaSepolia, WS_URL } from "../config/giwa";
 import { useStore } from "../state/store";
+import { sfxFail, sfxSent } from "../audio/sfx";
 import { MARKET_ADDRESS, MARKET_ABI } from "../config/market";
 import {
   DOJANG_SCROLL_ADDRESS,
@@ -34,12 +35,17 @@ export let activeWalletClient: WalletClient | null = null;
  * "replacement transaction underpriced"). 모든 버너 쓰기를 이 큐로 직렬화한다.
  */
 let txChain: Promise<unknown> = Promise.resolve();
-export function queueTx<T>(fn: () => Promise<T>): Promise<T> {
+/**
+ * @param silent 프레즌스 비컨처럼 사람이 누른 적 없는 전송 — 소리를 내지 않는다.
+ *   (비컨은 몇 초마다 나가므로 여기에 효과음을 붙이면 마을이 삑삑거린다)
+ */
+export function queueTx<T>(fn: () => Promise<T>, silent = false): Promise<T> {
   useStore.getState().bumpPendingTx(1);
   const run = txChain
     .then(fn, fn)
     .finally(() => useStore.getState().bumpPendingTx(-1));
   txChain = run.catch(() => {});
+  if (!silent) run.then(sfxSent, sfxFail);
   return run;
 }
 

@@ -6,6 +6,7 @@ import { WORLD_RADIUS, PORTAL_POS, CAMPFIRE_POS, BOSS_POS } from "./Village";
 import { sendBeacon } from "../chain/presence";
 import { strikeBoss, refreshBoss } from "../chain/boss";
 import { touchInput } from "./touch";
+import { bossHit, feel, tickFeel } from "./feel";
 import { localPos, sendMove, sendEmote } from "../net/colyseus";
 import { useStore } from "../state/store";
 
@@ -64,6 +65,9 @@ export default function Player() {
             const at = useStore.getState().emotes[id]?.at;
             if (at) setTimeout(() => useStore.getState().clearEmote(id, at), 2000);
           }
+          // 즉각 반응은 화면이 하고, 얼마나 깎였는지는 체인이 확정한 뒤에
+          // 숫자로 뜬다 (refreshBoss가 잔량 차이를 보고 띄운다)
+          bossHit();
           void strikeBoss()
             .then(() => refreshBoss())
             .catch(() => {});
@@ -129,6 +133,15 @@ export default function Player() {
     camDesired.current.set(localPos.x, 9.5, localPos.z + 11.5);
     camera.position.lerp(camDesired.current, 1 - Math.pow(0.0001, dt));
     camera.lookAt(camTarget.current.x, 1.4, camTarget.current.z);
+
+    // 타격감 — 누적한 흔들림을 제곱해 쓴다. 작은 흔들림은 더 작아지고 큰 것만
+    // 남으므로, 잔진동이 화면을 계속 떨게 하지 않는다.
+    tickFeel(dt);
+    if (feel.shake > 0.001) {
+      const s2 = feel.shake * feel.shake;
+      camera.position.x += (Math.random() - 0.5) * s2 * 1.8;
+      camera.position.y += (Math.random() - 0.5) * s2 * 1.1;
+    }
 
     // portal proximity
     const near =

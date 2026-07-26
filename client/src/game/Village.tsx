@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import type { Mesh, PointLight } from "three";
+import type { Mesh, MeshStandardMaterial, PointLight } from "three";
 import { useStore } from "../state/store";
 import { currentDaylight, type DaylightState } from "./daylight";
+import { feel, onDamagePop, type DamagePop } from "./feel";
 
 export const WORLD_RADIUS = 55;
 export const PORTAL_POS: [number, number, number] = [0, 0, -30];
@@ -302,13 +303,38 @@ function Campfire() {
 function BossGoblin() {
   const boss = useStore((s) => s.boss);
   const body = useRef<Mesh>(null);
+  const skin = useRef<MeshStandardMaterial>(null);
+  const glow = useRef<PointLight>(null);
+  const [pops, setPops] = useState<DamagePop[]>([]);
+
+  // 떠오르는 숫자 — 애니메이션이 끝나면 스스로 사라진다 (풀 최대 5개)
+  useEffect(
+    () =>
+      onDamagePop((p) => {
+        setPops((cur) => [...cur.slice(-4), p]);
+        setTimeout(() => setPops((cur) => cur.filter((x) => x.id !== p.id)), 1200);
+      }),
+    [],
+  );
+
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
+    const f = feel.bossFlash;
     if (body.current) {
       body.current.position.y = 1.15 + Math.sin(t * 1.7) * 0.1;
       body.current.rotation.y = Math.sin(t * 0.6) * 0.4;
+      // 맞으면 살짝 부푼다 — 새 메시 없이 스케일 하나로 내는 타격감
+      body.current.scale.setScalar(1 + f * 0.16);
     }
+    // 밝게 틴트 + 발광. 재질을 새로 만들지 않고 있는 값을 흔든다.
+    // 완전히 하얗게 태우지는 않는다 — 뿔·눈이 안 보이면 무엇이 맞았는지가 사라진다.
+    if (skin.current) {
+      skin.current.emissive.setRGB(0.23 + f * 0.42, 0.1 + f * 0.45, 0.29 + f * 0.36);
+      skin.current.emissiveIntensity = 0.4 + f * 1.5;
+    }
+    if (glow.current) glow.current.intensity = 1.2 + f * 4;
   });
+
   if (!boss || boss.slain) return null;
   const hpRatio = Math.max(0, Math.min(1, boss.remaining / 2000));
   return (
@@ -316,7 +342,12 @@ function BossGoblin() {
       {/* 몸통 */}
       <mesh ref={body} position={[0, 1.15, 0]} castShadow>
         <sphereGeometry args={[0.85, 16, 16]} />
-        <meshStandardMaterial color="#7a4a8f" emissive="#3a1a4a" emissiveIntensity={0.4} />
+        <meshStandardMaterial
+          ref={skin}
+          color="#7a4a8f"
+          emissive="#3a1a4a"
+          emissiveIntensity={0.4}
+        />
       </mesh>
       {/* 뿔 */}
       <mesh position={[-0.3, 2.15, 0]} rotation={[0, 0, 0.35]} castShadow>
@@ -336,12 +367,23 @@ function BossGoblin() {
         <sphereGeometry args={[0.09, 8, 8]} />
         <meshStandardMaterial color="#ff5a5a" emissive="#ff2a2a" emissiveIntensity={1.4} />
       </mesh>
-      <pointLight position={[0, 1.6, 0]} color="#b06cff" intensity={1.2} distance={6} />
-      <Html position={[0, 2.9, 0]} center distanceFactor={18} zIndexRange={[6, 0]}>
-        <div className="boss-tag">
+      <pointLight ref={glow} position={[0, 1.6, 0]} color="#b06cff" intensity={1.2} distance={6} />
+      {/* 간판(5~6)보다 위, 아바타 이름표(10~20)보다 아래 — 떠오르는 숫자가
+          주변 간판에 가려지지 않게 한 칸 올려 둔다 */}
+      <Html position={[0, 2.9, 0]} center distanceFactor={18} zIndexRange={[9, 0]}>
+        <div className={`boss-tag${hpRatio < 0.2 ? " low" : ""}`}>
           <div className="boss-name">🧿 장터 도깨비 <span>주간 토벌</span></div>
-          <div className="boss-hp"><i style={{ width: `${hpRatio * 100}%` }} /></div>
+          {/* 잔상 체력바: 앞 바는 즉시 줄고 뒤 바가 늦게 따라와 '얼마나 깎였나'가 보인다 */}
+          <div className="boss-hp">
+            <b style={{ width: `${hpRatio * 100}%` }} />
+            <i style={{ width: `${hpRatio * 100}%` }} />
+          </div>
           <div className="boss-sub">{boss.remaining} / 2000 · 내 기여 {boss.myContrib}</div>
+          {pops.map((p) => (
+            <span key={p.id} className={`boss-dmg${p.mine ? " mine" : ""}`}>
+              −{p.amount}
+            </span>
+          ))}
         </div>
       </Html>
     </group>

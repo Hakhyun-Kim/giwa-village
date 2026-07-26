@@ -2,6 +2,7 @@
 import { decodeEventLog, formatEther, parseEther } from "viem";
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { MARKET_ADDRESS, MARKET_ABI } from "../config/market";
+import { sfxSuccess } from "../audio/sfx";
 import { useStore } from "../state/store";
 import type { Stall } from "../types";
 import type { GiftResult } from "../wallet/wallet";
@@ -144,5 +145,6 @@ export async function buyStallOnChain(
       // 다른 이벤트 무시
     }
   }
+  sfxSuccess();
   return { tx, amountEth: priceEth, purchaseId, tokenId };
 }

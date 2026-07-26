@@ -1,5 +1,6 @@
 // 모닥불(화로) + 장날: 함께 쬔 온기의 온체인 증명 (GiwaHearth)
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
+import { sfxWarm } from "../audio/sfx";
 import { HEARTH_ADDRESS, HEARTH_ABI } from "../config/hearth";
 
 export interface HearthStatus {
@@ -56,6 +57,7 @@ export async function claimHearth(window: number): Promise<void> {
     }),
   );
   await publicClient.waitForTransactionReceipt({ hash: tx });
+  sfxWarm();
 }
 
 // ---------- 장날 (토요일 21:00 KST = 12:00 UTC, 1시간) ----------

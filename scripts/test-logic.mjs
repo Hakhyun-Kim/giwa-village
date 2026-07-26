@@ -245,6 +245,81 @@ it("쇼케이스는 한낮으로 고정된다 (데모 영상 보호)", () => {
   );
 });
 
+// ── 던전 문 확률 ──────────────────────────────────────────────────────────
+// 같은 밸런스 수치가 컨트랙트·서버·클라이언트 세 곳에 따로 적혀 있다. 컨트랙트는
+// Solidity라 한 파일로 합칠 수 없으니, 대신 "세 곳이 어긋나면 테스트가 깨진다"로
+// 묶어 둔다. 어긋나면 봇·서버는 통과하는데 체인에서만 함정을 밟는 일이 생긴다.
+// (해시 함수는 일부러 다르다 — 서버 모드는 sha256, 온체인 모드는 keccak256.
+//  같아야 하는 것은 굴림값이 아니라 확률표다.)
+
+describe("던전 문 확률 — 컨트랙트·서버·클라이언트가 같은 표를 본다");
+
+/** 문 판정 함수 본문에서 `< 숫자)` 형태의 경계 둘을 뽑는다 */
+function doorThresholds(relPath, anchor) {
+  const src = fs.readFileSync(path.join(ROOT, ...relPath.split("/")), "utf8");
+  const at = src.indexOf(anchor);
+  if (at < 0) throw new Error(`${relPath}: '${anchor}' 를 찾지 못했습니다`);
+  const region = src.slice(at, at + 700);
+  const nums = [...region.matchAll(/<\s*(\d{2,3})\s*\)/g)].map((m) => Number(m[1]));
+  if (nums.length < 2) throw new Error(`${relPath}: 경계 둘을 못 읽었습니다 (${nums})`);
+  return nums.slice(0, 2);
+}
+
+const doorTable = {
+  컨트랙트: doorThresholds("contracts/GiwaGuilds.sol", "function doorRoll"),
+  서버: doorThresholds("server/src/guilds.ts", "doorOutcome("),
+  클라이언트: doorThresholds("client/src/chain/guilds.ts", "function doorRollLocal"),
+};
+
+it("세 구현의 경계값이 같다", () => {
+  const [a, b] = doorTable.컨트랙트;
+  for (const [who, t] of Object.entries(doorTable)) {
+    eq(t[0], a, `${who} 안전 경계: `);
+    eq(t[1], b, `${who} 순풍 경계: `);
+  }
+  console.log(`     safe<${a} · bonus<${b} · trap≥${b} (of 256)`);
+});
+
+it("귀환할지 더 오를지가 진짜 선택이다 (탐욕이 늘 옳으면 결정이 아니다)", () => {
+  // 한 걸음의 기대값: 안전 +1층, 순풍 +2층, 함정이면 지금까지 쌓은 잠정 층수를 전부 잃는다.
+  // 따라서 잠정 t층에서 계속 오를 기대값은  p안전·1 + p순풍·2 − p함정·t.
+  // 이게 0이 되는 t가 '슬슬 돌아가야 하는' 지점 — 그 지점이 존재해야 게임이 된다.
+  const [safeLt, bonusLt] = doorTable.컨트랙트;
+  const pSafe = safeLt / 256;
+  const pBonus = (bonusLt - safeLt) / 256;
+  const pTrap = (256 - bonusLt) / 256;
+  ok(pTrap > 0, "함정이 없으면 오르기만 하면 됩니다");
+  const breakeven = (pSafe + 2 * pBonus) / pTrap;
+  console.log(`     손익분기 ${breakeven.toFixed(2)}층에서 귀환이 유리해진다`);
+  ok(
+    breakeven >= 2 && breakeven <= 8,
+    `손익분기 ${breakeven.toFixed(2)}층 — 2~8층 밖이면 한쪽 선택만 정답이 됩니다`,
+  );
+});
+
+// ── 부록: 에셋 0 규칙 ─────────────────────────────────────────────────────
+// 3D도 소리도 전부 코드로 만든다는 규칙을 테스트로 굳혀 둔다. 규칙을 어기는
+// 가장 흔한 경로는 "잠깐 이 mp3만"이고, 그 순간 라이선스 표기 의무가 생긴다.
+// media/ 는 우리가 찍은 시연 캡처라 예외.
+
+describe("에셋 0 — 그래픽도 소리도 코드로 만든다");
+
+it("소스 트리에 반입한 이미지·오디오·모델 파일이 없다", () => {
+  const BAD = /\.(png|jpe?g|gif|webp|mp3|wav|ogg|m4a|glb|gltf|fbx)$/i;
+  const found = [];
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.name === "node_modules" || e.name === "dist") continue;
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (BAD.test(e.name)) found.push(path.relative(ROOT, p));
+    }
+  };
+  walk(path.join(ROOT, "client", "src"));
+  walk(path.join(ROOT, "client", "public"));
+  eq(found.length, 0, `반입된 에셋: ${found.join(", ")} — `);
+});
+
 // ── HUD 함정 (실제로 겪었던 버그) ──────────────────────────────────────────
 
 describe("HUD — .hud는 pointer-events:none 이라 버튼마다 되살려야 한다");

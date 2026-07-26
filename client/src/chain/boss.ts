@@ -1,5 +1,7 @@
 // 도깨비 토벌: 주간 보스 — 함께 때려잡는 동시성 코업 (GiwaBoss)
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
+import { sfxHit } from "../audio/sfx";
+import { bossHit } from "../game/feel";
 import { BOSS_ADDRESS, BOSS_ABI } from "../config/boss";
 import { useStore } from "../state/store";
 
@@ -47,6 +49,7 @@ export async function strikeBoss(): Promise<void> {
       args: [],
     }),
   );
+  sfxHit();
   await publicClient.waitForTransactionReceipt({ hash: tx });
 }
 
@@ -72,6 +75,7 @@ export async function refreshBoss(): Promise<void> {
   if (!my) return;
   try {
     const s = await fetchBoss(my);
+    const prev = useStore.getState().boss;
     useStore.getState().setBoss({
       remaining: s.remaining,
       slain: s.slain,
@@ -79,6 +83,12 @@ export async function refreshBoss(): Promise<void> {
       nextStrikeAt: s.nextStrikeAt,
       trophies: s.trophies,
     });
+    // 지난 조회 이후 깎인 만큼을 숫자로 띄운다. 내 타격뿐 아니라 **남이 때린 것도**
+    // 뜬다 — 혼자 두들기는 게 아니라는 게 화면에 보여야 코업이 코업처럼 느껴진다.
+    if (prev && !prev.slain) {
+      const dealt = prev.remaining - s.remaining;
+      if (dealt > 0) bossHit(dealt, s.myContrib > prev.myContrib);
+    }
     if (s.prevClaimable) {
       await claimBossTrophy(s.week - 1);
       const id = useStore.getState().selfId;

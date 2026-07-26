@@ -74,16 +74,19 @@ export async function sendBeacon(emote = 0, force = false): Promise<void> {
   ];
   lastSent = { x: pos.x, z: pos.z, at: now };
   try {
-    // 모든 지갑 쓰기와 같은 큐 — 구매·입장 tx와의 nonce 경합을 원천 차단
-    await queueTx(() =>
-      wc.writeContract({
-        account: wc.account!,
-        chain: wc.chain,
-        address: PRESENCE_ADDRESS,
-        abi: PRESENCE_ABI,
-        functionName: "beacon",
-        args,
-      }),
+    // 모든 지갑 쓰기와 같은 큐 — 구매·입장 tx와의 nonce 경합을 원천 차단.
+    // silent: 비컨은 사람이 누른 전송이 아니므로 효과음을 내지 않는다.
+    await queueTx(
+      () =>
+        wc.writeContract({
+          account: wc.account!,
+          chain: wc.chain,
+          address: PRESENCE_ADDRESS,
+          abi: PRESENCE_ABI,
+          functionName: "beacon",
+          args,
+        }),
+      true,
     );
   } catch {
     // RPC 지연·거부 시 이번 비컨은 버린다 (다음 틱에 재시도)

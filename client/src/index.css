@@ -682,7 +682,8 @@ body,
   border-radius: 999px;
   text-decoration: none;
   backdrop-filter: blur(6px);
-  animation: gift-slide 0.3s ease-out;
+  /* 스프링 이징 — 툭 튀어나왔다 자리를 잡는다. 거래가 성사된 순간이 눈에 걸린다 */
+  animation: gift-slide 0.42s cubic-bezier(0.2, 1.6, 0.4, 1);
 }
 
 .gift-feed-item b {
@@ -1007,6 +1008,7 @@ body,
 .hud-bag-menu button:hover { background: #1c2331; color: #ffd66b; }
 
 .boss-tag {
+  position: relative;
   background: rgba(20, 24, 34, 0.88);
   border: 1px solid rgba(255, 90, 90, 0.4);
   border-radius: 10px;
@@ -1015,17 +1017,58 @@ body,
   min-width: 150px;
   pointer-events: none;
 }
+/* 저체력 맥동 — 마지막 20%에서 "곧 쓰러진다"가 보이게. 공짜에 가까운 긴장 연출 */
+.boss-tag.low { animation: boss-low 0.9s ease-in-out infinite; }
+@keyframes boss-low {
+  0%, 100% { border-color: rgba(255, 90, 90, 0.4); box-shadow: none; }
+  50% { border-color: rgba(255, 90, 90, 1); box-shadow: 0 0 14px rgba(255, 60, 60, 0.55); }
+}
 .boss-name { color: #fff; font-size: 12px; font-weight: 700; }
 .boss-name span { color: #ff9d9d; font-size: 10px; font-weight: 400; margin-left: 4px; }
 .boss-hp {
+  position: relative;
   margin-top: 4px;
   height: 6px;
   background: #2a3040;
   border-radius: 999px;
   overflow: hidden;
 }
-.boss-hp i { display: block; height: 100%; background: linear-gradient(90deg, #ff5a5a, #ff9d4d); }
+/* 잔상(뒤) 바 — 늦게 따라오면서 방금 얼마나 깎였는지를 보여준다 */
+.boss-hp b {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  background: #ffd66b;
+  transition: width 0.5s ease 0.25s;
+}
+.boss-hp i {
+  position: relative;
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #ff5a5a, #ff9d4d);
+}
 .boss-sub { margin-top: 3px; color: #9aa7bd; font-size: 10px; }
+/* 떠오르는 데미지 숫자 — 남이 때린 것도 뜬다(작고 흐리게) */
+.boss-dmg {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  color: #cfd6e4;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 0 0 4px #000;
+  animation: boss-dmg-float 1.2s ease-out forwards;
+}
+.boss-dmg.mine { color: #ffd66b; font-size: 16px; }
+@keyframes boss-dmg-float {
+  0% { opacity: 0; transform: translate(-50%, 6px) scale(0.7); }
+  20% { opacity: 1; transform: translate(-50%, -6px) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -42px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .boss-tag.low { animation: none; border-color: rgba(255, 90, 90, 1); }
+  .boss-dmg { animation-duration: 1.2s; }
+}
 
 .quest-card {
   position: absolute;
