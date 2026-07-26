@@ -26,7 +26,8 @@
     "wallets": "node scripts/gen-wallets.mjs",
     "bridge": "node scripts/bridge-deposit.mjs",
     "faucet": "node scripts/faucet-check.mjs",
-    "verify": "node scripts/verify-run.mjs"
+    "verify": "node scripts/verify-run.mjs",
+    "dojang-smoke": "node scripts/dojang-smoke.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
