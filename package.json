@@ -16,7 +16,7 @@
     "test:chain": "node scripts/test-chain.mjs",
     "smoke:boot": "node scripts/smoke-boot.mjs",
     "market-day": "node scripts/market-day-check.mjs",
-    "render-tests": "node scripts/render-run.mjs client/public/test-logic.svg \"npm test — 로직 검증 · 체인 없음\" -- npm test && node scripts/render-run.mjs client/public/test-local.svg \"npm run test:local — 컨트랙트 10종 · 테스트넷 가스 0\" -- npm run test:local",
+    "render-tests": "node scripts/render-run.mjs client/public/test-logic.svg \"npm test — 로직 검증 · 체인 없음\" -- npm test && node scripts/render-run.mjs client/public/test-local.svg \"npm run test:local — 컨트랙트 10종 · 테스트넷 가스 0\" -- npm run test:local && node scripts/render-run.mjs client/public/verify-run.svg \"npm run verify — 온체인 원정 재현 검증 · 신뢰 0\" -- npm run verify",
     "smoke": "node scripts/sync-smoke.mjs",
     "gift": "node scripts/gift-smoke.mjs",
     "bots": "node scripts/bots.mjs",
@@ -25,7 +25,8 @@
     "market-smoke": "node scripts/market-smoke.mjs",
     "wallets": "node scripts/gen-wallets.mjs",
     "bridge": "node scripts/bridge-deposit.mjs",
-    "faucet": "node scripts/faucet-check.mjs"
+    "faucet": "node scripts/faucet-check.mjs",
+    "verify": "node scripts/verify-run.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

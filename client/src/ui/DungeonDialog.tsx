@@ -1,7 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import { dungeonEnter, dungeonPick, dungeonBank } from "../net/colyseus";
+import { verifyLastRun } from "../chain/guilds";
 import { giwaSepolia, DUNGEON_URL } from "../config/giwa";
+
+type Proof = ReturnType<typeof verifyLastRun>;
 
 const OUTCOME_TEXT = {
   safe: "🕯️ 무사히 올랐다 — +1층",
@@ -15,6 +18,7 @@ export default function DungeonDialog() {
   const guilds = useStore((s) => s.guilds);
   const walletAddress = useStore((s) => s.walletAddress);
   const error = useStore((s) => s.guildError);
+  const [proof, setProof] = useState<Proof>(null);
 
   const myGuild = walletAddress
     ? guilds.find((g) =>
@@ -84,11 +88,48 @@ export default function DungeonDialog() {
                     ? `🏮 +${dungeon.banked}층 확정! 길드가 ${dungeon.floor}층에 도달했다`
                     : (OUTCOME_TEXT[dungeon.lastOutcome ?? "trap"] ?? "")}
                 </div>
+                {dungeon.banked ? (
+                  <div className="gift-note">
+                    {proof ? (
+                      proof.matches ? (
+                        <span>
+                          🔒 검증됨 — 블록 시드로부터 <b>+{proof.reproduced}층</b>을 그대로
+                          재현했고 온체인 확정값과 일치합니다. 누구나 같은 계산을 돌릴 수
+                          있습니다.
+                        </span>
+                      ) : (
+                        <span>
+                          ⚠ 불일치 — 재현 {proof.reproduced}층 vs 온체인 {proof.onchain}층
+                        </span>
+                      )
+                    ) : (
+                      <button
+                        className="gift-txlink"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          font: "inherit",
+                        }}
+                        onClick={() => setProof(verifyLastRun())}
+                      >
+                        🔒 이 결과 검증하기 — 시드로 재현
+                      </button>
+                    )}
+                  </div>
+                ) : null}
                 <div className="gift-actions">
                   <button className="gift-btn" onClick={close}>
                     마을로
                   </button>
-                  <button className="gift-btn primary" onClick={() => dungeonEnter()}>
+                  <button
+                    className="gift-btn primary"
+                    onClick={() => {
+                      setProof(null);
+                      dungeonEnter();
+                    }}
+                  >
                     다시 입장
                   </button>
                 </div>
