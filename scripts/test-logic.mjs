@@ -5,7 +5,7 @@
 // Usage: npm test
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseEther } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { BAND, classify, decideDeterministic, enforce, floorOf } from "./lib/haggle.mjs";
@@ -353,6 +353,127 @@ it("HUD의 <button>에 붙은 클래스가 pointer-events:auto 를 가진다", (
     );
   }
   console.log(`     검사한 버튼 클래스: ${classes.join(", ")}`);
+});
+
+// ── 마을 충돌 ─────────────────────────────────────────────────────────────
+// collide.ts는 의존성이 없는 순수 모듈이라 노드가 타입만 벗겨 그대로 불러온다
+// (소스를 정규식으로 훑을 필요가 없다 — 진짜 배치표로 진짜 함수를 돌린다).
+// 여기서 보는 것은 둘이다: ① 벽을 뚫지 않는가 ② 갈 데를 막지 않는가.
+// ②가 더 중요하다 — 부딪히는 것은 눈에 보이지만, 상호작용 지점이 막힌 것은
+// "왜 이 버튼이 안 뜨지"로만 나타난다.
+
+describe("마을 충돌 — 로컬에서만, 배치표 한 곳에서");
+
+const {
+  BOSS_POS: C_BOSS,
+  CAMPFIRE_POS: C_FIRE,
+  PORTAL_POS: C_PORTAL,
+  HANOKS: C_HANOKS,
+  PLAYER_R,
+  VILLAGE_COLLIDERS,
+  collide,
+  insideAny,
+  setDynamicColliders,
+} = await import(
+  pathToFileURL(path.join(ROOT, "client", "src", "game", "collide.ts")).href
+);
+
+/** 실제 조작처럼 잘게 걸어간다 — 한 프레임에 순간이동시키면 통과가 무의미하다 */
+function walk(from, toX, toZ, steps = 400) {
+  const p = { x: from[0], z: from[1] };
+  for (let i = 0; i < steps; i++) {
+    const dx = toX - p.x;
+    const dz = toZ - p.z;
+    const d = Math.hypot(dx, dz);
+    if (d < 1e-3) break;
+    const step = Math.min(d, 0.1); // 6 m/s · 60fps 한 프레임분
+    p.x += (dx / d) * step;
+    p.z += (dz / d) * step;
+    collide(p);
+  }
+  return p;
+}
+
+it("한옥 안으로 걸어 들어가지 못한다", () => {
+  for (const h of C_HANOKS) {
+    const [hx, , hz] = h.position;
+    // 마을 중앙에서 한옥 한가운데를 향해 걸어간다
+    const p = walk([0, 6], hx, hz);
+    const gap = Math.hypot(p.x - hx, p.z - hz);
+    ok(gap > 1.5, `한옥(${hx.toFixed(1)}, ${hz.toFixed(1)}) 안으로 ${gap.toFixed(2)}m까지 들어갔습니다`);
+  }
+});
+
+it("분수 안에 들어가지 못한다", () => {
+  const p = walk([0, 8], 0, 0);
+  ok(Math.hypot(p.x, p.z) > 2.6, `분수 중심에서 ${Math.hypot(p.x, p.z).toFixed(2)}m`);
+});
+
+it("벽에 비스듬히 부딪히면 미끄러진다 (제자리에 붙지 않는다)", () => {
+  const h = C_HANOKS[0];
+  const [hx, , hz] = h.position;
+  // 한옥 옆을 스치듯 지나가는 목표 — 막히더라도 옆으로는 계속 나아가야 한다
+  const p = walk([0, 6], hx * 1.6, hz * 1.6);
+  ok(
+    Math.hypot(p.x, p.z) > 12,
+    `벽에 걸려 ${Math.hypot(p.x, p.z).toFixed(1)}m에서 멈췄습니다 — 미끄러지지 않습니다`,
+  );
+});
+
+it("상호작용 지점은 막지 않는다 — 모닥불·도깨비·포털에 닿는다", () => {
+  const spots = [
+    ["모닥불", C_FIRE, 3.2],
+    ["도깨비", C_BOSS, 4.5],
+    ["포털", C_PORTAL, 4.5],
+  ];
+  for (const [name, pos, reach] of spots) {
+    // 분수를 정면으로 들이받지 않는 자리에서 출발한다 — 검사하려는 것은
+    // "길이 열려 있는가"이지 봇이 장애물을 돌아갈 줄 아는가가 아니다
+    const p = walk([6, 6], pos[0], pos[2]);
+    const d = Math.hypot(p.x - pos[0], p.z - pos[2]);
+    ok(d < reach, `${name}까지 ${d.toFixed(2)}m — 상호작용 반경 ${reach}m 안에 못 들어갑니다`);
+  }
+});
+
+it("첫 등장 자리(0, 5)와 광장이 비어 있다", () => {
+  ok(!insideAny(0, 5, PLAYER_R), "스폰 지점이 무언가에 끼어 있습니다");
+  for (let a = 0; a < 12; a++) {
+    const x = Math.cos((a / 12) * Math.PI * 2) * 5;
+    const z = Math.sin((a / 12) * Math.PI * 2) * 5;
+    ok(!insideAny(x, z, PLAYER_R), `광장 반경 5m(${x.toFixed(1)}, ${z.toFixed(1)})가 막혀 있습니다`);
+  }
+});
+
+it("마을 밖으로 나가지 못한다", () => {
+  const p = walk([0, 6], 900, 900, 12000);
+  ok(Math.hypot(p.x, p.z) <= 55.001, `${Math.hypot(p.x, p.z).toFixed(1)}m — 경계를 넘었습니다`);
+});
+
+it("노점은 열려 있을 때만 막는다 (닫히면 유령 벽이 남지 않는다)", () => {
+  const at = [20, 0];
+  ok(!insideAny(at[0], at[1], PLAYER_R), "검사 지점이 원래 막혀 있습니다");
+  setDynamicColliders("test-stall", [
+    { kind: "box", x: at[0], z: at[1], hw: 1.05, hd: 0.72, rot: 0 },
+  ]);
+  ok(insideAny(at[0], at[1], PLAYER_R), "열린 노점이 막지 않습니다");
+  setDynamicColliders("test-stall", null);
+  ok(!insideAny(at[0], at[1], PLAYER_R), "닫힌 노점 자리에 유령 벽이 남았습니다");
+});
+
+it("그리는 쪽(Village.tsx)이 같은 배치표를 읽는다", () => {
+  const villageSrc = fs.readFileSync(
+    path.join(ROOT, "client", "src", "game", "Village.tsx"),
+    "utf8",
+  );
+  ok(
+    /import\s*\{[^}]*HANOKS[^}]*\}\s*from\s*"\.\/collide"/s.test(villageSrc),
+    "Village.tsx가 collide.ts의 배치표를 쓰지 않습니다 — 보이는 것과 막히는 것이 어긋납니다",
+  );
+  ok(
+    !/mulberry32/.test(villageSrc),
+    "Village.tsx에 좌표 생성기가 다시 생겼습니다 — 배치표는 collide.ts 한 곳입니다",
+  );
+  console.log(`     콜라이더 ${VILLAGE_COLLIDERS.length}개 (한옥 ${C_HANOKS.length}채 포함)`);
 });
 
 // ── 결과 ──────────────────────────────────────────────────────────────────

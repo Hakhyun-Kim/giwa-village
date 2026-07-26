@@ -138,6 +138,30 @@ try {
     must(left === 0, `숫자가 스스로 사라진다 (남은 ${left}개)`);
   }
 
+  // 충돌 — 실제 프레임 위에서만 드러난다(로직은 npm test가 따로 본다).
+  // 한옥 한가운데에 떨어뜨려 놓고, 프레임이 스스로 밖으로 밀어내는지 본다.
+  const wall = await page.evaluate(() => window.__giwa.walls().find((c) => c.kind === "box"));
+  const escaped = await page.evaluate(async (w) => {
+    window.__giwa.teleport(w.x, w.z);
+    await new Promise((r) => setTimeout(r, 600));
+    const p = window.__giwa.pos();
+    return { dist: Math.hypot(p.x - w.x, p.z - w.z), stuck: window.__giwa.blocked(p.x, p.z) };
+  }, wall);
+  must(
+    escaped.dist > 1 && !escaped.stuck,
+    `벽 안에서 빠져나온다 (${escaped.dist.toFixed(2)}m 밀려남)`,
+  );
+
+  // 걸어서 분수로 돌진 — 통과하지 못해야 한다
+  const rammed = await page.evaluate(() => window.__giwa.teleport(0, 8));
+  await page.keyboard.down("KeyW");
+  await wait(1600);
+  await page.keyboard.up("KeyW");
+  const after = await page.evaluate(() => window.__giwa.pos());
+  const fromCenter = Math.hypot(after.x, after.z);
+  must(rammed && fromCenter > 2.5, `분수를 통과하지 못한다 (중심에서 ${fromCenter.toFixed(2)}m)`);
+  must(after.z < 7.9, `걷기는 그대로 된다 (z 8 → ${after.z.toFixed(2)})`);
+
   // 몇 초 더 돌려 NPC 이동·주야 사이클·비컨 경로에서 터지는 것이 없는지 본다
   await wait(6000);
   must(errors.length === 0, `콘솔 에러 0 (${errors.length}건)`);

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="589" height="1099" viewBox="0 0 589 1099" role="img" aria-label="npm test — 로직 검증 · 체인 없음 실행 결과">
-  <rect width="589" height="1099" rx="12" fill="#17141D"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="589" height="1330" viewBox="0 0 589 1330" role="img" aria-label="npm test — 로직 검증 · 체인 없음 실행 결과">
+  <rect width="589" height="1330" rx="12" fill="#17141D"/>
   <rect width="589" height="34" rx="12" fill="#241F2E"/>
   <rect y="22" width="589" height="12" fill="#241F2E"/>
   <circle cx="20" cy="17" r="5" fill="#DD6B5A"/>
@@ -56,7 +56,18 @@
   <text x="22.0" y="976" fill="#B4A99A">     검사한 버튼 클래스: hud-btn, hud-sound</text>
   <text x="38.3" y="997" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="997" fill="#EDE7DA">HUD의 &lt;button&gt;에 붙은 클래스가 pointer-events:auto 를 가진다</text>
   <text x="22.0" y="1018" fill="#B4A99A"></text>
-  <text x="22.0" y="1039" fill="#392F44">──────────────────────────────────────────────────</text>
-  <text x="22.0" y="1060" fill="#3FAE73" font-weight="700">전부 통과 (28건) · 가스 0</text>
+  <text x="22.0" y="1039" fill="#C79A3F" font-weight="600">마을 충돌 — 로컬에서만, 배치표 한 곳에서</text>
+  <text x="38.3" y="1060" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1060" fill="#EDE7DA">한옥 안으로 걸어 들어가지 못한다</text>
+  <text x="38.3" y="1081" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1081" fill="#EDE7DA">분수 안에 들어가지 못한다</text>
+  <text x="38.3" y="1102" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1102" fill="#EDE7DA">벽에 비스듬히 부딪히면 미끄러진다 (제자리에 붙지 않는다)</text>
+  <text x="38.3" y="1123" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1123" fill="#EDE7DA">상호작용 지점은 막지 않는다</text><text x="264.9" y="1123" fill="#8E8478"> — 모닥불·도깨비·포털에 닿는다</text>
+  <text x="38.3" y="1144" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1144" fill="#EDE7DA">첫 등장 자리(0, 5)와 광장이 비어 있다</text>
+  <text x="38.3" y="1165" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1165" fill="#EDE7DA">마을 밖으로 나가지 못한다</text>
+  <text x="38.3" y="1186" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1186" fill="#EDE7DA">노점은 열려 있을 때만 막는다 (닫히면 유령 벽이 남지 않는다)</text>
+  <text x="22.0" y="1207" fill="#B4A99A">     콜라이더 38개 (한옥 6채 포함)</text>
+  <text x="38.3" y="1228" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1228" fill="#EDE7DA">그리는 쪽(Village.tsx)이 같은 배치표를 읽는다</text>
+  <text x="22.0" y="1249" fill="#B4A99A"></text>
+  <text x="22.0" y="1270" fill="#392F44">──────────────────────────────────────────────────</text>
+  <text x="22.0" y="1291" fill="#3FAE73" font-weight="700">전부 통과 (36건) · 가스 0</text>
   </g>
 </svg>

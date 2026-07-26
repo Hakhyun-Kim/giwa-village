@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Group, Vector3 } from "three";
 import Avatar from "./Avatar";
-import { WORLD_RADIUS, PORTAL_POS, CAMPFIRE_POS, BOSS_POS } from "./Village";
+import { PORTAL_POS, CAMPFIRE_POS, BOSS_POS, collide } from "./collide";
 import { sendBeacon } from "../chain/presence";
 import { strikeBoss, refreshBoss } from "../chain/boss";
 import { touchInput } from "./touch";
@@ -114,13 +114,11 @@ export default function Player() {
       const len = Math.hypot(dx, dz);
       localPos.x += (dx / len) * SPEED * dt;
       localPos.z += (dz / len) * SPEED * dt;
-      const dist = Math.hypot(localPos.x, localPos.z);
-      if (dist > WORLD_RADIUS) {
-        localPos.x = (localPos.x / dist) * WORLD_RADIUS;
-        localPos.z = (localPos.z / dist) * WORLD_RADIUS;
-      }
       localPos.rot = Math.atan2(dx, dz);
     }
+    // 겹친 만큼 밀어낸다 — 멈춰 있을 때도 부르는 이유는, 순간이동(?debug)이나
+    // 나중에 열린 노점 안에 갇히면 스스로 빠져나와야 하기 때문이다.
+    collide(localPos);
     speedRef.current = moving ? SPEED : 0;
 
     if (group.current) {

@@ -53,6 +53,7 @@ client/  Vite + React Three Fiber + zustand + viem + Colyseus.js
   chain/    컨트랙트별 읽기·쓰기 (모든 쓰기는 wallet.ts의 queueTx 하나를 통과한다)
   config/   주소·ABI·상수
   game/     3D 씬 (절차 생성 한옥·아바타·주야 사이클) + feel.ts(타격감)
+            + collide.ts(배치표·충돌 — 그리는 쪽과 막는 쪽이 같은 표를 읽는다)
   ui/       HUD·다이얼로그
   demo/     서버 없는 모드(VITE_DEMO=1): NPC 로컬 시뮬 + 온체인은 실동작
   audio/    배경음·효과음 (파일 0개)
@@ -99,6 +100,7 @@ sdk/     외부에서 프로필을 읽는 패키지
 | 흥정 하한선 판단 | `scripts/lib/haggle.mjs` **한 곳** (봇과 테스트가 공유) | `npm test` |
 | 장날 판정 | `contracts/GiwaHearth.sol` · `client/src/chain/hearth.ts` | `npm run test:local` — 표본 64개 대조 |
 | 주야 사이클 밝기 | `client/src/game/daylight.ts` | `npm test` — 밤에도 읽을 수 있는 하한 |
+| 마을 배치·충돌 크기 | `client/src/game/collide.ts` **한 곳** (Village.tsx가 이 표를 그린다) | `npm test` — 벽 통과 금지 + 모닥불·도깨비·포털 도달 가능 · `npm run smoke:boot` — 실프레임 |
 
 수치를 고치면 **반드시 짝을 이루는 곳을 함께 고친다.** 봇·서버는 통과하는데
 체인에서만 다르게 판정되는 것이 가장 잡기 어려운 종류의 버그다.
@@ -108,7 +110,7 @@ sdk/     외부에서 프로필을 읽는 패키지
 ## 5. 검증 — 가스를 아끼는 순서
 
 ```bash
-npm test                     # 로직 28건 · 체인 없음 · 1초 미만 (저장할 때마다)
+npm test                     # 로직 36건 · 체인 없음 · 1초 미만 (저장할 때마다)
 npm run test:local           # 컨트랙트 10종 E2E 49건 · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)
 npm run test:chain -- --yes  # 실배포본·Dojang·UP.ID 읽기 확인
@@ -130,7 +132,7 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
 |---|---|
 | `?rafshim` | 숨은 탭에서 rAF가 스로틀돼 헤드리스 검증이 멈추는 것을 막는다 (30Hz 타이머) |
 | `?debug` | 프로덕션 빌드에서도 `window.__giwa` 노출 (개발 서버는 항상 노출) |
-| `window.__giwa` | `state()` `pos()` `teleport(x,z)` `ready()` `bossHit(n)` — 타격 연출만 흉내(가스 0) |
+| `window.__giwa` | `state()` `pos()` `teleport(x,z)` `ready()` `bossHit(n)` — 타격 연출만 흉내(가스 0) · `walls()` `blocked(x,z)` — 충돌 검사 |
 | `?showcase=1` | 무조작 자동 시연 (시각을 정오로 고정 — 영상 보호) |
 | `?slot=A` | 버너 지갑 슬롯으로 입장 (로컬 개발) |
 

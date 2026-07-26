@@ -1,28 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import type { Mesh, MeshStandardMaterial, PointLight } from "three";
 import { useStore } from "../state/store";
 import { currentDaylight, type DaylightState } from "./daylight";
 import { feel, onDamagePop, type DamagePop } from "./feel";
-
-export const WORLD_RADIUS = 55;
-export const PORTAL_POS: [number, number, number] = [0, 0, -30];
-export const CAMPFIRE_POS: [number, number, number] = [-9, 0, 9];
-export const BOSS_POS: [number, number, number] = [12, 0, 14];
-
-function mulberry32(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const WALL_COLORS = ["#e8dcc8", "#e2d4bc", "#ded0b0", "#e5d9c5"];
+// 배치 좌표(한옥·나무·등롱·간판)와 충돌은 collide.ts 한 곳에 있다 —
+// 그리는 표와 막는 표가 같아야 보이는 것과 부딪히는 것이 어긋나지 않는다.
+import {
+  BILLBOARDS,
+  BOSS_POS,
+  CAMPFIRE_POS,
+  HANOKS,
+  LANTERNS,
+  TREES,
+  WORLD_RADIUS,
+  setDynamicColliders,
+} from "./collide";
 
 /** 절차 생성 한옥: 기단 + 목재 기둥 + 회벽 + 기와 팔작지붕 근사 */
 export function Hanok({
@@ -307,6 +301,16 @@ function BossGoblin() {
   const glow = useRef<PointLight>(null);
   const [pops, setPops] = useState<DamagePop[]>([]);
 
+  // 도깨비는 잡히면 사라진다 — 보이지 않는 것에 부딪히지 않도록 수명을 맞춘다
+  const alive = !!boss && !boss.slain;
+  useEffect(() => {
+    setDynamicColliders(
+      "boss",
+      alive ? [{ kind: "circle", x: BOSS_POS[0], z: BOSS_POS[2], r: 0.95 }] : null,
+    );
+    return () => setDynamicColliders("boss", null);
+  }, [alive]);
+
   // 떠오르는 숫자 — 애니메이션이 끝나면 스스로 사라진다 (풀 최대 5개)
   useEffect(
     () =>
@@ -438,49 +442,6 @@ function useDaylight(): DaylightState {
 export default function Village() {
   const sun = useDaylight();
 
-  // 한옥 링 — 동쪽(식당가)과 북쪽(포털 길)은 비워둔다
-  const hanoks = useMemo(() => {
-    const rand = mulberry32(20260718);
-    const list: {
-      position: [number, number, number];
-      rotation: number;
-      tint: string;
-    }[] = [];
-    // 남서~서~북서 구간에 배치
-    const angles = [100, 130, 160, 195, 230, 255];
-    for (let i = 0; i < angles.length; i++) {
-      const a = (angles[i] * Math.PI) / 180;
-      const r = 25 + rand() * 5;
-      list.push({
-        position: [Math.cos(a) * r, 0, Math.sin(a) * r],
-        rotation: -a - Math.PI / 2,
-        tint: WALL_COLORS[i % WALL_COLORS.length],
-      });
-    }
-    return list;
-  }, []);
-
-  const trees = useMemo(() => {
-    const rand = mulberry32(91342);
-    const list: { position: [number, number, number]; scale: number; pine: boolean }[] = [];
-    while (list.length < 20) {
-      const angle = rand() * Math.PI * 2;
-      const r = 13 + rand() * 38;
-      const x = Math.cos(angle) * r;
-      const z = Math.sin(angle) * r;
-      const nearPortal = Math.hypot(x - PORTAL_POS[0], z - PORTAL_POS[2]) < 8;
-      const inHanokBand = r > 22 && r < 33;
-      const inFoodStreet = x > 10 && x < 34 && Math.abs(z) < 9;
-      if (nearPortal || inHanokBand || inFoodStreet) continue;
-      list.push({
-        position: [x, 0, z],
-        scale: 0.8 + rand() * 0.7,
-        pine: rand() > 0.5,
-      });
-    }
-    return list;
-  }, []);
-
   return (
     <group>
       <color attach="background" args={[sun.sky]} />
@@ -523,36 +484,24 @@ export default function Village() {
 
       <Fountain />
 
-      {hanoks.map((h, i) => (
+      {HANOKS.map((h, i) => (
         <Hanok key={i} {...h} />
       ))}
 
-      {trees.map((t, i) => (
+      {TREES.map((t, i) => (
         <Tree key={i} {...t} />
       ))}
 
       <Campfire />
       <BossGoblin />
       <GuildFlags />
-      <Lantern position={[7, 0, 7]} glow={sun.lantern} />
-      <Lantern position={[-7, 0, 7]} glow={sun.lantern} />
-      <Lantern position={[7, 0, -7]} glow={sun.lantern} />
-      <Lantern position={[-7, 0, -7]} glow={sun.lantern} />
-      <Lantern position={[12, 0, 3]} glow={sun.lantern} />
-      <Lantern position={[30, 0, -1]} glow={sun.lantern} />
+      {LANTERNS.map(([x, z], i) => (
+        <Lantern key={i} position={[x, 0, z]} glow={sun.lantern} />
+      ))}
 
-      <Billboard
-        position={[-3.4, 0, -22]}
-        rotation={0.35}
-        text="광고 배너 자리"
-        sub="온체인 분양 예정 · ad@giwa.village"
-      />
-      <Billboard
-        position={[12.5, 0, 8.5]}
-        rotation={-2.6}
-        text="GIWA 저잣거리"
-        sub="인증 상인 노점 환영 🧧"
-      />
+      {BILLBOARDS.map((b, i) => (
+        <Billboard key={i} {...b} />
+      ))}
     </group>
   );
 }

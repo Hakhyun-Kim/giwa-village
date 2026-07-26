@@ -8,6 +8,7 @@ import { adoptLocalBurner, colorFromString } from "../wallet/wallet";
 import { DEMO_STALLS, DEMO_NPCS } from "./demoData";
 import { randomLine } from "./personas";
 import { startOnchainVillage } from "../chain/village";
+import { collide } from "../game/collide";
 import type { PlayerInfo, Stall } from "../types";
 
 interface LocalPos {
@@ -131,8 +132,18 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
         continue;
       }
       const step = Math.min(dist, 0.28);
+      const fromX = n.x;
+      const fromZ = n.z;
       n.x += (dx / dist) * step;
       n.z += (dz / dist) * step;
+      collide(n, 0.35);
+      if (Math.hypot(n.x - fromX, n.z - fromZ) < step * 0.3) {
+        // 벽에 막혔다 — 밀리는 채로 계속 비비지 말고 다른 데로 간다
+        n.wait = 1 + Math.random() * 3;
+        n.tx = n.home[0] + (Math.random() * 8 - 4);
+        n.tz = n.home[1] + (Math.random() * 8 - 4);
+        continue;
+      }
       const t = remoteTargets.get(n.id);
       if (t) {
         t.x = n.x;

@@ -12,6 +12,7 @@
 import { useStore } from "../state/store";
 import { selfPos } from "../chain/core";
 import { bossHit } from "../game/feel";
+import { PLAYER_R, VILLAGE_COLLIDERS, insideAny } from "../game/collide";
 
 const FRAME_MS = 1000 / 30;
 
@@ -71,5 +72,11 @@ export function installDevHooks(): void {
      * 가스 한 푼 없이 검증하기 위한 창구. 체인 상태는 건드리지 않는다.
      */
     bossHit: (amount?: number) => bossHit(amount),
+    /**
+     * 충돌 검사 창구 — 벽을 뚫는지 보려면 좌표를 알아야 한다.
+     * walls()는 고정 배치만, blocked()는 그때그때 열린 노점·도깨비까지 본다.
+     */
+    walls: () => VILLAGE_COLLIDERS,
+    blocked: (x: number, z: number) => insideAny(x, z, PLAYER_R),
   };
 }

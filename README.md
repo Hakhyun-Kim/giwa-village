@@ -182,7 +182,7 @@ L1StandardBridge(`0x77b2…A7E7`)로 전송하면 1~3분 뒤 L2 잔액에 반영
 
 | 명령 | 무엇을 | 가스 | 걸리는 시간 |
 |---|---|---|---|
-| `npm test` | 로직·데이터·조명 하한·밸런스 표 대조·HUD 함정 (28건) | **0** (체인 없음) | 1초 미만 |
+| `npm test` | 로직·데이터·조명 하한·밸런스 표 대조·마을 충돌·HUD 함정 (36건) | **0** (체인 없음) | 1초 미만 |
 | `npm run test:local` | **컨트랙트 10종 전체** + 장날·쿨다운 시간 여행 (49건) | **0** (로컬 anvil) | ~5초 |
 | `npm run smoke:boot` | 실브라우저로 **첫 방문자 동선** 부팅 검사 | **0** (읽기만) | ~30초 |
 | `npm run test:chain -- --yes` | 실제 배포본·GIWA 네이티브 연동 확인 | 읽기만 (0) | ~10초 |
@@ -197,10 +197,11 @@ npm run test:chain -- --yes   # 배포 전 최종 확인
 
 **`npm test`** — 체인도 지갑도 네트워크도 쓰지 않는다. 흥정 하한선 강제(모델이
 헐값 수락을 반환해도 차단되는지), 주민 데이터 정합성, 야간 조명이 읽을 수 있는
-밝기인지, 던전 문 확률이 컨트랙트·서버·클라이언트 세 곳에서 같은지, HUD 버튼의
-`pointer-events` 누락까지 28건을 검사한다. CI에서도 돈다.
+밝기인지, 던전 문 확률이 컨트랙트·서버·클라이언트 세 곳에서 같은지, 한옥을 뚫고
+지나가지 않으면서도 모닥불·도깨비·포털까지 걸어갈 수 있는지, HUD 버튼의
+`pointer-events` 누락까지 36건을 검사한다. CI에서도 돈다.
 
-<img src="client/public/test-logic.svg" alt="npm test 실행 결과 — 로직 28건 통과, 가스 0" width="480">
+<img src="client/public/test-logic.svg" alt="npm test 실행 결과 — 로직 36건 통과, 가스 0" width="480">
 
 
 **`npm run test:local`** — anvil을 **chain-id 91342(GIWA Sepolia와 동일)**로 띄우고

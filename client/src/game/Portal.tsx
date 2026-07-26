@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { MeshStandardMaterial } from "three";
-import { PORTAL_POS } from "./Village";
+import { PORTAL_POS } from "./collide";
 
 export default function Portal() {
   const ringMat = useRef<MeshStandardMaterial>(null);
