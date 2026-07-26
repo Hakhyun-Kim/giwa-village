@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Html } from "@react-three/drei";
 import { useStore } from "../state/store";
 import { Hanok } from "./Village";
-import { hanokCollider, setDynamicColliders, type Collider } from "./collide";
+import { setDynamicColliders, stallCollider } from "./collide";
 import type { Stall } from "../types";
 
 function hover(on: boolean) {
@@ -112,14 +112,7 @@ export default function Stalls() {
   // 노점은 열렸다 닫힌다 — 서 있는 것만 부딪히도록 목록과 수명을 붙여 둔다.
   // 좌판은 평상만, 브랜드 점포는 한옥 기단까지가 부딪히는 크기다.
   useEffect(() => {
-    setDynamicColliders(
-      "stalls",
-      stalls.map((st): Collider =>
-        st.brand
-          ? hanokCollider(st.x, st.z, st.z > 0 ? Math.PI : 0, 5.2, 4)
-          : { kind: "box", x: st.x, z: st.z, hw: 1.05, hd: 0.72, rot: 0 },
-      ),
-    );
+    setDynamicColliders("stalls", stalls.map(stallCollider));
     return () => setDynamicColliders("stalls", null);
   }, [stalls]);
 

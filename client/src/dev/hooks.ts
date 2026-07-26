@@ -9,7 +9,7 @@
 // 여기서 잡은 예외는 절대 삼키지 않는다. 스모크의 합격 기준이 "콘솔 에러 0"이라
 // 삼키는 순간 검사가 죽는다.
 
-import { useStore } from "../state/store";
+import { useStore, remoteTargets } from "../state/store";
 import { selfPos } from "../chain/core";
 import { bossHit } from "../game/feel";
 import { PLAYER_R, VILLAGE_COLLIDERS, insideAny } from "../game/collide";
@@ -83,6 +83,14 @@ export function installDevHooks(): void {
       setMood(name, hp);
       return trackShape(name, hp);
     },
+    /**
+     * 주민·타 플레이어의 보간 목표. "한 틱에 튀지 않는가"는 좌표를 시간에 따라
+     * 찍어 봐야만 알 수 있고, 그건 화면을 보는 것으로는 증명이 안 된다.
+     */
+    remotes: () =>
+      Object.fromEntries(
+        [...remoteTargets].map(([id, t]) => [id, { x: t.x, z: t.z, rot: t.rot }]),
+      ),
     /**
      * 충돌 검사 창구 — 벽을 뚫는지 보려면 좌표를 알아야 한다.
      * walls()는 고정 배치만, blocked()는 그때그때 열린 노점·도깨비까지 본다.

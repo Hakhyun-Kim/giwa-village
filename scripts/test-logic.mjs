@@ -570,6 +570,99 @@ it("그리는 쪽(Village.tsx)이 같은 배치표를 읽는다", () => {
   console.log(`     콜라이더 ${VILLAGE_COLLIDERS.length}개 (한옥 ${C_HANOKS.length}채 포함)`);
 });
 
+// ── 주민 산책 ─────────────────────────────────────────────────────────────
+// 충돌을 넣은 뒤 주민들이 이상하게 움직였다. 상인의 집이 자기 좌판 안이라 매 틱
+// 밀려났고, 목적지를 벽 안에서도 골라 평생 벽을 비볐다. 걸음 규칙을 순수 모듈로
+// 떼어 뒀으니 브라우저 없이 진짜 노점 배치 위에서 1분씩 걸려 본다.
+
+describe("주민 산책 — 벽을 비비지도, 한 틱에 튀지도 않는다");
+
+const { makeWanderer, tickWander, pickTarget, NPC_R, NPC_SPEED } = await import(
+  pathToFileURL(path.join(ROOT, "client", "src", "demo", "wander.ts")).href
+);
+const { DEMO_STALLS } = await import(
+  pathToFileURL(path.join(ROOT, "client", "src", "demo", "demoData.ts")).href
+);
+const { stallCollider } = await import(
+  pathToFileURL(path.join(ROOT, "client", "src", "game", "collide.ts")).href
+);
+
+// 데모 마을 그대로 — 좌판·브랜드 점포까지 세워 두고 걷게 한다
+setDynamicColliders("stalls", DEMO_STALLS.map(stallCollider));
+
+/** 시드 난수 — 같은 시드면 같은 산책이라 실패를 재현할 수 있다 */
+function seeded(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const HOMES = npcsRaw.npcs.map((n) => [n.home[0], n.home[1]]);
+
+it("상인은 자기 좌판 안에 서 있다 — 그래서 세울 때 한 번 밖으로 내보낸다", () => {
+  const inStall = HOMES.filter(([x, z]) => insideAny(x, z, NPC_R)).length;
+  ok(inStall > 0, "이 회귀의 출발점이 사라졌습니다 (좌판과 집이 더 이상 겹치지 않음)");
+  const rand = seeded(7);
+  for (const home of HOMES) {
+    const w = makeWanderer(home, rand);
+    ok(!insideAny(w.x, w.z, NPC_R), `${home}에 세운 주민이 벽 안에 있습니다`);
+  }
+  console.log(`     집이 노점·건물과 겹치는 주민 ${inStall}/${HOMES.length}명 — 세울 때 밖으로`);
+});
+
+it("목적지는 갈 수 있는 자리만 고른다", () => {
+  const rand = seeded(11);
+  for (const home of HOMES) {
+    for (let i = 0; i < 60; i++) {
+      const t = pickTarget(home, rand);
+      // 집이 통째로 막힌 자리면 제자리를 돌려준다 — 그 경우만 예외
+      const stay = t.x === home[0] && t.z === home[1];
+      ok(stay || !insideAny(t.x, t.z, NPC_R), `${home} → (${t.x}, ${t.z})는 벽 안입니다`);
+    }
+  }
+});
+
+it("1분을 걸어도 한 틱에 한 걸음보다 더 가지 않는다 (튀지 않는다)", () => {
+  const dt = 0.05; // 데모가 도는 주기와 같은 20Hz
+  const step = NPC_SPEED * dt;
+  let worst = 0;
+  let insideTicks = 0;
+  let jitter = 0;
+  const walked = [];
+  for (let k = 0; k < HOMES.length; k++) {
+    const rand = seeded(1000 + k);
+    const w = makeWanderer(HOMES[k], rand);
+    let total = 0;
+    for (let i = 0; i < 60 / dt; i++) {
+      const px = w.x;
+      const pz = w.z;
+      tickWander(w, dt, rand);
+      const moved = Math.hypot(w.x - px, w.z - pz);
+      total += moved;
+      worst = Math.max(worst, moved);
+      // 움직이는 시늉만 하는 틱 — 제자리 떨림이 이렇게 보인다
+      if (moved > 0 && moved < step * 0.02) jitter++;
+      if (insideAny(w.x, w.z, NPC_R * 0.99)) insideTicks++;
+    }
+    walked.push(total);
+  }
+  ok(worst <= step + 1e-9, `한 틱에 ${worst.toFixed(3)}m — 보폭 ${step.toFixed(3)}m를 넘었습니다`);
+  eq(insideTicks, 0, "벽 안에서 끝난 틱: ");
+  eq(jitter, 0, "제자리 떨림 틱: ");
+  for (let k = 0; k < walked.length; k++) {
+    ok(walked[k] > 5, `${npcsRaw.npcs[k].name}이 1분에 ${walked[k].toFixed(1)}m밖에 못 걸었습니다`);
+  }
+  console.log(
+    `     1분에 ${Math.min(...walked).toFixed(0)}~${Math.max(...walked).toFixed(0)}m 걷고, 최대 보폭 ${worst.toFixed(3)}m`,
+  );
+});
+
+setDynamicColliders("stalls", null);
+
 // ── 결과 ──────────────────────────────────────────────────────────────────
 
 console.log(`\n${"─".repeat(50)}`);

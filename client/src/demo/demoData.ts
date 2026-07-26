@@ -99,5 +99,6 @@ export const DEMO_STALLS: Stall[] = [
 ];
 
 // 주민 명단은 data/npcs.json이 단일 소스다 — 상인 봇도 같은 파일을 읽는다.
-export type { Persona as DemoNpc } from "./personas";
-export { PERSONAS as DEMO_NPCS } from "./personas";
+// 여기서 다시 내보내지 않는다: 이 파일은 타입 말고는 아무것도 import하지 않아야
+// npm test가 노드로 그대로 불러 실제 노점 배치 위에서 주민들을 걸어 볼 수 있다.
+// (personas.ts는 JSON을 import해서 노드가 바로 읽지 못한다)

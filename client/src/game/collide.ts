@@ -111,6 +111,13 @@ export function hanokCollider(
   return { kind: "box", x, z, hw: (w + 0.7) / 2, hd: (d + 0.7) / 2, rot };
 }
 
+/** 노점 하나가 막는 크기 — 브랜드 상점은 건물이라 한옥과 같은 크기다 */
+export function stallCollider(st: { x: number; z: number; brand?: boolean }): Collider {
+  return st.brand
+    ? hanokCollider(st.x, st.z, st.z > 0 ? Math.PI : 0, 5.2, 4)
+    : { kind: "box", x: st.x, z: st.z, hw: 1.05, hd: 0.72, rot: 0 };
+}
+
 /** 항상 그 자리에 있는 것들 */
 export const VILLAGE_COLLIDERS: Collider[] = [
   // 분수

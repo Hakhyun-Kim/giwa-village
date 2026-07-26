@@ -176,6 +176,32 @@ try {
     must(left === 0, `숫자가 스스로 사라진다 (남은 ${left}개)`);
   }
 
+  // 주민 걸음 — 충돌을 넣은 뒤 튀던 것. 좌표를 시간에 따라 찍어야만 보인다.
+  // 타이머는 부하에 따라 늘어지므로 거리가 아니라 **속도**로 본다.
+  const walk = await page.evaluate(async () => {
+    const frames = [];
+    for (let i = 0; i < 24; i++) {
+      frames.push({ at: performance.now(), pos: window.__giwa.remotes() });
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    let topSpeed = 0;
+    let moved = 0;
+    for (let i = 1; i < frames.length; i++) {
+      const dt = (frames[i].at - frames[i - 1].at) / 1000;
+      for (const [id, b] of Object.entries(frames[i].pos)) {
+        const a = frames[i - 1].pos[id];
+        if (!a || dt <= 0) continue;
+        const d = Math.hypot(b.x - a.x, b.z - a.z);
+        moved += d;
+        topSpeed = Math.max(topSpeed, d / dt);
+      }
+    }
+    return { topSpeed, moved, count: Object.keys(frames[0].pos).length };
+  });
+  must(walk.count >= 1 && walk.moved > 0.5, `주민이 실제로 걷는다 (${walk.count}명 · ${walk.moved.toFixed(1)}m)`);
+  // 걷는 속도는 2.4m/s — 튀는 프레임이 하나라도 있으면 여기서 몇 배로 잡힌다
+  must(walk.topSpeed < 4, `걸음이 튀지 않는다 (최고 ${walk.topSpeed.toFixed(2)}m/s)`);
+
   // 충돌 — 실제 프레임 위에서만 드러난다(로직은 npm test가 따로 본다).
   // 한옥 한가운데에 떨어뜨려 놓고, 프레임이 스스로 밖으로 밀어내는지 본다.
   const wall = await page.evaluate(() => window.__giwa.walls().find((c) => c.kind === "box"));

@@ -5,10 +5,10 @@ import { generatePrivateKey } from "viem/accounts";
 import { useStore, remoteTargets } from "../state/store";
 import { FAUCET_URL } from "../config/giwa";
 import { adoptLocalBurner, colorFromString } from "../wallet/wallet";
-import { DEMO_STALLS, DEMO_NPCS } from "./demoData";
-import { randomLine } from "./personas";
+import { DEMO_STALLS } from "./demoData";
+import { PERSONAS as DEMO_NPCS, randomLine } from "./personas";
 import { startOnchainVillage } from "../chain/village";
-import { collide } from "../game/collide";
+import { makeWanderer, tickWander } from "./wander";
 import type { PlayerInfo, Stall } from "../types";
 
 interface LocalPos {
@@ -93,7 +93,8 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
 
   s.setStalls([...DEMO_STALLS]);
 
-  // NPC 주민 로컬 시뮬레이션
+  // NPC 주민 로컬 시뮬레이션 — 걸음 규칙은 demo/wander.ts 한 곳에 있다(순수 모듈이라
+  // npm test가 브라우저 없이 하루치를 돌려 본다)
   const players: Record<string, PlayerInfo> = {};
   const npcs = DEMO_NPCS.map((n, i) => {
     const id = `npc-${i}`;
@@ -102,56 +103,28 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
       address: n.address,
       color: colorFromString(n.name),
     };
-    remoteTargets.set(id, { x: n.home[0], z: n.home[1], rot: 0 });
-    return {
-      id,
-      x: n.home[0],
-      z: n.home[1],
-      home: n.home,
-      tx: n.home[0],
-      tz: n.home[1],
-      wait: Math.random() * 4,
-    };
+    const w = makeWanderer(n.home);
+    remoteTargets.set(id, { x: w.x, z: w.z, rot: w.rot });
+    return { id, w };
   });
   s.setPlayers(players);
   s.setOnlineCount(DEMO_NPCS.length + 1);
 
+  // 20Hz. 보간하는 쪽(RemotePlayers)이 밟는 계단이 촘촘할수록 걸음이 부드럽다.
+  const TICK_MS = 50;
   setInterval(() => {
-    for (const n of npcs) {
-      if (n.wait > 0) {
-        n.wait -= 0.1;
-        continue;
-      }
-      const dx = n.tx - n.x;
-      const dz = n.tz - n.z;
-      const dist = Math.hypot(dx, dz);
-      if (dist < 0.3) {
-        n.wait = 2 + Math.random() * 8;
-        n.tx = n.home[0] + (Math.random() * 8 - 4);
-        n.tz = n.home[1] + (Math.random() * 8 - 4);
-        continue;
-      }
-      const step = Math.min(dist, 0.28);
-      const fromX = n.x;
-      const fromZ = n.z;
-      n.x += (dx / dist) * step;
-      n.z += (dz / dist) * step;
-      collide(n, 0.35);
-      if (Math.hypot(n.x - fromX, n.z - fromZ) < step * 0.3) {
-        // 벽에 막혔다 — 밀리는 채로 계속 비비지 말고 다른 데로 간다
-        n.wait = 1 + Math.random() * 3;
-        n.tx = n.home[0] + (Math.random() * 8 - 4);
-        n.tz = n.home[1] + (Math.random() * 8 - 4);
-        continue;
-      }
-      const t = remoteTargets.get(n.id);
+    for (const { id, w } of npcs) {
+      tickWander(w, TICK_MS / 1000);
+      // 어떤 경우에도 매 틱 넘긴다 — 막혔다고 건너뛰면 그 사이 밀려난 만큼이
+      // 다음 틱에 한꺼번에 반영돼 아바타가 튄다
+      const t = remoteTargets.get(id);
       if (t) {
-        t.x = n.x;
-        t.z = n.z;
-        t.rot = Math.atan2(dx, dz);
+        t.x = w.x;
+        t.z = w.z;
+        t.rot = w.rot;
       }
     }
-  }, 100);
+  }, TICK_MS);
 
   setInterval(() => {
     const n = npcs[Math.floor(Math.random() * npcs.length)];
