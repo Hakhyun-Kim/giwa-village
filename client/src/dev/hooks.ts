@@ -13,6 +13,8 @@ import { useStore } from "../state/store";
 import { selfPos } from "../chain/core";
 import { bossHit } from "../game/feel";
 import { PLAYER_R, VILLAGE_COLLIDERS, insideAny } from "../game/collide";
+import { setMood } from "../audio/ambience";
+import { trackShape, type Mood } from "../audio/track";
 
 const FRAME_MS = 1000 / 30;
 
@@ -72,6 +74,15 @@ export function installDevHooks(): void {
      * 가스 한 푼 없이 검증하기 위한 창구. 체인 상태는 건드리지 않는다.
      */
     bossHit: (amount?: number) => bossHit(amount),
+    /**
+     * 풍류 트랙을 직접 갈아 끼운다 — 도깨비를 실제로 빈사까지 깎지 않고도
+     * "곁에 서면 북이 붙고, 깎일수록 빨라진다"를 측정할 수 있게. 소리는 귀로만
+     * 확인되므로, 스케줄되는 노드 수를 세는 것이 유일한 자동 검증 수단이다.
+     */
+    mood: (name: Mood, hp = 1) => {
+      setMood(name, hp);
+      return trackShape(name, hp);
+    },
     /**
      * 충돌 검사 창구 — 벽을 뚫는지 보려면 좌표를 알아야 한다.
      * walls()는 고정 배치만, blocked()는 그때그때 열린 노점·도깨비까지 본다.

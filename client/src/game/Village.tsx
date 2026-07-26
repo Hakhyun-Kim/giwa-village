@@ -5,6 +5,10 @@ import type { Mesh, MeshStandardMaterial, PointLight } from "three";
 import { useStore } from "../state/store";
 import { currentDaylight, type DaylightState } from "./daylight";
 import { feel, onDamagePop, type DamagePop } from "./feel";
+import { setMood } from "../audio/ambience";
+// 빈사 임계는 track.ts 한 곳 — 붉은 맥동(여기)과 심장박동(소리)이 어긋나면 안 된다
+import { isLowHp } from "../audio/track";
+import { BOSS_MAX_HP } from "../chain/boss";
 // 배치 좌표(한옥·나무·등롱·간판)와 충돌은 collide.ts 한 곳에 있다 —
 // 그리는 표와 막는 표가 같아야 보이는 것과 부딪히는 것이 어긋나지 않는다.
 import {
@@ -296,6 +300,7 @@ function Campfire() {
 /** 주간 도깨비 — 마을 사람들이 함께 때려잡는 온체인 보스 (R로 타격) */
 function BossGoblin() {
   const boss = useStore((s) => s.boss);
+  const nearBoss = useStore((s) => s.nearBoss);
   const body = useRef<Mesh>(null);
   const skin = useRef<MeshStandardMaterial>(null);
   const glow = useRef<PointLight>(null);
@@ -303,6 +308,14 @@ function BossGoblin() {
 
   // 도깨비는 잡히면 사라진다 — 보이지 않는 것에 부딪히지 않도록 수명을 맞춘다
   const alive = !!boss && !boss.slain;
+  const hpRatio = boss ? Math.max(0, Math.min(1, boss.remaining / BOSS_MAX_HP)) : 1;
+
+  // 곁에 서면 풍류가 토벌 트랙으로 갈아탄다. 깎을수록 빨라지므로 남은 체력을
+  // 읽지 않아도 막바지인 것이 들린다 — 붉은 맥동이 보이는 순간엔 심장박동도 돈다.
+  useEffect(() => {
+    setMood(alive && nearBoss ? "hunt" : "village", hpRatio);
+  }, [alive, nearBoss, hpRatio]);
+
   useEffect(() => {
     setDynamicColliders(
       "boss",
@@ -340,7 +353,6 @@ function BossGoblin() {
   });
 
   if (!boss || boss.slain) return null;
-  const hpRatio = Math.max(0, Math.min(1, boss.remaining / 2000));
   return (
     <group position={BOSS_POS}>
       {/* 몸통 */}
@@ -375,14 +387,16 @@ function BossGoblin() {
       {/* 간판(5~6)보다 위, 아바타 이름표(10~20)보다 아래 — 떠오르는 숫자가
           주변 간판에 가려지지 않게 한 칸 올려 둔다 */}
       <Html position={[0, 2.9, 0]} center distanceFactor={18} zIndexRange={[9, 0]}>
-        <div className={`boss-tag${hpRatio < 0.2 ? " low" : ""}`}>
+        <div className={`boss-tag${isLowHp(hpRatio) ? " low" : ""}`}>
           <div className="boss-name">🧿 장터 도깨비 <span>주간 토벌</span></div>
           {/* 잔상 체력바: 앞 바는 즉시 줄고 뒤 바가 늦게 따라와 '얼마나 깎였나'가 보인다 */}
           <div className="boss-hp">
             <b style={{ width: `${hpRatio * 100}%` }} />
             <i style={{ width: `${hpRatio * 100}%` }} />
           </div>
-          <div className="boss-sub">{boss.remaining} / 2000 · 내 기여 {boss.myContrib}</div>
+          <div className="boss-sub">
+            {boss.remaining} / {BOSS_MAX_HP} · 내 기여 {boss.myContrib}
+          </div>
           {pops.map((p) => (
             <span key={p.id} className={`boss-dmg${p.mine ? " mine" : ""}`}>
               −{p.amount}

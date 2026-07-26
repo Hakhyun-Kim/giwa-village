@@ -299,6 +299,98 @@ it("귀환할지 더 오를지가 진짜 선택이다 (탐욕이 늘 옳으면 �
   );
 });
 
+// ── 풍류(배경음·효과음) ───────────────────────────────────────────────────
+// 소리는 귀로만 확인되므로 규칙을 코드 밖에 두면 아무도 못 지킨다. track.ts는
+// Web Audio를 모르는 순수 표라 여기서 그대로 불러 검사한다.
+
+describe("풍류 — 상태가 트랙을 정하고, 임계는 화면과 하나다");
+
+const { trackShape, isLowHp, LOW_HP } = await import(
+  pathToFileURL(path.join(ROOT, "client", "src", "audio", "track.ts")).href
+);
+
+it("도깨비 곁에서는 트랙이 바뀐다 — 빨라지고 북이 붙는다", () => {
+  const village = trackShape("village", 1);
+  const hunt = trackShape("hunt", 1);
+  ok(hunt.stepSec < village.stepSec, `토벌 ${hunt.stepSec} · 마을 ${village.stepSec}`);
+  eq(village.drumEvery, 0, "마을에는 북이 없다: ");
+  ok(hunt.drumEvery > 0, "토벌에는 북이 있어야 합니다");
+  ok(hunt.restMax < village.restMax, "마을 쪽 여백이 더 길어야 합니다");
+});
+
+it("깎을수록 빨라진다 (진행도가 템포를 올린다)", () => {
+  let prev = Infinity;
+  for (let i = 10; i >= 0; i--) {
+    const s = trackShape("hunt", i / 10).stepSec;
+    ok(s < prev, `남은 체력 ${i * 10}%에서 느려졌습니다 (${s} ≥ ${prev})`);
+    ok(s > 0.05, `${s}초 — 스텝이 너무 짧으면 소리가 뭉갭니다`);
+    prev = s;
+  }
+  console.log(`     스텝 ${trackShape("hunt", 1).stepSec.toFixed(2)}s → ${prev.toFixed(2)}s`);
+});
+
+it("심장박동은 이름표가 붉어지는 바로 그 순간에 켜진다", () => {
+  // 표본 41개 — 화면(붉은 맥동)과 소리(심장박동)가 한 순간도 어긋나면 안 된다.
+  // 남은 체력 비율을 뒤집지 않고 그대로 넘기는 것이 요점: 1-x로 바꿔 넘기면
+  // 경계(20%)에서 부동소수 오차만큼 어긋나 소리만 먼저 켜진다. (실제로 겪음)
+  for (let i = 0; i <= 40; i++) {
+    const hp = i / 40;
+    eq(trackShape("hunt", hp).heartbeat, isLowHp(hp), `남은 체력 ${(hp * 100).toFixed(0)}%: `);
+  }
+  eq(trackShape("hunt", LOW_HP).heartbeat, false, "임계 자체는 아직 빈사가 아니다: ");
+  eq(trackShape("hunt", LOW_HP - 1e-9).heartbeat, true, "임계 바로 아래: ");
+  eq(trackShape("village", 0).heartbeat, false, "마을에서는 울리지 않는다: ");
+});
+
+it("그리는 쪽(Village.tsx)이 같은 임계 함수를 쓴다", () => {
+  const villageSrc = fs.readFileSync(
+    path.join(ROOT, "client", "src", "game", "Village.tsx"),
+    "utf8",
+  );
+  ok(
+    /isLowHp\(hpRatio\)/.test(villageSrc),
+    "Village.tsx가 isLowHp를 쓰지 않습니다 — 임계가 두 벌이 되면 조용히 어긋납니다",
+  );
+  ok(
+    !/hpRatio\s*<\s*0?\.\d/.test(villageSrc),
+    "Village.tsx에 빈사 임계가 다시 하드코딩됐습니다",
+  );
+});
+
+describe("효과음 — 마을이 삑삑거리지 않게 하는 규율");
+
+const sfxSrc = fs.readFileSync(
+  path.join(ROOT, "client", "src", "audio", "sfx.ts"),
+  "utf8",
+);
+
+it("타격 레이트 리밋이 45~70ms 안에 있다 (연타가 기관총이 되지 않게)", () => {
+  const m = sfxSrc.match(/lastHit\s*<\s*(\d+)/);
+  ok(m, "레이트 리밋 값을 찾지 못했습니다");
+  const ms = Number(m[1]);
+  ok(ms >= 45 && ms <= 70, `${ms}ms — 45~70ms 밖입니다`);
+  console.log(`     타격 최소 간격 ${ms}ms`);
+});
+
+it("효과음이 오디오 컨텍스트를 새로 열지 않는다", () => {
+  ok(
+    !/createAudioCtx/.test(sfxSrc),
+    "효과음이 컨텍스트를 만들면 소리를 켠 적 없는 방문자에게 소리가 납니다",
+  );
+  ok(/liveAudioCtx/.test(sfxSrc), "liveAudioCtx로 이미 열린 컨텍스트만 써야 합니다");
+});
+
+it("자동으로 나가는 전송(프레즌스 비컨)은 소리를 내지 않는다", () => {
+  const presenceSrc = fs.readFileSync(
+    path.join(ROOT, "client", "src", "chain", "presence.ts"),
+    "utf8",
+  );
+  ok(
+    /queueTx\([\s\S]{0,500}?\btrue,?\s*\)/.test(presenceSrc),
+    "비컨이 silent(queueTx(fn, true))로 나가지 않습니다 — 마을이 몇 초마다 삑삑거립니다",
+  );
+});
+
 // ── 부록: 에셋 0 규칙 ─────────────────────────────────────────────────────
 // 3D도 소리도 전부 코드로 만든다는 규칙을 테스트로 굳혀 둔다. 규칙을 어기는
 // 가장 흔한 경로는 "잠깐 이 mp3만"이고, 그 순간 라이선스 표기 의무가 생긴다.

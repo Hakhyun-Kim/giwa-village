@@ -2,6 +2,7 @@
 import { decodeEventLog } from "viem";
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { BOXES_ADDRESS, BOXES_ABI } from "../config/boxes";
+import { sfxJackpot, sfxSuccess } from "../audio/sfx";
 
 export const TRINKET_DEFS = [
   { id: 1, emoji: "🪶", name: "깃털", rarity: "커먼", color: "#d9c9a3" },
@@ -87,7 +88,11 @@ export async function revealBoxOnChain(): Promise<number> {
     try {
       const ev = decodeEventLog({ abi: BOXES_ABI, data: log.data, topics: log.topics });
       if (ev.eventName === "BoxRevealed") {
-        return Number((ev.args as unknown as { kind: number }).kind);
+        const kind = Number((ev.args as unknown as { kind: number }).kind);
+        // 잭팟은 소리로 먼저 안다 — 흔한 것과 같은 소리가 나면 희귀한 게 나온 줄도 모른다
+        if (TRINKET_DEFS.find((d) => d.id === kind)?.rarity === "에픽") sfxJackpot();
+        else sfxSuccess();
+        return kind;
       }
     } catch {
       /* skip */

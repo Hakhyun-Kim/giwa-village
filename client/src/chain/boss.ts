@@ -1,6 +1,6 @@
 // 도깨비 토벌: 주간 보스 — 함께 때려잡는 동시성 코업 (GiwaBoss)
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
-import { sfxHit } from "../audio/sfx";
+import { sfxHit, sfxSlain } from "../audio/sfx";
 import { bossHit } from "../game/feel";
 import { BOSS_ADDRESS, BOSS_ABI } from "../config/boss";
 import { useStore } from "../state/store";
@@ -88,6 +88,8 @@ export async function refreshBoss(): Promise<void> {
     if (prev && !prev.slain) {
       const dealt = prev.remaining - s.remaining;
       if (dealt > 0) bossHit(dealt, s.myContrib > prev.myContrib);
+      // 마지막 한 대는 누가 넣었든 마을 전체가 듣는다 — 주간에 한 번뿐인 순간이다
+      if (s.slain) sfxSlain();
     }
     if (s.prevClaimable) {
       await claimBossTrophy(s.week - 1);

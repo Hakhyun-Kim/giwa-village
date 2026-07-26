@@ -119,6 +119,44 @@ try {
   const pref = await page.evaluate(() => localStorage.getItem("giwa-ambience"));
   must(pref === "1", `풍류 켜짐이 저장된다 (pref=${pref})`);
 
+  // 배경음이 상태를 따라가는가. 소리는 귀로만 확인되므로 실제로 예약되는 오디오
+  // 노드를 센다 — 마을은 가야금뿐(북 0), 도깨비 곁은 북이 붙는다.
+  const track = await page.evaluate(async () => {
+    const spy = { osc: 0, buf: 0 };
+    const AC = AudioContext.prototype;
+    const [osc, buf] = [AC.createOscillator, AC.createBufferSource];
+    AC.createOscillator = function (...a) {
+      spy.osc++;
+      return osc.apply(this, a);
+    };
+    AC.createBufferSource = function (...a) {
+      spy.buf++;
+      return buf.apply(this, a);
+    };
+    const sample = async (mood, hp) => {
+      window.__giwa.mood(mood, hp);
+      await new Promise((r) => setTimeout(r, 400));
+      const from = { ...spy };
+      await new Promise((r) => setTimeout(r, 2500));
+      return { osc: spy.osc - from.osc, buf: spy.buf - from.buf };
+    };
+    const village = await sample("village", 1);
+    const hunt = await sample("hunt", 0.1); // 빈사 — 가장 빠른 트랙
+    window.__giwa.mood("village", 1);
+    return { village, hunt };
+  });
+  // 마을 트랙은 여백이 3~6초라 짧은 표본이 통째로 침묵일 수 있다 — 그걸 게이트로
+  // 삼으면 가끔 빨간불이 되고, 그러면 곧 아무도 안 본다. 확정적인 것만 본다:
+  // 토벌 트랙의 북은 두 스텝마다 반드시 울리고, 마을 트랙에는 북이 아예 없다.
+  must(
+    track.hunt.osc > 0 && track.hunt.buf > 0,
+    `풍류가 실제로 소리를 예약한다 (토벌 ${track.hunt.osc}음·${track.hunt.buf}북 / 2.5초)`,
+  );
+  must(
+    track.village.buf === 0,
+    `마을에는 북이 없다 (북 ${track.village.buf} · 가야금 ${track.village.osc})`,
+  );
+
   // 게임필 — 도깨비 이름표와 떠오르는 숫자. 연출만 흉내 내므로 가스가 들지 않는다.
   const bossTag = await page
     .waitForSelector(".boss-tag", { timeout: 20000 })
