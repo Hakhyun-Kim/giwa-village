@@ -1,6 +1,9 @@
 // 길드 + 백층 던전: 목록 동기화·가입·원정 (GiwaGuilds)
 // 던전 플레이는 로컬에서 즉시 판정(keccak 재계산)하고 귀환만 온체인 정산한다.
-import { decodeEventLog, encodePacked, hexToBytes, keccak256 } from "viem";
+// 문 판정은 @giwa-village/core 의 doorRoll 단일 소스를 쓴다 — 온체인 settleRun 과
+// 바이트 단위로 동일하고, 봇·검증기도 같은 함수를 공유한다.
+import { decodeEventLog } from "viem";
+import { doorRoll, resolveRun } from "@giwa-village/core";
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { GUILDS_ADDRESS, GUILDS_ABI } from "../config/guilds";
 import { useStore } from "../state/store";
@@ -109,25 +112,6 @@ const run: {
   picks: number[];
 } = { guildId: "0", attempt: 0, seed: "0x", picks: [] };
 
-function doorRollLocal(
-  seed: `0x${string}`,
-  guildId: bigint,
-  attempt: number,
-  step: number,
-  door: number,
-): "safe" | "bonus" | "trap" {
-  const digest = keccak256(
-    encodePacked(
-      ["bytes32", "uint256", "uint32", "uint256", "uint8"],
-      [seed, guildId, attempt, BigInt(step), door],
-    ),
-  );
-  const b = hexToBytes(digest)[0];
-  if (b < 154) return "safe";
-  if (b < 192) return "bonus";
-  return "trap";
-}
-
 export async function chainDungeonEnter(): Promise<void> {
   const s = useStore.getState();
   s.setDungeon(null);
@@ -209,7 +193,7 @@ export function chainDungeonPick(door: number): void {
   const s = useStore.getState();
   const d = s.dungeon;
   if (!d || d.ended) return;
-  const outcome = doorRollLocal(run.seed, BigInt(run.guildId), run.attempt, run.picks.length, door);
+  const outcome = doorRoll(run.seed, BigInt(run.guildId), run.attempt, run.picks.length, door);
   if (outcome === "trap") {
     run.picks = [];
     s.patchDungeon({ lastOutcome: "trap", lastDoor: door, tentative: 0, ended: true, busy: false });
@@ -224,12 +208,61 @@ export function chainDungeonPick(door: number): void {
   });
 }
 
+/** 방금 귀환한 원정의 검증 스냅샷 — "🔒 검증하기"가 코어로 독립 재현한다 */
+export interface RunProof {
+  seed: `0x${string}`;
+  guildId: string;
+  attempt: number;
+  picks: number[];
+  onchainClimbed: number;
+}
+let lastProof: RunProof | null = null;
+
+/**
+ * 방금 확정된 원정을 코어(resolveRun)로 재현해 온체인 결과와 대조한다.
+ * 시드·문 선택만으로 누구나 같은 계산을 돌릴 수 있다 — "검증 가능한 공정성".
+ */
+export function verifyLastRun():
+  | { reproduced: number; onchain: number; matches: boolean; seed: `0x${string}` }
+  | null {
+  if (!lastProof) return null;
+  const sim = resolveRun(
+    lastProof.seed,
+    BigInt(lastProof.guildId),
+    lastProof.attempt,
+    lastProof.picks,
+  );
+  return {
+    reproduced: sim.climbed,
+    onchain: lastProof.onchainClimbed,
+    matches: sim.ok && sim.climbed === lastProof.onchainClimbed,
+    seed: lastProof.seed,
+  };
+}
+
 export async function chainDungeonBank(): Promise<void> {
   const s = useStore.getState();
   if (!s.dungeon || run.picks.length === 0) return;
+
+  // 귀환 전 로컬 재계산 — 함정이 섞였으면 온체인 settleRun 이 되돌릴(revert) 것이므로
+  // 가스를 버리기 전에 코어로 먼저 막는다 (클라이언트 예측 = 온체인 판정과 동일 로직).
+  const sim = resolveRun(run.seed, BigInt(run.guildId), run.attempt, run.picks);
+  if (!sim.ok) {
+    run.picks = [];
+    s.patchDungeon({ lastOutcome: "trap", tentative: 0, ended: true, busy: false });
+    return;
+  }
+
   s.patchDungeon({ busy: true });
   const wc = activeWalletClient;
   if (!wc?.account) return;
+  const snapshot: RunProof = {
+    seed: run.seed,
+    guildId: run.guildId,
+    attempt: run.attempt,
+    picks: [...run.picks],
+    onchainClimbed: 0,
+  };
   try {
     const tx = await queueTx(() =>
       wc.writeContract({
@@ -257,12 +290,16 @@ export async function chainDungeonBank(): Promise<void> {
       }
     }
     run.picks = [];
+    snapshot.onchainClimbed = climbed;
+    lastProof = snapshot;
     useStore.getState().patchDungeon({
       banked: climbed,
       floor,
       tentative: 0,
       ended: true,
       busy: false,
+      // 온체인 확정값이 귀환 전 로컬 예측과 일치하는가 (옵티미스틱 리컨실리에이션)
+      verified: sim.climbed === climbed,
     });
     void syncGuilds();
   } catch (err) {

@@ -9,6 +9,9 @@
     "skipLibCheck": true,
 
     /* Bundler mode */
+    "paths": {
+      "@giwa-village/core": ["../core/src/index.ts"]
+    },
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,

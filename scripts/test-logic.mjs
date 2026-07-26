@@ -246,13 +246,15 @@ it("쇼케이스는 한낮으로 고정된다 (데모 영상 보호)", () => {
 });
 
 // ── 던전 문 확률 ──────────────────────────────────────────────────────────
-// 같은 밸런스 수치가 컨트랙트·서버·클라이언트 세 곳에 따로 적혀 있다. 컨트랙트는
-// Solidity라 한 파일로 합칠 수 없으니, 대신 "세 곳이 어긋나면 테스트가 깨진다"로
-// 묶어 둔다. 어긋나면 봇·서버는 통과하는데 체인에서만 함정을 밟는 일이 생긴다.
-// (해시 함수는 일부러 다르다 — 서버 모드는 sha256, 온체인 모드는 keccak256.
-//  같아야 하는 것은 굴림값이 아니라 확률표다.)
+// 같은 밸런스 수치가 컨트랙트·서버·코어 세 곳에 적혀 있다. 컨트랙트는 Solidity라
+// 한 파일로 합칠 수 없으니, 대신 "세 곳이 어긋나면 테스트가 깨진다"로 묶어 둔다.
+// 어긋나면 봇·서버는 통과하는데 체인에서만 함정을 밟는 일이 생긴다.
+// (클라이언트는 @giwa-village/core 의 doorRoll 을 임포트해 단일화됐다 — 이제
+//  keccak256 판정의 단일 소스는 core/src/dungeon.ts 하나다. 해시 함수는 일부러
+//  다르다: 서버 모드는 sha256, 온체인/코어 모드는 keccak256. 같아야 하는 것은
+//  굴림값이 아니라 확률표다.)
 
-describe("던전 문 확률 — 컨트랙트·서버·클라이언트가 같은 표를 본다");
+describe("던전 문 확률 — 컨트랙트·서버·코어가 같은 표를 본다");
 
 /** 문 판정 함수 본문에서 `< 숫자)` 형태의 경계 둘을 뽑는다 */
 function doorThresholds(relPath, anchor) {
@@ -268,7 +270,7 @@ function doorThresholds(relPath, anchor) {
 const doorTable = {
   컨트랙트: doorThresholds("contracts/GiwaGuilds.sol", "function doorRoll"),
   서버: doorThresholds("server/src/guilds.ts", "doorOutcome("),
-  클라이언트: doorThresholds("client/src/chain/guilds.ts", "function doorRollLocal"),
+  코어: doorThresholds("core/src/dungeon.ts", "export function doorRoll"),
 };
 
 it("세 구현의 경계값이 같다", () => {

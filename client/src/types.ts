@@ -98,6 +98,8 @@ export interface DungeonView {
   ended?: boolean;
   banked?: number;
   busy?: boolean;
+  /** 온체인 확정값이 귀환 전 로컬 예측과 일치하는가 (옵티미스틱 리컨실리에이션) */
+  verified?: boolean;
 }
 
 export interface Coupon {

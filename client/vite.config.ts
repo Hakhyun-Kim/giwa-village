@@ -66,4 +66,10 @@ function demoBurnerDev(): Plugin {
 export default defineConfig({
   base: process.env.VITE_BASE || '/',
   plugins: [react(), demoBurnerDev()],
+  resolve: {
+    alias: {
+      // 결정론 게임 로직 코어 — 클라·봇·검증기가 공유하는 단일 소스 (repo 내 core/)
+      '@giwa-village/core': fileURLToPath(new URL('../core/src/index.ts', import.meta.url)),
+    },
+  },
 })
