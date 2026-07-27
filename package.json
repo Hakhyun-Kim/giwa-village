@@ -12,6 +12,7 @@
     "playtest": "node scripts/launch-test.mjs",
     "showcase": "node scripts/launch-test.mjs --showcase",
     "test": "node scripts/test-logic.mjs",
+    "assets": "node scripts/assets.mjs",
     "test:local": "node scripts/test-local.mjs",
     "test:chain": "node scripts/test-chain.mjs",
     "smoke:boot": "node scripts/smoke-boot.mjs",

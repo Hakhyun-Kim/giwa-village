@@ -1,0 +1,192 @@
+{
+  "//": "반입한 외부 에셋의 원장. 사람이 손으로 고치는 파일이고, 체크섬(digest)만 npm run assets가 채운다.",
+  "//규칙": "바이너리는 원본 그대로 둔다 — 손질(게인·피치·필터·레이어)은 코드에서 한다. 그래야 출처 대조가 체크섬으로 끝난다.",
+  "budgetBytes": 20971520,
+  "licenses": {
+    "CC0-1.0": {
+      "name": "Creative Commons Zero 1.0",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": false
+    },
+    "CC-BY-4.0": {
+      "name": "Creative Commons Attribution 4.0",
+      "url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": true
+    },
+    "OFL-1.1": {
+      "name": "SIL Open Font License 1.1",
+      "url": "https://openfontlicense.org/",
+      "attribution": false
+    }
+  },
+  "entries": [
+    {
+      "id": "kenney-impact",
+      "what": "발소리(흙)·타격 바디·격파 종소리",
+      "dest": "client/public/audio/sfx",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "zip": "https://kenney.nl/media/pages/assets/impact-sounds/87b4ddecda-1677589768/kenney_impact-sounds.zip",
+      "modified": "130개 중 10개만 추림. 게인·피치 랜덤·레이어는 코드에서.",
+      "files": [
+        {
+          "from": "Audio/footstep_grass_000.ogg",
+          "to": "step0.ogg"
+        },
+        {
+          "from": "Audio/footstep_grass_001.ogg",
+          "to": "step1.ogg"
+        },
+        {
+          "from": "Audio/footstep_grass_002.ogg",
+          "to": "step2.ogg"
+        },
+        {
+          "from": "Audio/footstep_grass_003.ogg",
+          "to": "step3.ogg"
+        },
+        {
+          "from": "Audio/footstep_grass_004.ogg",
+          "to": "step4.ogg"
+        },
+        {
+          "from": "Audio/impactPunch_heavy_000.ogg",
+          "to": "hit0.ogg"
+        },
+        {
+          "from": "Audio/impactPunch_heavy_001.ogg",
+          "to": "hit1.ogg"
+        },
+        {
+          "from": "Audio/impactPunch_heavy_002.ogg",
+          "to": "hit2.ogg"
+        },
+        {
+          "from": "Audio/impactSoft_heavy_000.ogg",
+          "to": "thud.ogg"
+        },
+        {
+          "from": "Audio/impactBell_heavy_002.ogg",
+          "to": "bell.ogg"
+        }
+      ],
+      "digest": "336394e34af7c5a03c4b862034be8af2744b65718c581821bc5247babe807b67",
+      "bytes": 190521,
+      "count": 16
+    },
+    {
+      "id": "kenney-rpg",
+      "what": "동전·책장·문·쇠걸쇠·칼날 — 거래와 UI에 붙는 소리",
+      "dest": "client/public/audio/sfx",
+      "author": "Kenney",
+      "license": "CC0-1.0",
+      "source": "https://kenney.nl/assets/rpg-audio",
+      "zip": "https://kenney.nl/media/pages/assets/rpg-audio/8e99002d76-1677590336/kenney_rpg-audio.zip",
+      "modified": "55개 중 6개만 추림.",
+      "files": [
+        {
+          "from": "Audio/handleCoins.ogg",
+          "to": "coins.ogg"
+        },
+        {
+          "from": "Audio/bookOpen.ogg",
+          "to": "open.ogg"
+        },
+        {
+          "from": "Audio/bookClose.ogg",
+          "to": "close.ogg"
+        },
+        {
+          "from": "Audio/doorOpen_2.ogg",
+          "to": "stall.ogg"
+        },
+        {
+          "from": "Audio/metalClick.ogg",
+          "to": "click.ogg"
+        },
+        {
+          "from": "Audio/knifeSlice.ogg",
+          "to": "slice.ogg"
+        }
+      ],
+      "digest": "336394e34af7c5a03c4b862034be8af2744b65718c581821bc5247babe807b67",
+      "bytes": 190521,
+      "count": 16
+    },
+    {
+      "id": "oga-fire",
+      "what": "모닥불 장작 타는 소리 (자리 소리 — 가까이 갈수록 커진다)",
+      "dest": "client/public/audio/amb",
+      "author": "AntumDeluge",
+      "license": "CC0-1.0",
+      "source": "https://opengameart.org/content/fire-crackling",
+      "modified": "그대로. 반복 재생·거리 감쇠는 코드에서.",
+      "files": [
+        {
+          "from": "https://opengameart.org/sites/default/files/fire-1_0.ogg",
+          "to": "fire.ogg"
+        }
+      ],
+      "digest": "a74e02eef50c0afc2a3d3cd62759b5d1fbf0e776a7da9c4ae6174b6916b35230",
+      "bytes": 22784,
+      "count": 1
+    },
+    {
+      "id": "polyhaven-tex",
+      "what": "기와·나무·회벽·흙바닥 컬러맵 (1K JPG)",
+      "dest": "client/public/tex",
+      "author": "Poly Haven",
+      "license": "CC0-1.0",
+      "source": "https://polyhaven.com/textures",
+      "modified": "1K 컬러맵만. 타일링·색조·거칠기는 코드에서.",
+      "files": [
+        {
+          "from": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/clay_roof_tiles_03/clay_roof_tiles_03_diff_1k.jpg",
+          "to": "roof.jpg"
+        },
+        {
+          "from": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_planks_09/brown_planks_09_diff_1k.jpg",
+          "to": "wood.jpg"
+        },
+        {
+          "from": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/clay_plaster/clay_plaster_diff_1k.jpg",
+          "to": "plaster.jpg"
+        },
+        {
+          "from": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/park_dirt/park_dirt_diff_1k.jpg",
+          "to": "ground.jpg"
+        }
+      ],
+      "digest": "2dcee8c7114858a24561b6a7e21c60e4548593fd0e4bc748e0bb34f835c94dbf",
+      "bytes": 3234474,
+      "count": 4
+    },
+    {
+      "id": "font-song-myung",
+      "what": "제목·간판용 명조 (기와장터 로고, 노점 간판)",
+      "dest": "client/public/fonts/song-myung",
+      "author": "Sandoll Communications",
+      "license": "OFL-1.1",
+      "source": "https://fonts.google.com/specimen/Song+Myung",
+      "modified": "구글이 쪼개 주는 유니코드 서브셋 그대로 셀프 호스팅(브라우저가 필요한 조각만 받는다).",
+      "googleFont": "Song Myung",
+      "digest": "78258dbd168afca6213c9d408b1e2c14f2b9b71ec850081e451ff334037d4ecd",
+      "bytes": 844332,
+      "count": 89
+    },
+    {
+      "id": "font-do-hyeon",
+      "what": "HUD·버튼용 고딕 (숫자와 짧은 라벨이 또렷해야 한다)",
+      "dest": "client/public/fonts/do-hyeon",
+      "author": "Woowa Brothers",
+      "license": "OFL-1.1",
+      "source": "https://fonts.google.com/specimen/Do+Hyeon",
+      "modified": "위와 같음.",
+      "googleFont": "Do Hyeon",
+      "digest": "045dcc877e2fb0c1fd5a0f6c6fffb2806dcdb40aefa52baccce88be9c5f11035",
+      "bytes": 492149,
+      "count": 94
+    }
+  ]
+}

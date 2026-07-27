@@ -391,27 +391,76 @@ it("자동으로 나가는 전송(프레즌스 비컨)은 소리를 내지 않�
   );
 });
 
-// ── 부록: 에셋 0 규칙 ─────────────────────────────────────────────────────
-// 3D도 소리도 전부 코드로 만든다는 규칙을 테스트로 굳혀 둔다. 규칙을 어기는
-// 가장 흔한 경로는 "잠깐 이 mp3만"이고, 그 순간 라이선스 표기 의무가 생긴다.
+// ── 에셋 원장 ─────────────────────────────────────────────────────────────
+// 에셋 반입이 허용된 뒤로, 규칙은 "넣지 마라"가 아니라 "출처 없는 것은 넣지 마라"다.
+// 라이선스는 사람의 기억에 맡기면 반드시 새는 종류의 것이라 여기서 강제한다.
 // media/ 는 우리가 찍은 시연 캡처라 예외.
 
-describe("에셋 0 — 그래픽도 소리도 코드로 만든다");
+describe("에셋 원장 — 출처 없는 바이너리는 들어올 수 없다");
 
-it("소스 트리에 반입한 이미지·오디오·모델 파일이 없다", () => {
-  const BAD = /\.(png|jpe?g|gif|webp|mp3|wav|ogg|m4a|glb|gltf|fbx)$/i;
-  const found = [];
-  const walk = (dir) => {
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (e.name === "node_modules" || e.name === "dist") continue;
-      const p = path.join(dir, e.name);
-      if (e.isDirectory()) walk(p);
-      else if (BAD.test(e.name)) found.push(path.relative(ROOT, p));
-    }
-  };
-  walk(path.join(ROOT, "client", "src"));
-  walk(path.join(ROOT, "client", "public"));
-  eq(found.length, 0, `반입된 에셋: ${found.join(", ")} — `);
+// SVG는 뺀다 — 우리가 코드로 그려 커밋하는 것(파비콘·아이콘·테스트 실행 캡처)이고,
+// 텍스트라 diff로 읽힌다. 여기서 보는 것은 "읽을 수 없는 채로 들어오는 파일"이다.
+const ASSET_EXT = /\.(png|jpe?g|gif|webp|mp3|wav|ogg|m4a|woff2?|ttf|otf|glb|gltf|fbx)$/i;
+const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, "data", "assets.json"), "utf8"));
+
+function walkFiles(dir, out = []) {
+  if (!fs.existsSync(dir)) return out;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.name === "node_modules" || e.name === "dist") continue;
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walkFiles(p, out);
+    else out.push(path.relative(ROOT, p).split(path.sep).join("/"));
+  }
+  return out;
+}
+
+it("client/src에는 여전히 바이너리를 두지 않는다 (에셋은 public 아래)", () => {
+  const found = walkFiles(path.join(ROOT, "client", "src")).filter((f) => ASSET_EXT.test(f));
+  eq(found.length, 0, `소스 트리에 들어온 에셋: ${found.join(", ")} — `);
+});
+
+it("public의 모든 에셋이 원장에 적힌 자리 안에 있다", () => {
+  const dests = manifest.entries.map((e) => e.dest);
+  const orphans = walkFiles(path.join(ROOT, "client", "public"))
+    .filter((f) => ASSET_EXT.test(f))
+    .filter((f) => !dests.some((d) => f.startsWith(d + "/")));
+  eq(orphans.length, 0, `원장에 없는 에셋: ${orphans.join(", ")} — data/assets.json에 적으세요. `);
+});
+
+it("라이선스가 허용 목록(CC0·CC-BY·OFL) 안에 있다", () => {
+  for (const e of manifest.entries) {
+    ok(manifest.licenses[e.license], `${e.id}: '${e.license}'은 허용 목록에 없습니다`);
+    ok(e.source && /^https?:\/\//.test(e.source), `${e.id}: 출처 URL이 필요합니다`);
+  }
+  console.log(`     ${manifest.entries.length}건 · ${Object.keys(manifest.licenses).join(" · ")}`);
+});
+
+it("표기가 필요한 라이선스는 저작자 이름이 있다", () => {
+  for (const e of manifest.entries) {
+    if (!manifest.licenses[e.license].attribution) continue;
+    ok(e.author && e.author.length > 1, `${e.id}: ${e.license}는 저작자 표기가 필수입니다`);
+  }
+});
+
+it("용량이 예산 안에 있다", () => {
+  const total = walkFiles(path.join(ROOT, "client", "public"))
+    .filter((f) => ASSET_EXT.test(f))
+    .reduce((n, f) => n + fs.statSync(path.join(ROOT, f)).size, 0);
+  ok(
+    total <= manifest.budgetBytes,
+    `${Math.round(total / 1024)}KB — 예산 ${Math.round(manifest.budgetBytes / 1024)}KB를 넘었습니다`,
+  );
+  console.log(
+    `     ${Math.round(total / 1024).toLocaleString()}KB / ${Math.round(manifest.budgetBytes / 1024).toLocaleString()}KB`,
+  );
+});
+
+it("사람이 읽는 원장(ASSETS.md)이 최신이다", () => {
+  const md = fs.readFileSync(path.join(ROOT, "ASSETS.md"), "utf8");
+  for (const e of manifest.entries) {
+    ok(md.includes(e.dest), `ASSETS.md에 ${e.dest}가 없습니다 — npm run assets 로 다시 만드세요`);
+    ok(md.includes(e.author), `ASSETS.md에 저작자 ${e.author}가 없습니다`);
+  }
 });
 
 // ── HUD 함정 (실제로 겪었던 버그) ──────────────────────────────────────────
