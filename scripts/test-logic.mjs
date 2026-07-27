@@ -380,6 +380,35 @@ it("효과음이 오디오 컨텍스트를 새로 열지 않는다", () => {
   ok(/liveAudioCtx/.test(sfxSrc), "liveAudioCtx로 이미 열린 컨텍스트만 써야 합니다");
 });
 
+it("반입한 소리가 가리키는 파일이 실제로 있다", () => {
+  // 404가 나도 마을은 조용해지지 않는다(합성음으로 폴백) — 그래서 오타는 아무
+  // 증상 없이 "소리가 좀 심심해진" 상태로 남는다. 여기서 잡는 이유다.
+  const src = fs.readFileSync(
+    path.join(ROOT, "client", "src", "audio", "samples.ts"),
+    "utf8",
+  );
+  const paths = [...src.matchAll(/`?(audio\/[a-z]+\/[a-z0-9]+\.ogg)`?/g)].map((m) => m[1]);
+  const groups = [...src.matchAll(/audio\/([a-z]+)\/\$\{n\}\.ogg/g)].length;
+  ok(paths.length + groups > 5, `경로를 못 읽었습니다 (${paths.length}개)`);
+  for (const p of paths) {
+    ok(
+      fs.existsSync(path.join(ROOT, "client", "public", ...p.split("/"))),
+      `client/public/${p} 이 없습니다 — data/assets.json과 어긋났습니다`,
+    );
+  }
+  // 묶음(step0..4 · hit0..2)은 이름을 만들어 쓰므로 따로 센다
+  for (const [id, count] of [
+    ["step", 5],
+    ["hit", 3],
+  ]) {
+    for (let i = 0; i < count; i++) {
+      const f = path.join(ROOT, "client", "public", "audio", "sfx", `${id}${i}.ogg`);
+      ok(fs.existsSync(f), `audio/sfx/${id}${i}.ogg 이 없습니다`);
+    }
+  }
+  console.log(`     낱개 ${paths.length}개 + 묶음 2종 확인`);
+});
+
 it("자동으로 나가는 전송(프레즌스 비컨)은 소리를 내지 않는다", () => {
   const presenceSrc = fs.readFileSync(
     path.join(ROOT, "client", "src", "chain", "presence.ts"),

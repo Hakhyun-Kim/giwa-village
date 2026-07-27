@@ -15,6 +15,72 @@
 const STORAGE_KEY = "giwa-ambience"; // 기존 방문자의 선택을 잃지 않도록 키 이름은 유지
 
 let ctx: AudioContext | null = null;
+let music: GainNode | null = null;
+let effects: GainNode | null = null;
+let send: GainNode | null = null;
+
+/**
+ * 마당 울림 — 잡음을 지수 감쇠시켜 만든 임펄스 응답. 파일 0개다.
+ *
+ * 이것 하나가 체감을 가장 크게 바꾼다: 리버브가 없으면 아무리 잘 만든 소리도
+ * "스피커에서 나는 소리"로 들리고, 있으면 **같은 공간에서 나는 소리**가 된다.
+ * 초기 반사를 몇 개 심는 것이 요점 — 매끈한 잡음만으로는 마당이 아니라 욕실이 된다.
+ */
+function courtyardImpulse(c: AudioContext, seconds = 1.9, decay = 2.8): AudioBuffer {
+  const len = Math.max(1, Math.floor(c.sampleRate * seconds));
+  const buf = c.createBuffer(2, len, c.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    // 담과 기와에 한 번씩 부딪혀 오는 소리 (좌우를 살짝 어긋나게 둔다)
+    for (const [ms, g] of [
+      [9 + ch * 2, 0.5],
+      [23 + ch * 3, 0.34],
+      [41 + ch * 5, 0.2],
+    ]) {
+      const at = Math.floor((ms / 1000) * c.sampleRate);
+      if (at < len) d[at] += g;
+    }
+  }
+  return buf;
+}
+
+/**
+ * 믹서를 세운다. 배경음과 효과음이 각자 스피커로 직행하면 여럿이 겹칠 때
+ * 찢어지므로, 두 버스를 컴프레서 하나로 모아 천장을 만든다.
+ *
+ *   music ─┐                 ┌─ (마당 울림)
+ *          ├─ compressor ─ 스피커
+ *   sfx ───┘        └── send ┘
+ */
+function buildGraph(c: AudioContext): void {
+  const comp = c.createDynamicsCompressor();
+  comp.threshold.value = -16;
+  comp.knee.value = 22;
+  comp.ratio.value = 4;
+  comp.attack.value = 0.004;
+  comp.release.value = 0.2;
+  comp.connect(c.destination);
+
+  const verb = c.createConvolver();
+  verb.buffer = courtyardImpulse(c);
+  verb.connect(comp);
+  send = c.createGain();
+  send.gain.value = 0.3;
+  send.connect(verb);
+
+  music = c.createGain();
+  music.gain.value = 0.0001; // 켤 때 페이드인
+  music.connect(comp);
+  music.connect(send);
+
+  effects = c.createGain();
+  effects.gain.value = 0.95;
+  effects.connect(comp);
+  effects.connect(send);
+}
 
 /** 필요하면 만들어서 돌려준다. 반드시 사용자 제스처 안에서 부를 것. */
 export function createAudioCtx(): AudioContext | null {
@@ -24,7 +90,51 @@ export function createAudioCtx(): AudioContext | null {
     (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
   ctx = new Ctor();
+  buildGraph(ctx);
   return ctx;
+}
+
+/** 배경음이 붙는 자리 (페이드인·아웃을 이 게인 하나로 한다) */
+export function musicBus(): GainNode | null {
+  return music;
+}
+
+/** 효과음·자리 소리가 붙는 자리 */
+export function sfxBus(): AudioNode | null {
+  return effects;
+}
+
+/**
+ * 3D 소리를 위한 귀의 위치. 카메라가 움직일 때마다 갱신한다 —
+ * 이게 없으면 PannerNode가 원점에 선 사람 기준으로 소리를 굴린다.
+ */
+export function syncListener(
+  px: number,
+  py: number,
+  pz: number,
+  fx: number,
+  fy: number,
+  fz: number,
+): void {
+  const l = ctx?.listener;
+  if (!l) return;
+  if (l.positionX) {
+    l.positionX.value = px;
+    l.positionY.value = py;
+    l.positionZ.value = pz;
+    l.forwardX.value = fx;
+    l.forwardY.value = fy;
+    l.forwardZ.value = fz;
+    l.upY.value = 1;
+  } else {
+    // 사파리 등 구형 API
+    (l as unknown as { setPosition(x: number, y: number, z: number): void }).setPosition(px, py, pz);
+    (
+      l as unknown as {
+        setOrientation(x: number, y: number, z: number, ux: number, uy: number, uz: number): void;
+      }
+    ).setOrientation(fx, fy, fz, 0, 1, 0);
+  }
 }
 
 /** 이미 만들어져 재생 중인 컨텍스트만 — 효과음이 컨텍스트를 새로 여는 것을 막는다 */
@@ -93,7 +203,7 @@ export function tone(
   env.gain.exponentialRampToValueAtTime(0.0001, at + dur);
 
   osc.connect(env);
-  env.connect(o.dest ?? ctx.destination);
+  env.connect(o.dest ?? effects ?? ctx.destination);
   osc.start(at);
   osc.stop(at + dur + 0.05);
 }
@@ -130,7 +240,7 @@ export function noise(
 
   src.connect(filter);
   filter.connect(env);
-  env.connect(o.dest ?? ctx.destination);
+  env.connect(o.dest ?? effects ?? ctx.destination);
   src.start(at);
   src.stop(at + dur + 0.02);
 }

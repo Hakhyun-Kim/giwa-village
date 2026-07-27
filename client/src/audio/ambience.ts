@@ -16,13 +16,16 @@
 
 import {
   createAudioCtx,
+  musicBus,
   noise,
   noteHz,
   setSoundPreference,
   soundPreference,
   tone,
 } from "./audio";
+import { playLoopAt, preloadSamples } from "./samples";
 import { trackShape, type Mood, type TrackShape } from "./track";
+import { CAMPFIRE_POS } from "../game/collide";
 
 function rand(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -32,38 +35,60 @@ let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let timer: number | null = null;
 let running = false;
+let stopFire: (() => void) | null = null;
 
-/** 가야금 뜯는 소리 — 날카로운 어택 뒤 길게 떨어지는 감쇠 */
+// ── 가야금 ────────────────────────────────────────────────────────────────
+// 오실레이터로는 아무리 필터를 씌워도 "삐" 소리를 못 벗는다. 뜯은 현은 물리적으로
+// 짧은 잡음이 현 길이만큼의 지연선을 돌면서 고음부터 잃어 가는 것이라, 그대로
+// 시뮬레이션하면(Karplus–Strong) 같은 코드 양으로 훨씬 현답게 들린다.
+// 음 하나당 한 번만 만들고 캐시한다 — 만드는 비용은 첫 음에서만 든다.
+
+const strings = new Map<number, AudioBuffer>();
+
+function stringBuffer(c: AudioContext, hz: number): AudioBuffer {
+  const key = Math.round(hz);
+  const hit = strings.get(key);
+  if (hit) return hit;
+
+  const sr = c.sampleRate;
+  const n = Math.max(2, Math.round(sr / hz)); // 지연선 = 한 주기
+  const len = Math.floor(sr * 1.8);
+  const buf = c.createBuffer(1, len, sr);
+  const d = buf.getChannelData(0);
+  const line = new Float32Array(n);
+  for (let i = 0; i < n; i++) line[i] = Math.random() * 2 - 1; // 뜯는 순간
+  // -60dB까지 약 1.4초 (평균 필터가 고음부터 깎아 내는 것과 겹쳐 자연스럽게 준다)
+  const decay = Math.exp(Math.log(0.001) / (1.4 * sr));
+  let idx = 0;
+  for (let i = 0; i < len; i++) {
+    const cur = line[idx];
+    d[i] = cur;
+    line[idx] = (cur * 0.5 + line[(idx + 1) % n] * 0.5) * decay;
+    idx = (idx + 1) % n;
+  }
+  strings.set(key, buf);
+  return buf;
+}
+
+/** 가야금 한 음 — 뜯고 나면 스스로 사그라든다 */
 function pluck(at: number, hz: number, gain: number) {
   if (!ctx || !master) return;
-  const osc = ctx.createOscillator();
-  const body = ctx.createOscillator();
+  const src = ctx.createBufferSource();
+  src.buffer = stringBuffer(ctx, hz);
+  // 몸통 울림: 아주 살짝 눌러 줘야 쨍하지 않다
   const filter = ctx.createBiquadFilter();
-  const env = ctx.createGain();
-
-  osc.type = "triangle";
-  osc.frequency.value = hz;
-  // 현이 울리는 배음. 살짝 어긋나게 둬야 뜯는 맛이 산다.
-  body.type = "sine";
-  body.frequency.value = hz * 2.01;
-
   filter.type = "lowpass";
-  filter.frequency.setValueAtTime(hz * 7, at);
-  filter.frequency.exponentialRampToValueAtTime(hz * 1.6, at + 0.9);
-  filter.Q.value = 1.2;
+  filter.frequency.setValueAtTime(hz * 9, at);
+  filter.frequency.exponentialRampToValueAtTime(hz * 2.4, at + 1.1);
+  filter.Q.value = 0.8;
+  const env = ctx.createGain();
+  env.gain.value = gain * 3.4; // KS 버퍼는 진폭이 작다
 
-  env.gain.setValueAtTime(0.0001, at);
-  env.gain.exponentialRampToValueAtTime(gain, at + 0.012);
-  env.gain.exponentialRampToValueAtTime(0.0001, at + rand(1.6, 2.6));
-
-  osc.connect(filter);
-  body.connect(filter);
+  src.connect(filter);
   filter.connect(env);
   env.connect(master);
-  osc.start(at);
-  body.start(at);
-  osc.stop(at + 3);
-  body.stop(at + 3);
+  src.start(at);
+  src.stop(at + 2);
 }
 
 /** 대금 지속음 — 숨결 섞인 긴 음, 느린 비브라토 */
@@ -94,6 +119,15 @@ function flute(at: number, hz: number, gain: number) {
   vib.start(at);
   osc.stop(at + dur + 0.1);
   vib.stop(at + dur + 0.1);
+
+  // 숨소리 — 대금이 대금처럼 들리는 건 음정이 아니라 이 바람 소리 때문이다.
+  // 사인파만 있으면 신디사이저고, 잡음을 한 겹 얹으면 사람이 부는 것이 된다.
+  noise(ctx, at, dur, {
+    hz: hz * 2.2,
+    q: 1.4,
+    vol: gain * 0.5,
+    dest: master,
+  });
 }
 
 /** 처마 끝 풍경 — 아주 짧고 높은 한 점 */
@@ -210,6 +244,16 @@ export function setMood(next: Mood, hp = 1): void {
   hpRatio = hp;
 }
 
+/**
+ * 모닥불 자리 소리를 건다. 샘플이 아직 안 왔을 수 있으므로 될 때까지 몇 번 본다 —
+ * 끝내 안 오면(오프라인·404) 그냥 조용하다. 불은 눈으로도 보이니까.
+ */
+function hangFire(tries = 10): void {
+  if (stopFire || !running) return;
+  stopFire = playLoopAt("fire", CAMPFIRE_POS[0], 0.7, CAMPFIRE_POS[2], 0.85);
+  if (!stopFire && tries > 0) setTimeout(() => hangFire(tries - 1), 900);
+}
+
 export function isAmbienceOn(): boolean {
   return running;
 }
@@ -232,6 +276,8 @@ export async function setAmbience(on: boolean): Promise<boolean> {
       clearInterval(timer);
       timer = null;
     }
+    stopFire?.();
+    stopFire = null;
     if (master && ctx) {
       // 뚝 끊기면 클릭 노이즈가 나므로 짧게 페이드아웃
       master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
@@ -242,11 +288,12 @@ export async function setAmbience(on: boolean): Promise<boolean> {
   if (!ctx) {
     ctx = createAudioCtx();
     if (!ctx) return false;
-    master = ctx.createGain();
-    master.connect(ctx.destination);
   }
   if (ctx.state === "suspended") await ctx.resume();
+  master = musicBus();
   if (!master) return false;
+  // 반입한 소리 조각은 지금부터 배경에서 받는다 (기다리지 않는다)
+  preloadSamples();
 
   master.gain.cancelScheduledValues(ctx.currentTime);
   master.gain.setValueAtTime(Math.max(0.0001, master.gain.value), ctx.currentTime);
@@ -258,5 +305,6 @@ export async function setAmbience(on: boolean): Promise<boolean> {
     tick();
     timer = window.setInterval(tick, TICK_MS);
   }
+  hangFire(); // running이 선 뒤에 걸어야 한다 (아래 함수가 running을 본다)
   return true;
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
 import { openStall } from "../net/colyseus";
+import { sfxStallOpen } from "../audio/sfx";
 import { listOnMarket } from "../wallet/wallet";
 import { DEMO } from "../config/giwa";
 
@@ -64,6 +65,7 @@ export default function StallOpenDialog() {
       }
     }
     openStall(title.trim(), items);
+    sfxStallOpen(); // 좌판을 펴는 순간 — 체인이 확정하기 전에 화면과 소리가 먼저 답한다
     // 온체인 리스팅 (best-effort): 아이템 id는 서버 규칙과 동일하게 계산.
     // 같은 지갑에서 병렬 전송하면 nonce 충돌("replacement transaction
     // underpriced")이 나므로 반드시 순차 전송 — listOnMarket이 영수증까지

@@ -9,9 +9,13 @@ import { touchInput } from "./touch";
 import { bossHit, feel, tickFeel } from "./feel";
 import { localPos, sendMove, sendEmote } from "../net/colyseus";
 import { useStore } from "../state/store";
+import { sfxStep } from "../audio/sfx";
+import { syncListener } from "../audio/audio";
 
 const SPEED = 6;
 const SEND_INTERVAL = 1 / 15;
+/** 한 걸음의 보폭(m) — 이만큼 걸을 때마다 발소리가 한 번 난다 */
+const STRIDE = 1.9;
 
 export default function Player() {
   const group = useRef<Group>(null);
@@ -21,6 +25,7 @@ export default function Player() {
   const lastSent = useRef({ x: NaN, z: NaN, rot: NaN });
   const camTarget = useRef(new Vector3());
   const camDesired = useRef(new Vector3());
+  const walked = useRef(0);
   const camera = useThree((s) => s.camera);
 
   const selfId = useStore((s) => s.selfId);
@@ -118,8 +123,22 @@ export default function Player() {
     }
     // 겹친 만큼 밀어낸다 — 멈춰 있을 때도 부르는 이유는, 순간이동(?debug)이나
     // 나중에 열린 노점 안에 갇히면 스스로 빠져나와야 하기 때문이다.
+    const beforeX = localPos.x;
+    const beforeZ = localPos.z;
     collide(localPos);
     speedRef.current = moving ? SPEED : 0;
+
+    // 발소리는 시간이 아니라 **걸은 거리**로 센다. 벽에 막혀 제자리걸음을 하면
+    // 소리도 나지 않아야 하고, 속도가 바뀌어도 보폭은 그대로여야 하기 때문.
+    if (moving) {
+      walked.current += Math.hypot(localPos.x - beforeX, localPos.z - beforeZ);
+      if (walked.current >= STRIDE) {
+        walked.current = 0;
+        sfxStep();
+      }
+    } else {
+      walked.current = STRIDE * 0.8; // 서 있다 떼는 첫 걸음은 바로 난다
+    }
 
     if (group.current) {
       group.current.position.set(localPos.x, 0, localPos.z);
@@ -131,6 +150,10 @@ export default function Player() {
     camDesired.current.set(localPos.x, 9.5, localPos.z + 11.5);
     camera.position.lerp(camDesired.current, 1 - Math.pow(0.0001, dt));
     camera.lookAt(camTarget.current.x, 1.4, camTarget.current.z);
+
+    // 귀는 카메라가 아니라 **아바타**에 둔다. 카메라는 뒤에서 내려다보고 있어서,
+    // 카메라에 귀를 달면 모닥불 옆에 서도 소리가 저 멀리서 난다.
+    syncListener(localPos.x, 1.4, localPos.z, Math.sin(localPos.rot), 0, Math.cos(localPos.rot));
 
     // 타격감 — 누적한 흔들림을 제곱해 쓴다. 작은 흔들림은 더 작아지고 큰 것만
     // 남으므로, 잔진동이 화면을 계속 떨게 하지 않는다.

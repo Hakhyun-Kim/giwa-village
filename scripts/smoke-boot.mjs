@@ -77,6 +77,32 @@ try {
   // 새 컨텍스트 = 빈 localStorage. 개발자 브라우저에는 이미 온보딩 진행 기록이
   // 남아 있어, 그대로 검사하면 "첫 방문자에게만 나는 문제"를 영영 못 잡는다.
   const ctx = await browser.newContext({ viewport: { width: 1024, height: 640 } });
+  // 오디오 그래프를 밖에서 들여다볼 창구. 앱 코드가 돌기 전에 심어야 컨텍스트를 잡는다.
+  // (소리는 귀로만 확인되므로, 무엇이 실제로 세워졌는지는 이렇게만 알 수 있다)
+  await ctx.addInitScript(() => {
+    const Orig = window.AudioContext;
+    window.__audio = { osc: 0, buf: 0, conv: 0, panner: 0, comp: 0, ctx: null };
+    window.AudioContext = function (...a) {
+      const c = new Orig(...a);
+      window.__audio.ctx = c;
+      return c;
+    };
+    window.AudioContext.prototype = Orig.prototype;
+    const P = Orig.prototype;
+    for (const [key, method] of [
+      ["osc", "createOscillator"],
+      ["buf", "createBufferSource"],
+      ["conv", "createConvolver"],
+      ["panner", "createPanner"],
+      ["comp", "createDynamicsCompressor"],
+    ]) {
+      const orig = P[method];
+      P[method] = function (...a) {
+        window.__audio[key]++;
+        return orig.apply(this, a);
+      };
+    }
+  });
   const page = await ctx.newPage();
   const errors = collectErrors(page);
 
@@ -147,22 +173,60 @@ try {
   });
   // 마을 트랙은 여백이 3~6초라 짧은 표본이 통째로 침묵일 수 있다 — 그걸 게이트로
   // 삼으면 가끔 빨간불이 되고, 그러면 곧 아무도 안 본다. 확정적인 것만 본다:
-  // 토벌 트랙의 북은 두 스텝마다 반드시 울리고, 마을 트랙에는 북이 아예 없다.
+  // 토벌 트랙은 두 스텝마다 북이 반드시 울리므로 마을보다 확실히 촘촘하다.
+  // (무엇이 북이고 무엇이 가야금인지는 세지 않는다 — 가야금도 버퍼로 울린 뒤로
+  //  노드 종류로는 구분되지 않고, 구분하려 들면 테스트가 구현을 따라다니게 된다)
+  const nodes = (s) => s.osc + s.buf;
+  must(nodes(track.hunt) >= 4, `풍류가 실제로 소리를 예약한다 (토벌 ${nodes(track.hunt)}개 / 2.5초)`);
   must(
-    track.hunt.osc > 0 && track.hunt.buf > 0,
-    `풍류가 실제로 소리를 예약한다 (토벌 ${track.hunt.osc}음·${track.hunt.buf}북 / 2.5초)`,
+    nodes(track.hunt) > nodes(track.village) + 2,
+    `토벌이 마을보다 촘촘하다 (마을 ${nodes(track.village)} → 토벌 ${nodes(track.hunt)})`,
   );
+
+  // 믹서가 실제로 서는가 — 컴프레서 하나로 모으고, 마당 울림(리버브)을 태운다.
+  // 이게 없으면 소리가 겹칠 때 찢어지고, 전부 "스피커에서 나는 소리"로 들린다.
+  const graph = await page.evaluate(() => ({ ...window.__audio, ctx: undefined }));
+  must(graph.comp === 1, `믹서 버스가 하나로 모인다 (컴프레서 ${graph.comp}개)`);
+  must(graph.conv === 1, `마당 울림이 걸린다 (리버브 ${graph.conv}개)`);
+
+  // 반입한 소리 조각이 실제로 로드되고, 모닥불이 **자리 소리**로 걸리는가.
+  // (파일이 없으면 panner가 0이고, 그때도 마을은 조용해지지 않아야 한다)
+  await page.waitForFunction(() => window.__audio.panner > 0, { timeout: 15000 }).catch(() => {});
+  const fire = await page.evaluate(() => window.__audio.panner);
+  must(fire > 0, `모닥불이 자리 소리로 걸린다 (panner ${fire}개)`);
+
+  // 귀가 아바타를 따라가는가 — 카메라에 귀를 달면 모닥불 옆에 서도 소리가 멀리서 난다
+  const ears = await page.evaluate(async () => {
+    const l = window.__audio.ctx?.listener;
+    if (!l?.positionX) return null;
+    const read = () => ({ x: +l.positionX.value.toFixed(2), z: +l.positionZ.value.toFixed(2) });
+    window.__giwa.teleport(-9, 12);
+    await new Promise((r) => setTimeout(r, 500));
+    const near = read();
+    window.__giwa.teleport(26, -6);
+    await new Promise((r) => setTimeout(r, 500));
+    const far = read();
+    // 첫 등장 자리로 돌려놓는다 — 뒤에 오는 검사들이 "화면에 보이는 것"을 보기 때문
+    window.__giwa.teleport(0, 5);
+    await new Promise((r) => setTimeout(r, 700));
+    return { near, far };
+  });
   must(
-    track.village.buf === 0,
-    `마을에는 북이 없다 (북 ${track.village.buf} · 가야금 ${track.village.osc})`,
+    !!ears && Math.hypot(ears.near.x + 9, ears.near.z - 12) < 1.5 && ears.far.x > 20,
+    `귀가 아바타를 따라간다 (${ears ? `${ears.near.x},${ears.near.z} → ${ears.far.x},${ears.far.z}` : "리스너 없음"})`,
   );
 
   // 게임필 — 도깨비 이름표와 떠오르는 숫자. 연출만 흉내 내므로 가스가 들지 않는다.
-  const bossTag = await page
+  // 도깨비 상태는 공개 RPC에서 온다. 못 읽었거나 이번 주 도깨비가 이미 잡혔으면
+  // **건너뛴다** — 남의 사정으로 게이트가 빨간불이 되면 곧 아무도 안 보기 때문.
+  const bossState = await page.evaluate(() => window.__giwa.state().boss);
+  const bossTag = bossState?.slain === false && (await page
     .waitForSelector(".boss-tag", { timeout: 20000 })
     .then(() => true)
-    .catch(() => false);
-  must(bossTag, "도깨비 이름표(체력바)가 뜬다");
+    .catch(() => false));
+  if (!bossState) console.log("⏭ 도깨비 상태를 아직 못 읽었다 (공개 RPC) — 이름표 검사 건너뜀");
+  else if (bossState.slain) console.log("⏭ 이번 주 도깨비는 이미 잡혔다 — 이름표 검사 건너뜀");
+  else must(bossTag, "도깨비 이름표(체력바)가 뜬다");
   if (bossTag) {
     await page.evaluate(() => window.__giwa.bossHit(123));
     const dmg = await page

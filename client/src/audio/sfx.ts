@@ -11,6 +11,10 @@
 // 도구 자체는 배경음과 나눠 쓰도록 audio.ts에 있다.
 
 import { liveAudioCtx, noise, noteHz, soundPreference, tone } from "./audio";
+import { playSample } from "./samples";
+
+/** 매번 조금씩 다른 음높이 — 같은 파일도 연달아 나면 기계처럼 들린다 */
+const wobble = (spread = 0.12) => 1 + (Math.random() * 2 - 1) * spread;
 
 /** 소리를 낼 수 있는 상태일 때만 컨텍스트와 시작 시각을 넘겨준다 */
 function play(fn: (ctx: AudioContext, at: number) => void): void {
@@ -20,11 +24,46 @@ function play(fn: (ctx: AudioContext, at: number) => void): void {
   fn(ctx, ctx.currentTime + 0.01);
 }
 
-/** 지갑이 tx를 받아들였다 — 두 음 상승, 아주 짧게 */
+/** 지갑이 tx를 받아들였다 — 쇠걸쇠 한 번 + 두 음 상승, 아주 짧게 */
 export function sfxSent(): void {
   play((ctx, at) => {
+    playSample("click", { gain: 0.22, rate: wobble(0.08) });
     tone(ctx, at, noteHz(5), 0.09, { vol: 0.05 });
     tone(ctx, at + 0.07, noteHz(8), 0.14, { vol: 0.05 });
+  });
+}
+
+// 발소리는 걸음마다 나므로 가장 자주 울리는 소리다 — 조금만 크면 바로 거슬린다.
+/** 한 걸음. 파일이 없으면 아주 짧은 흙 소리로 대신한다 */
+export function sfxStep(): void {
+  play((ctx, at) => {
+    if (playSample("step", { gain: 0.16, rate: wobble(0.16) })) return;
+    noise(ctx, at, 0.05, { hz: 420, q: 0.9, vol: 0.05, filter: "lowpass" });
+  });
+}
+
+/** 다이얼로그가 열린다 — 책장 넘기는 소리 */
+export function sfxOpen(): void {
+  play((ctx, at) => {
+    if (playSample("open", { gain: 0.3, rate: wobble(0.06) })) return;
+    tone(ctx, at, noteHz(6), 0.1, { vol: 0.04 });
+  });
+}
+
+/** 다이얼로그가 닫힌다 */
+export function sfxClose(): void {
+  play((ctx, at) => {
+    if (playSample("close", { gain: 0.26, rate: wobble(0.06) })) return;
+    tone(ctx, at, noteHz(3), 0.1, { vol: 0.035 });
+  });
+}
+
+/** 노점을 편다 — 문 여는 소리 위에 상승 두 음 */
+export function sfxStallOpen(): void {
+  play((ctx, at) => {
+    playSample("stall", { gain: 0.34 });
+    tone(ctx, at + 0.12, noteHz(5), 0.16, { vol: 0.045 });
+    tone(ctx, at + 0.24, noteHz(9), 0.3, { vol: 0.045 });
   });
 }
 
@@ -36,9 +75,10 @@ export function sfxFail(): void {
   });
 }
 
-/** 거래 확정·쿠폰 수령 — 상승 아르페지오 (평조 네 음) */
+/** 거래 확정·쿠폰 수령 — 엽전 소리 위에 상승 아르페지오 (평조 네 음) */
 export function sfxSuccess(): void {
   play((ctx, at) => {
+    playSample("coins", { gain: 0.34, rate: wobble(0.06) });
     [0, 2, 4, 7].forEach((d, i) => {
       tone(ctx, at + i * 0.075, noteHz(d + 5), 0.2, { vol: 0.055 });
     });
@@ -47,14 +87,24 @@ export function sfxSuccess(): void {
 
 // 도깨비 타격은 여럿이 동시에 때리므로 최소 간격을 둔다 (실측: 70ms면 연타가 살아 있다)
 let lastHit = 0;
-/** 도깨비 타격 — 짧은 필터드 잡음 한 방 */
+/**
+ * 도깨비 타격 — 세 겹으로 친다. 게임 타격음이 시원하게 들리는 이유는 대개
+ * 소리가 커서가 아니라 **겹이 있어서**다:
+ *   ① 트랜지언트(찰나의 잡음) — "닿았다"를 알리는 것. 늦으면 둔해진다.
+ *   ② 바디(반입한 묵직한 타격) — 무게를 담당한다.
+ *   ③ 테일(낮게 미끄러지는 음) — 여운. 리버브가 이걸 마당으로 퍼뜨린다.
+ */
 export function sfxHit(): void {
   const now = performance.now();
   if (now - lastHit < 70) return;
   lastHit = now;
   play((ctx, at) => {
-    noise(ctx, at, 0.06, { hz: 1500, q: 1.1, vol: 0.14 });
-    tone(ctx, at, 180, 0.09, { type: "square", vol: 0.05, glideTo: 70 });
+    noise(ctx, at, 0.05, { hz: 1800, q: 1.2, vol: 0.11 }); // ①
+    if (!playSample("hit", { gain: 0.42, rate: wobble(0.14) })) {
+      // 파일이 없을 때의 바디 — 원래 쓰던 잡음 한 방
+      noise(ctx, at, 0.07, { hz: 1200, q: 1, vol: 0.13 });
+    }
+    tone(ctx, at, 180, 0.11, { type: "square", vol: 0.05, glideTo: 70 }); // ③
   });
 }
 
@@ -65,9 +115,12 @@ export function sfxHit(): void {
  */
 export function sfxSlain(): void {
   play((ctx, at) => {
-    // 포효: 낮게 무너지는 글라이드 + 밑을 받치는 잡음
+    // 쓰러지는 순간: 묵직한 한 방 + 낮게 무너지는 포효
+    playSample("thud", { gain: 0.5, rate: 0.86 });
     tone(ctx, at, 200, 0.7, { type: "sawtooth", vol: 0.07, glideTo: 42 });
     noise(ctx, at, 0.55, { hz: 220, q: 0.7, vol: 0.09, filter: "lowpass" });
+    // 마을에 알리는 종 — 팡파레보다 반 박자 먼저 들어간다
+    playSample("bell", { gain: 0.4, at: at + 0.34 });
     // 팡파레: 평조 다섯 음을 밟고 올라가 마지막 음을 길게 끈다
     [0, 2, 4, 7, 9].forEach((d, i) => {
       tone(ctx, at + 0.5 + i * 0.11, noteHz(d + 5), i === 4 ? 0.8 : 0.22, { vol: 0.06 });
