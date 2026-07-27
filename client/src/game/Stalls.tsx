@@ -3,6 +3,7 @@ import { Html } from "@react-three/drei";
 import { useStore } from "../state/store";
 import { Hanok } from "./Village";
 import { setDynamicColliders, stallCollider } from "./collide";
+import { useSurfaces } from "./textures";
 import type { Stall } from "../types";
 
 function hover(on: boolean) {
@@ -12,6 +13,8 @@ function hover(on: boolean) {
 /** 좌판 노점: 평상 + 기둥 + 차양 + 상품 */
 function StallBooth({ stall }: { stall: Stall }) {
   const awning = `#${((stall.ownerName.length * 2654435761) % 0xffffff | 0x404040).toString(16).padStart(6, "0")}`;
+  const tex = useSurfaces();
+  const texKey = Object.keys(tex).length;
   return (
     <group
       position={[stall.x, 0, stall.z]}
@@ -28,7 +31,7 @@ function StallBooth({ stall }: { stall: Stall }) {
       {/* 평상(좌판) */}
       <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
         <boxGeometry args={[2.0, 0.16, 1.3]} />
-        <meshStandardMaterial color="#a3794f" />
+        <meshStandardMaterial key={texKey} color="#a3794f" map={tex.wood} />
       </mesh>
       {[
         [-0.85, -0.5],

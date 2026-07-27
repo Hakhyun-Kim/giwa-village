@@ -4,6 +4,17 @@
   box-sizing: border-box;
 }
 
+/* 글자꼴 둘. 반입한 것이 못 오면 스택이 시스템 글꼴로 조용히 내려간다.
+   본문(설명·목록)은 일부러 시스템 글꼴로 둔다 — 표정 있는 글꼴은 짧은 곳에서만
+   좋고, 긴 문장에서는 읽기가 힘들어진다. */
+:root {
+  /* 명조 — 간판·제목처럼 '적어 놓은 것'에 (기와장터의 얼굴) */
+  --font-title: "Song Myung", "Malgun Gothic", "Apple SD Gothic Neo", serif;
+  /* 고딕 — HUD 라벨·버튼처럼 '읽어야 하는 것'에 */
+  --font-ui: "Do Hyeon", "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-body: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+
 html,
 body,
 #root,
@@ -11,7 +22,7 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  font-family: var(--font-body);
 }
 
 .app {
@@ -42,9 +53,23 @@ body,
 }
 
 .hud-title {
+  font-family: var(--font-title);
   font-weight: 700;
-  font-size: 16px;
-  letter-spacing: 0.5px;
+  font-size: 19px;
+  letter-spacing: 1px;
+}
+
+/* HUD의 라벨·버튼·칩은 짧고 자주 읽는 것이라 표정 있는 고딕이 낫다 */
+.hud-btn,
+.hud-status,
+.hud-festival,
+.hud-prompt,
+.hud-txchip,
+.hud-sound,
+.hud-bag-menu button,
+.quest-title,
+.quest-objective {
+  font-family: var(--font-ui);
 }
 
 .hud-status {
@@ -257,6 +282,7 @@ body,
 }
 
 .portal-label {
+  font-family: var(--font-title);
   color: #e6d8ff;
   font-size: 18px;
   font-weight: 700;
@@ -268,6 +294,7 @@ body,
 .stall-tag {
   display: flex;
   align-items: center;
+  font-family: var(--font-title);
   gap: 5px;
   background: rgba(58, 42, 24, 0.85);
   color: #ffe9c4;
@@ -305,8 +332,9 @@ body,
 }
 
 .shop-sign b {
+  font-family: var(--font-title);
   color: #ffe9c4;
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 2px;
 }
 
@@ -1023,7 +1051,7 @@ body,
   0%, 100% { border-color: rgba(255, 90, 90, 0.4); box-shadow: none; }
   50% { border-color: rgba(255, 90, 90, 1); box-shadow: 0 0 14px rgba(255, 60, 60, 0.55); }
 }
-.boss-name { color: #fff; font-size: 12px; font-weight: 700; }
+.boss-name { font-family: var(--font-title); color: #fff; font-size: 12px; font-weight: 700; }
 .boss-name span { color: #ff9d9d; font-size: 10px; font-weight: 400; margin-left: 4px; }
 .boss-hp {
   position: relative;

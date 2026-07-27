@@ -134,7 +134,7 @@
     },
     {
       "id": "polyhaven-tex",
-      "what": "기와·나무·회벽·흙바닥 컬러맵 (1K JPG)",
+      "what": "기와·나무·회벽·마른 흙바닥 컬러맵 (1K JPG)",
       "dest": "client/public/tex",
       "author": "Poly Haven",
       "license": "CC0-1.0",
@@ -154,12 +154,12 @@
           "to": "plaster.jpg"
         },
         {
-          "from": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/park_dirt/park_dirt_diff_1k.jpg",
+          "from": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dry_ground_01/dry_ground_01_diff_1k.jpg",
           "to": "ground.jpg"
         }
       ],
-      "digest": "2dcee8c7114858a24561b6a7e21c60e4548593fd0e4bc748e0bb34f835c94dbf",
-      "bytes": 3234474,
+      "digest": "1b39183274d59a997e28cd578dfb26734304a6358d6db35bc67685efb2612fd7",
+      "bytes": 2692914,
       "count": 4
     },
     {

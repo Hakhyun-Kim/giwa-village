@@ -6,6 +6,7 @@ import { useStore } from "../state/store";
 import { currentDaylight, type DaylightState } from "./daylight";
 import { feel, onDamagePop, type DamagePop } from "./feel";
 import { setMood } from "../audio/ambience";
+import { useSurfaces } from "./textures";
 // 빈사 임계는 track.ts 한 곳 — 붉은 맥동(여기)과 심장박동(소리)이 어긋나면 안 된다
 import { isLowHp } from "../audio/track";
 import { BOSS_MAX_HP } from "../chain/boss";
@@ -41,17 +42,22 @@ export function Hanok({
   tag?: string;
 }) {
   const wallH = 2.1;
+  // 질감은 있으면 얹고 없으면 색만 — 색은 그대로 두고 곱해지므로 팔레트가 유지된다.
+  // key: 질감은 첫 프레임 뒤에 도착한다. 재질을 통째로 새로 만들지 않으면 three가
+  // 셰이더를 다시 컴파일하지 않아 map이 붙어도 화면이 그대로다(실제로 겪음).
+  const tex = useSurfaces();
+  const texKey = Object.keys(tex).length;
   return (
     <group position={position} rotation={[0, rotation, 0]}>
       {/* 기단 (돌 단) */}
       <mesh position={[0, 0.18, 0]} receiveShadow castShadow>
         <boxGeometry args={[w + 0.7, 0.36, d + 0.7]} />
-        <meshStandardMaterial color="#9a958a" />
+        <meshStandardMaterial key={texKey} color="#9a958a" bumpMap={tex.plaster} bumpScale={1.6} />
       </mesh>
-      {/* 회벽 */}
+      {/* 회벽 — 얼룩(색)이 아니라 거친 결만. 흰 회벽이 갈색이 되면 한옥이 아니다 */}
       <mesh position={[0, 0.36 + wallH / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[w, wallH, d]} />
-        <meshStandardMaterial color={tint} />
+        <meshStandardMaterial key={texKey} color={tint} bumpMap={tex.plaster} bumpScale={1.2} roughness={0.94} />
       </mesh>
       {/* 모서리 목재 기둥 */}
       {[
@@ -62,7 +68,7 @@ export function Hanok({
       ].map(([x, z], i) => (
         <mesh key={i} position={[x, 0.36 + wallH / 2, z]} castShadow>
           <boxGeometry args={[0.22, wallH, 0.22]} />
-          <meshStandardMaterial color="#6b4a30" />
+          <meshStandardMaterial key={texKey} color="#6b4a30" map={tex.wood} />
         </mesh>
       ))}
       {/* 문 */}
@@ -76,13 +82,15 @@ export function Hanok({
         <meshStandardMaterial color="#f4ead2" emissive="#d8c9a0" emissiveIntensity={0.25} />
       </mesh>
       {/* 기와지붕: 넓은 처마의 낮은 사각뿔 2단 + 용마루 */}
+      {/* 기와는 **결만** 가져온다(bumpMap). 사진의 색까지 쓰면 서양 붉은 기와가 되고,
+          한옥 지붕은 잿빛이어야 한옥으로 보인다 — 색은 우리가 정한 값 그대로. */}
       <mesh position={[0, wallH + 0.85, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
         <coneGeometry args={[Math.hypot(w, d) * 0.62, 1.0, 4]} />
-        <meshStandardMaterial color="#3b3f46" flatShading />
+        <meshStandardMaterial key={texKey} color="#3b3f46" bumpMap={tex.roof} bumpScale={2.4} roughness={0.75} />
       </mesh>
       <mesh position={[0, wallH + 1.28, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
         <coneGeometry args={[Math.hypot(w, d) * 0.38, 0.62, 4]} />
-        <meshStandardMaterial color="#464b54" flatShading />
+        <meshStandardMaterial key={texKey} color="#464b54" bumpMap={tex.roof} bumpScale={2.4} roughness={0.75} />
       </mesh>
       {/* 용마루 */}
       <mesh position={[0, wallH + 1.62, 0]} castShadow>
@@ -455,6 +463,8 @@ function useDaylight(): DaylightState {
 
 export default function Village() {
   const sun = useDaylight();
+  const tex = useSurfaces();
+  const texKey = Object.keys(tex).length;
 
   return (
     <group>
@@ -475,7 +485,9 @@ export default function Village() {
         shadow-camera-bottom={-50}
       />
 
-      {/* ground */}
+      {/* ground — 바깥 풀밭은 사진을 얹지 않는다. 흙 사진을 초록으로 곱하면 올리브색
+          진창이 되고, 무엇보다 이 마을은 납작한 색면(치비 아바타·플랫셰이딩) 쪽이라
+          풀밭까지 사진이 되면 결이 어긋난다. 사진은 흙이 맞는 자리에만. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[WORLD_RADIUS + 8, 48]} />
         <meshStandardMaterial color="#7fae64" />
@@ -483,17 +495,17 @@ export default function Village() {
       {/* plaza */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]} receiveShadow>
         <circleGeometry args={[10, 36]} />
-        <meshStandardMaterial color="#cbb896" />
+        <meshStandardMaterial key={texKey} color={tex.plaza ? "#f0e2c6" : "#cbb896"} map={tex.plaza} />
       </mesh>
       {/* 포털로 가는 북쪽 길 */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, -19]} receiveShadow>
         <planeGeometry args={[3.4, 20]} />
-        <meshStandardMaterial color="#cbb896" />
+        <meshStandardMaterial key={texKey} color={tex.plaza ? "#f0e2c6" : "#cbb896"} map={tex.plaza} />
       </mesh>
       {/* 동쪽 식당가 거리 */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[21, 0.015, 0]} receiveShadow>
         <planeGeometry args={[24, 5]} />
-        <meshStandardMaterial color="#cbb896" />
+        <meshStandardMaterial key={texKey} color={tex.plaza ? "#f0e2c6" : "#cbb896"} map={tex.plaza} />
       </mesh>
 
       <Fountain />

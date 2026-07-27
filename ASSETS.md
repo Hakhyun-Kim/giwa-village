@@ -9,14 +9,14 @@
 허용 라이선스: **CC0-1.0** · **CC-BY-4.0** · **OFL-1.1** — 그 밖의 것은 반입하지 않는다.
 저작자 표기가 필요한 라이선스(CC-BY)는 아래 표와 화면 크레딧 양쪽에 이름이 있어야 한다.
 
-용량 4,672KB / 예산 20,480KB
+용량 4,143KB / 예산 20,480KB
 
 | 자리 | 무엇 | 저작자 | 라이선스 | 우리가 한 손질 |
 |---|---|---|---|---|
 | `client/public/audio/sfx` | 발소리(흙)·타격 바디·격파 종소리 | [Kenney](https://kenney.nl/assets/impact-sounds) | CC0-1.0 | 130개 중 10개만 추림. 게인·피치 랜덤·레이어는 코드에서. |
 | `client/public/audio/sfx` | 동전·책장·문·쇠걸쇠·칼날 — 거래와 UI에 붙는 소리 | [Kenney](https://kenney.nl/assets/rpg-audio) | CC0-1.0 | 55개 중 6개만 추림. |
 | `client/public/audio/amb` | 모닥불 장작 타는 소리 (자리 소리 — 가까이 갈수록 커진다) | [AntumDeluge](https://opengameart.org/content/fire-crackling) | CC0-1.0 | 그대로. 반복 재생·거리 감쇠는 코드에서. |
-| `client/public/tex` | 기와·나무·회벽·흙바닥 컬러맵 (1K JPG) | [Poly Haven](https://polyhaven.com/textures) | CC0-1.0 | 1K 컬러맵만. 타일링·색조·거칠기는 코드에서. |
+| `client/public/tex` | 기와·나무·회벽·마른 흙바닥 컬러맵 (1K JPG) | [Poly Haven](https://polyhaven.com/textures) | CC0-1.0 | 1K 컬러맵만. 타일링·색조·거칠기는 코드에서. |
 | `client/public/fonts/song-myung` | 제목·간판용 명조 (기와장터 로고, 노점 간판) | [Sandoll Communications](https://fonts.google.com/specimen/Song+Myung) | OFL-1.1 | 구글이 쪼개 주는 유니코드 서브셋 그대로 셀프 호스팅(브라우저가 필요한 조각만 받는다). |
 | `client/public/fonts/do-hyeon` | HUD·버튼용 고딕 (숫자와 짧은 라벨이 또렷해야 한다) | [Woowa Brothers](https://fonts.google.com/specimen/Do+Hyeon) | OFL-1.1 | 위와 같음. |
 
