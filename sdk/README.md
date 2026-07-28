@@ -38,3 +38,10 @@ const stop = village.watchPresence((b) => console.log(b.who, b.x, b.z));
   애그리게이터로 6개 컨트랙트를 1콜에 집계
 - 참조 구현: 게임 클라이언트 `client/src/chain/*` (같은 컨트랙트를 소비)
 - 소스 배포(TS) — 번들러 환경에서 바로 사용. `viem` peer dependency
+
+## 읽는 것 말고 들어가고 싶다면
+
+이 SDK는 TypeScript에서 마을을 **읽는** 길이다. 다른 언어·다른 엔진으로
+**마을에 들어가는** 클라이언트를 만들려면 [PROTOCOL.md](../PROTOCOL.md)를 본다 —
+좌표계·충돌 규칙·프레즌스 비컨·룸 메시지 24종의 공개 명세이고, 한옥과 벽의 배치는
+[`world.json`](../client/public/world.json) 한 파일에 있다.

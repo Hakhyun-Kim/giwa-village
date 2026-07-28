@@ -75,6 +75,15 @@ scripts/ 테스트·배포·봇·스모크
 sdk/     외부에서 프로필을 읽는 패키지
 ```
 
+**클라이언트도 하나가 아니다.** 마을은 구현체가 아니라 프로토콜이다 —
+루트의 `PROTOCOL.md`가 공개 명세이고, 배치표·충돌·소리 임계는
+`client/public/world.json`으로 구워 누구나 읽는다. **표를 옮기지 말고 굽는다:**
+원본은 여전히 §4의 TypeScript 한 곳이고 world.json은 생성물이다. 배치·상수를
+고쳤으면 `npm run export-world`를 함께 돌린다(잊으면 `npm test`가 잡는다).
+서버 메시지를 추가·변경했으면 `PROTOCOL.md`도 함께 고친다 — 이것도 `npm test`가
+서버 소스와 대조하고, `npm run smoke:protocol`이 **문서만 보고 짠 클라이언트로**
+실제 룸에 들어가 본다(colyseus.js를 일부러 안 쓴다 — 쓰면 아무것도 증명 못 한다).
+
 **핵심 결정 셋:**
 
 - **체인이 곧 서버다.** 노점 레지스트리·길드·던전 정산·프레즌스가 전부 온체인이라
@@ -139,6 +148,7 @@ sdk/     외부에서 프로필을 읽는 패키지
 | 마을 배치·충돌 크기 | `client/src/game/collide.ts` **한 곳** (Village.tsx가 이 표를 그린다) | `npm test` — 벽 통과 금지 + 모닥불·도깨비·포털 도달 가능 · `npm run smoke:boot` — 실프레임 |
 | 주민 걸음 (속도·몸 크기·배회 반경) | `client/src/demo/wander.ts` **한 곳** | `npm test` — 진짜 노점 배치 위에서 1분 산책: 한 틱에 한 걸음 넘지 않기 · 벽 안에서 끝나는 틱 0 · `npm run smoke:boot` — 실브라우저 속도 표본 |
 | 풍류 트랙·도깨비 빈사 임계 | `client/src/audio/track.ts` **한 곳** (Village.tsx가 붉은 맥동에 이 함수를 쓴다) | `npm test` — 표본 41개로 소리·화면 임계 대조 · `npm run smoke:boot` — 실브라우저에서 예약되는 오디오 노드 수 |
+| 위 표들을 남이 읽는 형태로 구운 것 | `client/public/world.json` — **생성물이다** (`npm run export-world`) | `npm test` — 굽는 것을 잊으면 실패 + world.json만 읽고 걸어도 웹과 1mm 안에서 같은 벽에 막힐 것 |
 
 수치를 고치면 **반드시 짝을 이루는 곳을 함께 고친다.** 봇·서버는 통과하는데
 체인에서만 다르게 판정되는 것이 가장 잡기 어려운 종류의 버그다.
@@ -148,9 +158,11 @@ sdk/     외부에서 프로필을 읽는 패키지
 ## 5. 검증 — 가스를 아끼는 순서
 
 ```bash
-npm test                     # 로직 52건 · 체인 없음 · 1초 미만 (저장할 때마다)
+npm test                     # 로직 56건 · 체인 없음 · 1초 미만 (저장할 때마다)
+npm run export-world         # 배치표를 client/public/world.json 으로 굽는다
 npm run test:local           # 컨트랙트 10종 E2E 49건 · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)
+npm run smoke:protocol       # PROTOCOL.md만 보고 짠 클라이언트로 룸에 입장 (서버 자동 기동)
 npm run test:chain -- --yes  # 실배포본·Dojang·UP.ID 읽기 확인
 npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다)
 ```

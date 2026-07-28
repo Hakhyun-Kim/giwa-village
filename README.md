@@ -104,11 +104,30 @@ GIWA 체인 위의 **한옥 저잣거리** — 지갑으로 접속해 아바타�
   NPC. 들어온 흥정을 페르소나에 따라 받거나 튕긴다. 값은 LLM이 정하지만
   **하한선은 코드가 강제**해서, 어떤 대답이 나와도 헐값 체결은 불가능하다.
 
+## 다른 엔진으로 만든 클라이언트도 같은 마을에 선다
+
+같은 이유로 **클라이언트도 하나일 필요가 없다.** 입장 자격이 서명뿐이라
+컨트랙트는 그 좌표가 웹에서 왔는지 언리얼에서 왔는지 구분할 자리가 없다.
+
+그래서 마을을 프로토콜로 적어 뒀다 — **[PROTOCOL.md](PROTOCOL.md)**.
+한옥이 어디 서 있고 무엇이 길을 막는지는
+[`world.json`](client/public/world.json)([라이브](https://hakhyun-kim.github.io/giwa-village/world.json))
+하나에 있고, 배치표 원본이 바뀌면 `npm test`가 이 파일과 문서를 함께 검사한다.
+`npm test`는 아예 **`world.json`만 읽는 낯선 클라이언트인 척** 마을을 걸어 본 뒤
+웹 클라이언트가 밀려난 자리와 1mm 안에서 같은지 대조한다.
+
+붙는 길은 둘이다. **체인 경로**(정본 — 노점·거래·길드·프레즌스가 전부 온체인)와
+**룸 경로**(선택 — 15Hz 위치 동기화). 룸은 Colyseus 스키마 상태를 쓰지 않아서,
+다른 언어로 붙일 때 제일 어려운 부분(델타 디코더)이 통째로 필요 없다 —
+WebSocket과 msgpack 리더면 된다.
+
 ## 구조
 
 ```
+PROTOCOL.md 공개 프로토콜 — 이것만 지키면 누구든 클라이언트를 만들 수 있다
 client/     Vite + React + react-three-fiber 3D 클라이언트
             src/chain/  풀온체인 레이어 — 컨트랙트별 모듈 (stalls·guilds·boss·presence…)
+            public/world.json  마을 배치표(기계용) — npm run export-world 가 굽는다
 contracts/  Solidity 10종 (카탈로그: contracts/README.md)
 sdk/        @giwa-village/sdk — 외부 dApp·봇용 읽기 SDK (프로필·리더보드·프레즌스)
 mcp/        기와장터 MCP 서버 — LLM이 마을을 읽고(무료) 키가 있으면 직접 장사한다
@@ -182,9 +201,10 @@ L1StandardBridge(`0x77b2…A7E7`)로 전송하면 1~3분 뒤 L2 잔액에 반영
 
 | 명령 | 무엇을 | 가스 | 걸리는 시간 |
 |---|---|---|---|
-| `npm test` | 로직·데이터·조명 하한·밸런스 표 대조·마을 충돌·HUD 함정 (36건) | **0** (체인 없음) | 1초 미만 |
+| `npm test` | 로직·데이터·조명 하한·밸런스 표 대조·마을 충돌·공개 프로토콜 (56건) | **0** (체인 없음) | 1초 미만 |
 | `npm run test:local` | **컨트랙트 10종 전체** + 장날·쿨다운 시간 여행 (49건) | **0** (로컬 anvil) | ~5초 |
 | `npm run smoke:boot` | 실브라우저로 **첫 방문자 동선** 부팅 검사 | **0** (읽기만) | ~30초 |
+| `npm run smoke:protocol` | [PROTOCOL.md](PROTOCOL.md)**만 보고 짠** 클라이언트로 룸 입장 (colyseus.js 안 씀) | **0** (로컬 서버) | ~10초 |
 | `npm run test:chain -- --yes` | 실제 배포본·GIWA 네이티브 연동 확인 | 읽기만 (0) | ~10초 |
 | `npm run market-smoke` 등 | 실거래가 꼭 필요한 검증 | **든다** | 분 단위 |
 
@@ -366,6 +386,7 @@ WebGL 창 없이 서버에만 접속하는 헤드리스 주민들 — 조선 저
 ## 검증
 
 ```bash
+npm run smoke:protocol # 공개 명세만 보고 짠 클라이언트로 룸 입장 (서버 자동 기동)
 npm run smoke         # 동기화: 접속/이동/이모트/좌표클램프/퇴장
 npm run gift          # 선물 온체인 E2E: A→B 실제 전송 + gift 브로드캐스트
 npm run stall-smoke   # 노점 E2E: 개설→실결제 구매→판매 전파→영속성→폐점 + 거부 케이스
@@ -414,6 +435,9 @@ node scripts/dojang-smoke.mjs  # Dojang isVerified 조회 경로 확인
 - [x] 게임필 — 도깨비 타격 섬광·화면 흔들림·떠오르는 숫자·잔상 체력바
       (새 메시·파티클 0개 · `prefers-reduced-motion` 존중)
 - [x] 부팅 스모크 배포 게이트 + 자동화 훅 (`?rafshim` · `window.__giwa`)
+- [x] **공개 프로토콜**([PROTOCOL.md](PROTOCOL.md)) — 마을 배치표를 기계가 읽는
+      [`world.json`](client/public/world.json)으로 굽고, 문서만 보고 짠 클라이언트로
+      실제 룸에 들어가는 검증까지 (`npm run smoke:protocol`)
 - [ ] 일일 장터 기록 — 로컬 무가스 주행을 콘텐츠로 (설계: [CLAUDE.md §8](CLAUDE.md))
 - [ ] RPC 읽기 캐시/인덱서·구역 샤딩 (다수 동시 접속 대비 — [기술 문서 §7](https://hakhyun-kim.github.io/giwa-village/tech.html#scale))
 - [ ] 실브랜드 기프티콘 API 연동

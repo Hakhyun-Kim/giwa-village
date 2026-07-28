@@ -741,6 +741,128 @@ it("1분을 걸어도 한 틱에 한 걸음보다 더 가지 않는다 (튀지 �
 
 setDynamicColliders("stalls", null);
 
+// ── 공개 프로토콜 ─────────────────────────────────────────────────────────
+// 마을은 클라이언트 하나가 아니라 프로토콜이다(PROTOCOL.md). 남이 만든
+// 클라이언트가 같은 자리에 한옥을 세우고 같은 벽에 막히려면 배치표를 읽을 수
+// 있어야 하는데, 원본은 TypeScript 안에 산다 — 그래서 굽는다(world.json).
+// 굽는 것을 잊거나 문서가 서버보다 늦으면 조용히 어긋나므로 여기서 잡는다.
+
+describe("공개 프로토콜 — 남이 만든 클라이언트도 같은 마을에 선다");
+
+const { buildWorld, serializeWorld, WORLD_FILE, WORLD_VERSION } = await import(
+  pathToFileURL(path.join(ROOT, "scripts", "lib", "world.mjs")).href
+);
+const worldText = fs.readFileSync(WORLD_FILE, "utf8");
+const world = JSON.parse(worldText);
+const rebuilt = serializeWorld(await buildWorld());
+
+it("world.json이 지금 배치표와 일치한다 (굽는 것을 잊으면 여기서 걸린다)", () => {
+  ok(rebuilt === worldText, "world.json이 낡았습니다 — npm run export-world 를 실행하세요");
+  eq(world.version, WORLD_VERSION, "판: ");
+});
+
+it("world.json만 읽고 걸어도 같은 벽에 막힌다", () => {
+  // 남의 클라이언트가 할 일을 그대로 해 본다 — TypeScript를 안 보고 JSON만 본다.
+  const push = (p, c, radius) => {
+    if (c.kind === "circle") {
+      const dx = p.x - c.x;
+      const dz = p.z - c.z;
+      const d = Math.hypot(dx, dz);
+      const min = c.r + radius;
+      if (d >= min) return;
+      if (d < 1e-4) {
+        p.x = c.x + min;
+        return;
+      }
+      p.x = c.x + (dx / d) * min;
+      p.z = c.z + (dz / d) * min;
+      return;
+    }
+    const cos = Math.cos(c.rot);
+    const sin = Math.sin(c.rot);
+    const dx = p.x - c.x;
+    const dz = p.z - c.z;
+    const lx = dx * cos - dz * sin;
+    const lz = dx * sin + dz * cos;
+    const ox = c.hw + radius - Math.abs(lx);
+    const oz = c.hd + radius - Math.abs(lz);
+    if (ox <= 0 || oz <= 0) return;
+    let nx = lx;
+    let nz = lz;
+    if (ox < oz) nx = (lx < 0 ? -1 : 1) * (c.hw + radius);
+    else nz = (lz < 0 ? -1 : 1) * (c.hd + radius);
+    p.x = c.x + nx * cos + nz * sin;
+    p.z = c.z + (-nx * sin + nz * cos);
+  };
+  const foreign = (x, z) => {
+    const p = { x, z };
+    for (const c of world.colliders) push(p, c, world.world.playerRadius);
+    const d = Math.hypot(p.x, p.z);
+    if (d > world.world.radius) {
+      p.x = (p.x / d) * world.world.radius;
+      p.z = (p.z / d) * world.world.radius;
+    }
+    return p;
+  };
+
+  let worst = 0;
+  let touched = 0;
+  for (let x = -56; x <= 56; x += 1.3) {
+    for (let z = -56; z <= 56; z += 1.3) {
+      const mine = { x, z };
+      collide(mine, PLAYER_R);
+      const theirs = foreign(x, z);
+      if (mine.x !== x || mine.z !== z) touched++;
+      worst = Math.max(worst, Math.hypot(mine.x - theirs.x, mine.z - theirs.z));
+    }
+  }
+  ok(touched > 200, `막히는 지점이 ${touched}개뿐입니다 — 표본이 벽을 안 지나갑니다`);
+  // 좌표를 0.1mm까지 반올림해 굽고 밀어내기가 그 위에서 겹치므로 mm 아래에서 논다.
+  // 1mm를 넘으면 반올림이 아니라 규칙이 갈라진 것이다.
+  ok(worst < 1e-3, `밀려난 자리가 ${(worst * 1000).toFixed(2)}mm 어긋났습니다`);
+  console.log(`     막힌 지점 ${touched}개 · 최대 오차 ${(worst * 1000).toFixed(3)}mm`);
+});
+
+it("PROTOCOL.md가 서버의 메시지를 하나도 빠뜨리지 않는다", () => {
+  const roomSrc = fs.readFileSync(
+    path.join(ROOT, "server", "src", "VillageRoom.ts"),
+    "utf8",
+  );
+  const doc = fs.readFileSync(path.join(ROOT, "PROTOCOL.md"), "utf8");
+  const names = new Set();
+  for (const re of [
+    /this\.onMessage\(\s*"([^"]+)"/g,
+    /this\.broadcast\(\s*"([^"]+)"/g,
+    /client\.send\(\s*"([^"]+)"/g,
+    /\bbroadcast\(\s*"([^"]+)"/g,
+  ]) {
+    for (const m of roomSrc.matchAll(re)) names.add(m[1]);
+  }
+  ok(names.size >= 20, `메시지를 ${names.size}개밖에 못 찾았습니다 — 추출 규칙을 보세요`);
+  const missing = [...names].filter((n) => !doc.includes(`\`${n}\``));
+  eq(missing.join(", "), "", "PROTOCOL.md에 없는 메시지: ");
+  console.log(`     메시지 ${names.size}종 전부 문서에 있음`);
+});
+
+it("문서가 가리키는 상수가 실제 서버 값과 같다", () => {
+  const roomSrc = fs.readFileSync(
+    path.join(ROOT, "server", "src", "VillageRoom.ts"),
+    "utf8",
+  );
+  const doc = fs.readFileSync(path.join(ROOT, "PROTOCOL.md"), "utf8");
+  const hz = roomSrc.match(/SNAPSHOT_HZ\s*=\s*(\d+)/)?.[1];
+  const idle = roomSrc.match(/HEARTBEAT_TIMEOUT_MS\s*=\s*([\d_]+)/)?.[1];
+  const max = roomSrc.match(/maxClients\s*=\s*(\d+)/)?.[1];
+  ok(hz && idle && max, "서버 상수를 못 찾았습니다");
+  ok(doc.includes(`${hz}Hz`), `스냅샷 주기 ${hz}Hz가 문서에 없습니다`);
+  ok(doc.includes(`${Number(idle.replace(/_/g, "")) / 1000}초`), "유휴 정리 시간이 문서와 다릅니다");
+  ok(doc.includes(`${max}명`), `정원 ${max}명이 문서와 다릅니다`);
+  ok(
+    doc.includes(world.world.radius.toString()) && doc.includes(`x${world.chain.posScale}`),
+    "월드 반경·좌표 배율이 문서에 없습니다",
+  );
+});
+
 // ── 결과 ──────────────────────────────────────────────────────────────────
 
 console.log(`\n${"─".repeat(50)}`);
