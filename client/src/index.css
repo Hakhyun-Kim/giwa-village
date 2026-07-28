@@ -1098,6 +1098,78 @@ body,
   .boss-dmg { animation-duration: 1.2s; }
 }
 
+/* 첫 방문자 환영 카드 — 마을 한가운데에 딱 한 번 뜬다 */
+.welcome-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 120;
+  width: min(420px, 88vw);
+  background: rgba(22, 27, 38, 0.96);
+  border: 1px solid #3a3325;
+  border-top: 3px solid #ffd66b;
+  border-radius: 14px;
+  padding: 18px 20px 15px;
+  color: #eef2f8;
+  pointer-events: auto;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+  animation: welcome-in 0.35s ease-out;
+}
+@keyframes welcome-in {
+  from { opacity: 0; transform: translate(-50%, -46%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome-card { animation: none; }
+}
+.welcome-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: #ffd66b;
+}
+.welcome-npc { font-size: 22px; }
+.welcome-body {
+  margin-top: 10px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #cfd6e2;
+}
+.welcome-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+}
+.welcome-actions button {
+  flex: 1;
+  border-radius: 9px;
+  padding: 10px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.welcome-yes {
+  background: #ffd66b;
+  border: 1px solid #ffd66b;
+  color: #1a1508;
+}
+.welcome-yes:hover { background: #ffe08c; }
+.welcome-no {
+  background: transparent;
+  border: 1px solid #2a3040;
+  color: #cfd6e2;
+}
+.welcome-no:hover { border-color: #ffd66b; color: #ffd66b; }
+.welcome-note {
+  margin-top: 11px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #8ea0bd;
+}
+
 .quest-card {
   position: absolute;
   left: 14px;

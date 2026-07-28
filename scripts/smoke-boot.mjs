@@ -133,6 +133,22 @@ try {
   must(snap.wallet, "데모 버너 지갑 생성");
   must(!!snap.pos, `내 아바타 위치 (${snap.pos?.x}, ${snap.pos?.z})`);
 
+  // 환영 카드 — 첫 방문자에게 "자동으로 둘러볼까요?"를 딱 한 번 묻는다.
+  // 처음 온 사람이 무엇을 눌러야 할지 모르는 것이 가장 흔한 이탈이므로,
+  // 이게 안 뜨는 회귀는 게이트로 잡는다. 여기서는 "직접"을 골라 아래 검사를 잇는다.
+  const welcome = await page
+    .waitForSelector(".welcome-card", { timeout: 15000 })
+    .then(() => true)
+    .catch(() => false);
+  must(welcome, "환영 카드가 첫 방문자에게 뜬다 (자동 시연 여부를 묻는다)");
+  if (welcome) {
+    await page.locator("button.welcome-no").click();
+    const answer = await page.evaluate(() => localStorage.getItem("giwa-welcome"));
+    must(answer === "self", `한 번 답하면 다시 묻지 않는다 (giwa-welcome=${answer})`);
+    const gone = await page.locator(".welcome-card").count();
+    must(gone === 0, `카드가 사라진다 (남은 ${gone}개)`);
+  }
+
   // 첫 방문자 온보딩 — 이게 조용히 사라지면 신규 유저는 뭘 할지 모른 채 나간다
   const quest = await page
     .waitForSelector(".quest-card", { timeout: 10000 })
@@ -289,6 +305,28 @@ try {
   const fromCenter = Math.hypot(after.x, after.z);
   must(rammed && fromCenter > 2.5, `분수를 통과하지 못한다 (중심에서 ${fromCenter.toFixed(2)}m)`);
   must(after.z < 7.9, `걷기는 그대로 된다 (z 8 → ${after.z.toFixed(2)})`);
+
+  // 환영 카드의 "예" 갈래 — 잔액 0인 첫 방문자가 고르는 길이다. 여기서 시연이
+  // 터지면 처음 온 사람이 정확히 그것만 보게 되므로, 첫 자막까지는 확인한다.
+  // (전체 시연은 몇 분짜리라 게이트에 넣지 않는다 — 시작과 중단만 본다)
+  await page.evaluate(() => localStorage.removeItem("giwa-welcome"));
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => window.__giwa?.ready?.() === true, { timeout: 60000 });
+  await page.waitForSelector("button.welcome-yes", { timeout: 15000 });
+  await page.locator("button.welcome-yes").click();
+  const started = await page
+    .waitForSelector(".sc-bar", { timeout: 15000 })
+    .then(() => true)
+    .catch(() => false);
+  must(started, "‘자동으로 둘러보기’를 고르면 시연이 그 자리에서 시작한다");
+  const hidden = await page.locator(".quest-card").count();
+  must(hidden === 0, `시연 중에는 촌장의 부탁이 비켜 준다 (남은 ${hidden}개)`);
+  await page.keyboard.press("Escape");
+  const back = await page
+    .waitForSelector(".quest-card", { timeout: 5000 })
+    .then(() => true)
+    .catch(() => false);
+  must(back, "ESC로 멈추면 촌장의 부탁이 다시 안내를 잇는다");
 
   // 몇 초 더 돌려 NPC 이동·주야 사이클·비컨 경로에서 터지는 것이 없는지 본다
   await wait(6000);

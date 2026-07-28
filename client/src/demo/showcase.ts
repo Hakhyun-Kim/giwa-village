@@ -1,7 +1,13 @@
-// 자동 시연(쇼케이스) 모드 — ?showcase=1
+// 자동 시연(쇼케이스) 모드 — ?showcase=1, 또는 첫 방문자가 환영 카드에서 "예"
 // 키 조작 없이 입장→산책→노점 개설→구매(온체인)→쿠폰 정산→영수증까지
 // 자막과 함께 자동 진행한다. 테스터가 설명 없이 보기만 해도 전체 플로우를
-// 이해하도록 하는 것이 목적. 로컬 풀스택(서버+dev 지갑) 전용.
+// 이해하도록 하는 것이 목적.
+//
+// 두 갈래가 있다. **실거래 시연**은 지갑에 테스트 ETH가 있을 때만 되고,
+// **구경 모드**(gasless)는 쓰기를 하나도 하지 않는다 — 처음 온 사람은 대개
+// 잔액이 0이므로, 잔액을 못 찾으면 포셋 앞에서 멈추는 대신 구경 모드로
+// 조용히 내려간다. 빈손으로 들어온 사람에게 아무것도 안 보여주는 것보다는
+// 걸어서 보여주는 편이 낫다.
 import { useStore } from "../state/store";
 import { getBalanceEth } from "../wallet/wallet";
 import { loadCoupons } from "../state/coupons";
@@ -21,14 +27,27 @@ let started = false;
 let aborted = false;
 
 export function maybeStartShowcase(): void {
+  if (new URLSearchParams(location.search).get("showcase") !== "1") return;
+  // 녹화·시연용 경로: 포셋 입금을 오래 기다려서라도 실거래까지 보여준다
+  startShowcase({ patient: true });
+}
+
+/**
+ * 환영 카드("자동으로 둘러보기")와 `?showcase=1`이 함께 쓰는 입구.
+ * - `gasless`: 처음부터 구경 모드(쓰기 0)로만 돈다
+ * - `patient`: 잔액이 없을 때 포셋 입금을 15분까지 기다린다(녹화용).
+ *   기본값은 1분만 기다리고 구경 모드로 내려간다 — 처음 온 사람을
+ *   포셋 앞에 세워 두는 것이 가장 나쁜 첫인상이기 때문.
+ */
+export function startShowcase(
+  opts: { gasless?: boolean; patient?: boolean } = {},
+): void {
   // HMR로 모듈이 재로드돼도 시연이 중복 실행되지 않도록 전역 플래그 사용
   const w = window as unknown as { __giwaShowcase?: boolean };
   if (started || w.__giwaShowcase) return;
-  const params = new URLSearchParams(location.search);
-  if (params.get("showcase") !== "1") return;
   started = true;
   w.__giwaShowcase = true;
-  void run();
+  void run(opts.gasless === true, opts.patient === true);
 }
 
 // ---- 오버레이 ----
@@ -55,6 +74,7 @@ let bar: HTMLDivElement | null = null;
 let skipBtn: HTMLButtonElement | null = null;
 
 function mountOverlay() {
+  useStore.getState().setShowcasing(true);
   for (const el of document.querySelectorAll(".sc-bar, .sc-skip")) el.remove();
   const style = document.createElement("style");
   style.textContent = STYLE;
@@ -76,10 +96,15 @@ function onEsc(e: KeyboardEvent) {
 
 function abort() {
   aborted = true;
-  teardown("직접 둘러보세요 — WASD 이동 · E 인사 · 노점 클릭 구매 · 포털 F");
+  teardown(
+    "직접 둘러보세요 — WASD 이동 · E 인사 · 노점 클릭 구매 · 포털 F" +
+      " · 왼쪽 <b>촌장의 부탁</b>이 순서대로 안내합니다",
+  );
 }
 
 function teardown(finalText?: string) {
+  // 시연이 끝나면 촌장의 부탁이 다시 나와 다음에 할 것을 알려준다
+  useStore.getState().setShowcasing(false);
   window.removeEventListener("keydown", onEsc);
   skipBtn?.remove();
   skipBtn = null;
@@ -368,9 +393,96 @@ async function showHonors(my: string) {
   useStore.getState().setHonorsOpen(false);
 }
 
+// ---- 구경 모드 (가스 0) ----
+
+/**
+ * 쓰기를 하나도 하지 않는 갈래. 처음 온 사람의 지갑은 대개 비어 있어서
+ * 실거래 시연은 포셋 앞에서 멈춘다 — 그때 아무것도 안 보여주는 대신
+ * 걸어다니며 "여기서 무엇을 할 수 있는지"만 보여준다.
+ */
+async function tour(my: string | null) {
+  const mine = (my ?? "").toLowerCase();
+
+  caption(
+    "봇 주민들이 저잣거리에서 노점을 열고 있습니다",
+    "WASD 이동 · E 인사 · 아바타 클릭 선물",
+  );
+  await walk("KeyW", 1500);
+  await walk("KeyD", 1000);
+  await pace(1000);
+
+  // 노점 — 열어서 보기만 한다 (구매는 가스가 든다)
+  const stall = useStore
+    .getState()
+    .stalls.find((st) => st.ownerAddress.toLowerCase() !== mine);
+  if (stall) {
+    caption(
+      `🧺 <b>${stall.title}</b> — 노점은 주인이 접속을 끊어도 마을에 남습니다`,
+      "가격은 컨트랙트에 온체인으로 적혀 있고, 컨트랙트가 그 값만 받습니다",
+    );
+    useStore.getState().setStallView(stall.id);
+    await pace(4500);
+    caption(
+      "🎫 사면 대금은 <b>에스크로</b>에 묶이고 ERC-1155 쿠폰이 지갑에 발행됩니다",
+      "값을 깎고 싶으면 흥정 — 제안 금액도 체인에 걸립니다",
+    );
+    await pace(4000);
+    useStore.getState().setStallView(null);
+  }
+
+  // 모닥불 — 앉는 것 자체는 화면에서 일어나고, 온기 적립만 체인이 한다
+  caption(
+    "🔥 <b>모닥불</b> — 함께 앉으면 온기가 쌓입니다 (혼자서는 안 됩니다)",
+    "매주 토 21시 장날엔 온기·도깨비 데미지 2배 — 모두가 모일 시간",
+  );
+  await walk("KeyA", 1200);
+  await walk("KeyS", 1000);
+  const near = useStore.getState().nearFire;
+  if (near) useStore.getState().setSelfSitting(true);
+  await pace(3500);
+  useStore.getState().setSelfSitting(false);
+
+  // 도깨비 — 곁에 서면 배경음이 토벌 트랙으로 갈아탄다 (때리진 않는다)
+  const boss = useStore.getState().boss;
+  if (boss && !boss.slain) {
+    caption(
+      "🧿 광장의 <b>장터 도깨비</b> — 혼자선 못 잡습니다, 함께 때려야죠",
+      "곁에 서면 배경음이 토벌 가락으로 바뀝니다 · 타격은 R (쿨다운 30초)",
+    );
+    await walk("KeyD", 3400);
+    await walk("KeyS", 900);
+    await pace(3500);
+  }
+
+  // 길드·공방·칭호는 다이얼로그를 열어 읽기만 한다
+  caption(
+    "🏯 <b>길드와 백층 던전</b> — 길드원들이 각자의 시간에 이어 오르는 비동기 코업",
+    "주차 시드가 GIWA 블록 해시로 고정돼, 오른 층수를 누구나 재현·검증할 수 있습니다",
+  );
+  useStore.getState().setGuildOpen(true);
+  await pace(4500);
+  useStore.getState().setGuildOpen(false);
+
+  caption(
+    "🎨 <b>문양 공방</b> — 8×8 픽셀을 직접 그려 온체인에 등록하고 팝니다",
+    "판매 대금은 창작자에게 직접 전달됩니다",
+  );
+  useStore.getState().setWorkshopOpen(true);
+  await pace(4000);
+  useStore.getState().setWorkshopOpen(false);
+
+  caption(
+    "🎖 <b>칭호</b>는 소울바운드입니다 — 전송 함수가 아예 없습니다",
+    "게임에서 얻은 것은 팔 수 없고, 거래되는 것은 노점의 재화뿐입니다",
+  );
+  useStore.getState().setHonorsOpen(true);
+  await pace(4000);
+  useStore.getState().setHonorsOpen(false);
+}
+
 // ---- 시나리오 ----
 
-async function run() {
+async function run(gasless: boolean, patient: boolean) {
   mountOverlay();
   try {
     // 0) 접속·지갑 대기 (데모 모드 = 풀온체인 서버리스로 그대로 시연)
@@ -383,7 +495,10 @@ async function run() {
       return s.status === "connected" && !!s.walletAddress && s.stalls.length > 0;
     }, 30000);
     if (!ready) {
-      caption("서버에 연결하지 못했습니다", "test.cmd 로 서버를 먼저 띄워주세요");
+      caption(
+        "마을에 들어가지 못했습니다 — 새로고침해 주세요",
+        DEMO ? "공개 RPC가 붐빌 때 가끔 있습니다" : "test.cmd 로 서버를 먼저 띄워주세요",
+      );
       await pace(8000);
       teardown();
       return;
@@ -391,24 +506,39 @@ async function run() {
     const my = useStore.getState().walletAddress!;
     await pace(3500);
 
-    // 1) 잔액 확인 — 없으면 포셋 안내 후 대기
-    let bal = Number(await getBalanceEth(my).catch(() => "0"));
-    if (bal < MIN_BALANCE_ETH) {
-      void navigator.clipboard?.writeText(my).catch(() => {});
-      caption(
-        `테스트 ETH가 필요합니다 — <a href="${FAUCET_URL}" target="_blank" rel="noreferrer">GIWA 포셋 ↗</a>에서 받아주세요`,
-        `내 주소 ${my.slice(0, 6)}…${my.slice(-4)} 를 클립보드에 복사했습니다 · 입금되면 자동으로 계속합니다`,
-      );
-      await waitFor(() => {
-        void getBalanceEth(my).then((v) => (bal = Number(v))).catch(() => {});
-        return bal >= MIN_BALANCE_ETH;
-      }, 15 * 60_000);
+    // 1) 잔액 확인 — 없으면 포셋을 안내하되, 기다리다 끝내지는 않는다
+    if (!gasless) {
+      let bal = Number(await getBalanceEth(my).catch(() => "0"));
       if (bal < MIN_BALANCE_ETH) {
-        caption("잔액이 확인되지 않아 시연을 종료합니다");
-        await pace(6000);
-        teardown();
-        return;
+        void navigator.clipboard?.writeText(my).catch(() => {});
+        caption(
+          `실제로 사고파는 것까지 보려면 테스트 ETH가 필요합니다 — <a href="${FAUCET_URL}" target="_blank" rel="noreferrer">GIWA 포셋 ↗</a>`,
+          `내 주소 ${my.slice(0, 6)}…${my.slice(-4)} 를 클립보드에 복사했습니다 · ${
+            patient ? "입금되면 자동으로 계속합니다" : "그동안 마을을 걸어서 보여드릴게요"
+          }`,
+        );
+        if (patient) {
+          await waitFor(() => {
+            void getBalanceEth(my).then((v) => (bal = Number(v))).catch(() => {});
+            return bal >= MIN_BALANCE_ETH;
+          }, 15 * 60_000);
+        } else {
+          await pace(6500); // 포셋 링크를 읽을 만큼만 — 세워 두지 않는다
+        }
+        // 안 들어와도 끝내지 않는다 — 쓰기 없는 구경 모드로 내려간다
+        if (bal < MIN_BALANCE_ETH) gasless = true;
       }
+    }
+
+    // 1.5) 구경 모드 — 가스가 드는 것은 하나도 하지 않고 마을만 보여준다
+    if (gasless) {
+      await tour(my);
+      teardown(
+        "구경 끝! 테스트 ETH를 받으면 여기서 실제로 사고팔 수 있습니다 — " +
+          `<a href="${FAUCET_URL}" target="_blank" rel="noreferrer">GIWA 포셋 ↗</a>` +
+          " · 왼쪽 <b>촌장의 부탁</b>이 순서대로 안내합니다",
+      );
+      return;
     }
 
     // 2) 산책 — 봇 주민과 노점 구경

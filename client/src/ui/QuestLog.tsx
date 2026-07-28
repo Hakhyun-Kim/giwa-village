@@ -105,6 +105,7 @@ export default function QuestLog() {
   });
   const [expanded, setExpanded] = useState(true);
   const [justDone, setJustDone] = useState(false);
+  const showcasing = useStore((s) => s.showcasing);
   const ctx = useRef<QuestCtx>({ walked: 0, viewedStall: false });
   const lastPos = useRef({ x: 0, z: 0, init: false });
 
@@ -149,8 +150,8 @@ export default function QuestLog() {
     return () => clearInterval(id);
   }, [step, dismissed]);
 
-  // 쇼케이스 중에는 숨긴다
-  if (new URLSearchParams(location.search).get("showcase") === "1") return null;
+  // 자동 시연 중에는 숨긴다 (?showcase=1 · 환영 카드에서 시작한 시연 둘 다)
+  if (showcasing) return null;
   if (dismissed) return null;
 
   function skip() {

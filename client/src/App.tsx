@@ -18,6 +18,7 @@ import HonorsDialog from "./ui/HonorsDialog";
 import SellerLedgerDialog from "./ui/SellerLedgerDialog";
 import WorkshopDialog from "./ui/WorkshopDialog";
 import QuestLog from "./ui/QuestLog";
+import Welcome from "./ui/Welcome";
 import TouchControls from "./ui/TouchControls";
 import { joinVillage, leaveVillage } from "./net/colyseus";
 import { useStore } from "./state/store";
@@ -106,6 +107,7 @@ export default function App() {
       <SellerLedgerDialog />
       <WorkshopDialog />
       <QuestLog />
+      <Welcome />
       <TouchControls />
     </div>
   );

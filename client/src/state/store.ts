@@ -55,6 +55,8 @@ interface VillageStore {
   nearBoss: boolean;
   /** 전송 큐에서 처리 중인 tx 수 (HUD 칩) */
   pendingTx: number;
+  /** 자동 시연이 도는 중 — 촌장의 부탁 같은 안내 UI는 비켜 준다 */
+  showcasing: boolean;
 
   setStatus: (s: ConnectionStatus) => void;
   setSelfId: (id: string | null) => void;
@@ -98,6 +100,7 @@ interface VillageStore {
   setBoss: (b: { remaining: number; slain: boolean; myContrib: number; nextStrikeAt: number; trophies: number } | null) => void;
   setNearBoss: (v: boolean) => void;
   bumpPendingTx: (delta: number) => void;
+  setShowcasing: (v: boolean) => void;
   patchDungeon: (d: Partial<DungeonView>) => void;
 }
 
@@ -140,6 +143,7 @@ export const useStore = create<VillageStore>((set) => ({
   boss: null,
   nearBoss: false,
   pendingTx: 0,
+  showcasing: false,
 
   setStatus: (status) => set({ status }),
   setSelfId: (selfId) => set({ selfId }),
@@ -205,6 +209,7 @@ export const useStore = create<VillageStore>((set) => ({
   setBoss: (boss) => set({ boss }),
   setNearBoss: (nearBoss) => set({ nearBoss }),
   bumpPendingTx: (delta) => set((s) => ({ pendingTx: Math.max(0, s.pendingTx + delta) })),
+  setShowcasing: (showcasing) => set({ showcasing }),
   patchDungeon: (d) =>
     set((s) => (s.dungeon ? { dungeon: { ...s.dungeon, ...d } } : s)),
 }));
