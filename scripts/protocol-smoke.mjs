@@ -15,7 +15,7 @@
 //   · 3.3 opcode 13 뒤에는 msgpack 값 둘이 연달아 온다
 //   · 3.4/3.5 보낸 대로 움직이고, 목록이 오고, 15Hz로 스냅샷이 온다
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -138,6 +138,18 @@ async function waitForServer(ms = 20000) {
 
 let child = null;
 if (!ATTACH) {
+  // 포트가 이미 잡혀 있으면 우리 서버는 조용히 못 뜨고, 스모크는 **낡은 서버**를
+  // 검사하게 된다 — 통과해도 아무 의미가 없다. 그래서 먼저 멈춘다.
+  try {
+    await fetch(`http://${HOST}/`, { signal: AbortSignal.timeout(800) });
+    console.error(
+      `${HOST} 를 이미 누가 쓰고 있습니다.\n` +
+        `  · 직접 띄운 서버라면: npm run smoke:protocol -- --port <그 포트> --attach\n` +
+        `  · 지난 실행의 유령이라면 그 프로세스를 내리고 다시 실행하세요`,
+    );
+    process.exit(1);
+  } catch {}
+
   // 인자를 배열로 나누지 않는다 — 윈도우에서 npm은 .cmd라 shell이 필요하고,
   // shell과 인자 배열을 같이 쓰면 노드가 경고를 뱉는다(DEP0190).
   child = spawn("npm run start -w server", {
@@ -145,12 +157,35 @@ if (!ATTACH) {
     env: { ...process.env, PORT: String(PORT) },
     stdio: "ignore",
     shell: true,
+    // 프로세스 그룹을 따로 만든다 — 아래 killTree가 손자까지 데려가려면 필요하다
+    detached: process.platform !== "win32",
   });
 }
+
+/**
+ * npm → sh → node 로 이어지는 사슬을 통째로 끝낸다.
+ *
+ * child.kill()은 맨 위(npm이 띄운 셸)만 죽이고 실제 서버 프로세스는 살아남는다.
+ * CI에서는 그 유령이 다음 단계(브라우저 스모크)와 CPU를 나눠 쓰게 되고, 그러면
+ * 타이머가 늘어져 "주민이 안 걷는다" 같은 엉뚱한 실패로 나타난다 — 실제로 겪었다.
+ */
+function killTree() {
+  if (!child?.pid) return;
+  try {
+    if (process.platform === "win32") {
+      // 동기로 부른다 — 비동기로 두면 이 스크립트가 먼저 끝나 버려 아무도 안 죽는다
+      spawnSync(`taskkill /pid ${child.pid} /T /F`, { shell: true, stdio: "ignore" });
+    } else {
+      process.kill(-child.pid, "SIGTERM"); // 음수 = 프로세스 그룹 전체
+    }
+  } catch {}
+  child = null;
+}
+process.on("exit", killTree);
+
 console.log(`\n문서만 보고 만든 클라이언트로 ws://${HOST} 에 들어가 본다\n`);
 if (!(await waitForServer())) {
   console.error(`서버가 안 뜹니다 (http://${HOST}) — npm run dev:server 로 확인하세요`);
-  child?.kill();
   process.exit(1);
 }
 
@@ -255,7 +290,18 @@ ok(
   "LEAVE_ROOM(12)을 보내면 자리에서 빠진다",
 );
 
-child?.kill();
+// 서버를 완전히 내리고, 정말 내려갔는지(포트가 비었는지) 확인한다
+killTree();
+await wait(700);
+if (!ATTACH) {
+  let alive = true;
+  try {
+    await fetch(`http://${HOST}/`, { signal: AbortSignal.timeout(1000) });
+  } catch {
+    alive = false;
+  }
+  ok(!alive, "끝나면 서버 프로세스가 남지 않는다 (다음 스모크와 CPU를 다투지 않게)");
+}
 
 console.log(`\n${"─".repeat(50)}`);
 if (fails.length) {
