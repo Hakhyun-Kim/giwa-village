@@ -265,7 +265,7 @@ export default function Hud() {
               테스트 ETH 받기 ↗
             </a>
             <a
-              href="https://github.com/Hakhyun-Kim/giwa-village#자동-시연-처음-보는-분"
+              href="https://github.com/Hakhyun-Kim/giwa-village/blob/main/guide/PLAY.md"
               target="_blank"
               rel="noreferrer"
             >

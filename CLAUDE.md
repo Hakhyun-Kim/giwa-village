@@ -63,9 +63,11 @@ client/  Vite + React Three Fiber + zustand + viem + Colyseus.js
   config/   주소·ABI·상수
   game/     3D 씬 (절차 생성 한옥·아바타·주야 사이클) + feel.ts(타격감)
             + collide.ts(배치표·충돌 — 그리는 쪽과 막는 쪽이 같은 표를 읽는다)
-  ui/       HUD·다이얼로그
+  ui/       HUD·다이얼로그 + Welcome.tsx(첫 방문자에게 시연 여부를 한 번 묻는 카드)
+            + QuestLog.tsx(촌장의 부탁 — 시연 중에는 비켜 준다)
   demo/     서버 없는 모드(VITE_DEMO=1): NPC 로컬 시뮬 + 온체인은 실동작
             (걸음 규칙은 wander.ts — 순수 모듈이라 npm test가 그대로 걸려 본다)
+            showcase.ts는 두 갈래 — 실거래 시연과 쓰기 0인 구경 모드
   audio/    배경음(파일 0개 · 절차 생성) + 효과음(합성 + 반입한 CC0 조각)
             audio.ts가 믹서·리버브·귀, samples.ts가 반입 조각과 폴백
   dev/      자동화 훅 (?rafshim, window.__giwa)
@@ -73,7 +75,13 @@ server/  Colyseus 룸 — 선택 사항이다. 서버 0으로도 마을이 돈�
 contracts/ Solidity 10종 (전부 GIWA Sepolia 배포·검증 완료)
 scripts/ 테스트·배포·봇·스모크
 sdk/     외부에서 프로필을 읽는 패키지
+guide/   사람이 읽는 문서 (놀기·이어붙이기·검증·이어만들기) — README는 색인이다
 ```
+
+**문서는 README에 쌓지 않는다.** 루트 `README.md`는 랜딩과 문서 지도이고, 주제별
+본문은 `guide/` 아래 한 파일씩이다(PLAY·FEATURES·WALLET·TESTING·AGENTS·ROADMAP·
+DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 줄만 는다.
+`PROTOCOL.md`·`ASSETS.md`는 루트에 남긴다 — 둘 다 `npm test`가 경로로 읽는다.
 
 **클라이언트도 하나가 아니다.** 마을은 구현체가 아니라 프로토콜이다 —
 루트의 `PROTOCOL.md`가 공개 명세이고, 배치표·충돌·소리 임계는
@@ -131,6 +139,21 @@ sdk/     외부에서 프로필을 읽는 패키지
    함수는 실패하면 `false`를 돌려주고 부르는 쪽이 폴백한다 — 404·오프라인·디코드
    실패 어느 쪽이든 마을은 조용해지지 않는다. 대신 조용히 나빠지는 것을 막으려고
    `npm test`가 "가리키는 파일이 실제로 있는가"를 본다.
+
+**첫 방문자 동선의 규율 셋:**
+
+1. **딱 한 번만 묻는다.** 들어오면 촌장이 "대신 걸어서 보여줄까?"를 한 번 묻고
+   (`ui/Welcome.tsx`), 답은 `giwa-welcome`에 남아 다시 묻지 않는다. 첫 방문 판정은
+   `giwa-welcome`과 `giwa-quest-step`이 **둘 다 없을 때**다 — 온보딩을 이미 시작한
+   사람에게 처음인 척 묻지 않기 위해서.
+2. **빈손이어도 보여준다.** 처음 온 사람의 지갑은 대개 비어 있다. 잔액이 없으면
+   쓰기를 하나도 하지 않는 **구경 모드**로 내려가 걸어서 보여주고, 포셋 링크는
+   자막으로만 안내한다. 포셋 앞에 세워 두는 것이 가장 나쁜 첫인상이다.
+   오래 기다리는 것은 녹화용 `?showcase=1` 갈래(`patient`)뿐이다.
+3. **안내는 겹치지 않는다.** 시연 중에는 촌장의 부탁이 숨고(`store.showcasing`),
+   시연이 끝나거나 ESC로 멈추면 다시 나와 다음 할 일을 잇는다.
+   셋 다 `npm run smoke:boot`이 빈 localStorage로 검사한다 — 이 동선은 처음 온
+   사람에게만 보이므로, 게이트가 없으면 조용히 망가진다.
 
 ---
 
