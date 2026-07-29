@@ -1,4 +1,4 @@
-<title>기와장터 개발일지 — 작업 6일의 기록</title>
+<title>기와장터 개발일지 — 작업 9일의 기록</title>
 <style>
   :root {
     --ink: #241F2E;
@@ -269,9 +269,9 @@
 
 <div class="hero">
   <span class="eyebrow"><span class="dot"></span>개발일지 · 기와장터 (GIWA Village)</span>
-  <h1 class="title">지갑 하나가 마을이 되기까지,<br>작업 6일의 기록</h1>
+  <h1 class="title">지갑 하나가 마을이 되기까지,<br>작업 9일의 기록</h1>
   <p class="lede">
-    2026년 7월 18일 오후, 빈 저장소 하나로 시작해 7월 26일까지 — 커밋 57개,
+    2026년 7월 18일 오후, 빈 저장소 하나로 시작해 7월 29일까지 — 커밋 74개,
     온체인 컨트랙트 10종. 이 문서는 그 사이 <b style="color:var(--ink)">무엇을 만들었는지</b>가 아니라
     <b style="color:var(--ink)">어떤 질문들을 던지며 나아갔는지</b>를 실제 git 기록으로 되짚는다.
   </p>
@@ -288,20 +288,20 @@
 
   <section>
     <div class="kicker">한눈에</div>
-    <h2 class="h">숫자로 보는 작업 6일</h2>
+    <h2 class="h">숫자로 보는 작업 9일</h2>
     <div class="stats">
-      <div class="stat"><div class="n">57</div><div class="l">총 커밋 (공개 41 · 비공개 16)</div></div>
+      <div class="stat"><div class="n">74</div><div class="l">총 커밋 (공개 54 · 비공개 20)</div></div>
       <div class="stat"><div class="n">10</div><div class="l">온체인 컨트랙트 · 전부 Verified</div></div>
-      <div class="stat"><div class="n">31,884</div><div class="l">누적 삽입 라인 (공개 저장소)</div></div>
-      <div class="stat"><div class="n">6</div><div class="l">작업일 (7/18 → 7/26)</div></div>
+      <div class="stat"><div class="n">38,263</div><div class="l">누적 삽입 라인 (공개 저장소)</div></div>
+      <div class="stat"><div class="n">9</div><div class="l">작업일 (7/18 → 7/29)</div></div>
     </div>
     <p class="chart-note" style="margin-top:14px">
       <b style="color:var(--ink)">시간을 어떻게 셌는가</b> — 이전 판은 "43시간"·"70시간"이라고 적었다.
       그건 첫 커밋과 마지막 커밋 사이의 <b style="color:var(--ink)">경과 시간</b>이었고, 작업이 연속이던
       초반에는 실제 몰입 시간과 비슷했다. 지금은 아니다 — 7/22와 7/26 사이에 92.9시간의 공백이 있다.
-      같은 방식이면 "198시간"이 되는데 그건 대부분 쉰 시간이므로, 부풀지 않는 값인
-      <b style="color:var(--ink)">커밋이 찍힌 날의 수(6일)</b>로 바꿨다. 참고로 3시간 이상 공백을
-      휴식으로 본 커밋 세션 합계는 약 21시간(세션 10개)이고, 이건 세션 첫 커밋 이전의 작업이
+      같은 방식이면 "257시간"이 되는데 그건 대부분 쉰 시간이므로, 부풀지 않는 값인
+      <b style="color:var(--ink)">커밋이 찍힌 날의 수(9일)</b>로 바꿨다. 참고로 3시간 이상 공백을
+      휴식으로 본 커밋 세션 합계는 약 26시간(세션 14개)이고, 이건 세션 첫 커밋 이전의 작업이
       안 잡히므로 하한선이다. 어느 값이든 <span class="mono">git log</span>로 다시 셀 수 있다.
     </p>
   </section>
@@ -329,7 +329,10 @@
         <b style="color:var(--ink)">기반을 다지는 단계</b>로 넘어간 흔적.
         7/22와 7/26 사이의 <b style="color:var(--ink)">92.9시간 공백</b>은 지우지 않았다 —
         연속 몰입 구간과 돌아와서 다시 손대는 구간은 성격이 다르고, 후자에서 나온 것이
-        마지막 두 장(결정론 코어·검증 가능한 공정성)이다.
+        결정론 코어와 검증 가능한 공정성이다.
+        돌아온 뒤의 나흘(7/26 밤 ~ 7/29)은 다시 짧은 구간이 여럿이다 —
+        소리·에셋 원장, 공개 프로토콜, 첫 방문자 온보딩. 한 번에 몰아치는 대신
+        하루에 한 겹씩 <b style="color:var(--ink)">덮어 두는 작업</b>으로 성격이 바뀌었다.
       </p>
     </div>
   </section>
@@ -338,20 +341,20 @@
     <div class="kicker">코드베이스</div>
     <h2 class="h">코드가 자라난 모양</h2>
     <p class="sub">
-      공개 저장소 41개 커밋의 누적 삽입 라인. 점을 지나가면 그 순간 무슨 커밋이었는지 뜬다.
+      공개 저장소 54개 커밋의 누적 삽입 라인. 점을 지나가면 그 순간 무슨 커밋이었는지 뜬다.
       초반의 급경사는 최초 스캐폴드(9,845줄)와 풀온체인 전환(+2,341줄) — 이후로는
       완만하지만 꾸준한 계단이다.
     </p>
     <div class="chart-card">
       <div class="growth-wrap"><svg id="growthChart" viewBox="0 0 900 320" style="width:100%;height:auto;overflow:visible"></svg></div>
-      <p class="chart-note">현재 코드베이스: 컨트랙트 1,601줄(Solidity 12개 파일, 현행 10종) · 클라이언트 12,180줄(64개 파일) · MCP 서버 779줄 · SDK 200줄 · 결정론 코어 184줄 · 스크립트 22개.</p>
+      <p class="chart-note">현재 코드베이스: 컨트랙트 1,601줄(Solidity 12개 파일, 현행 10종) · 클라이언트 14,567줄(72개 파일) · 서버 829줄 · MCP 서버 879줄 · SDK 200줄 · 결정론 코어 184줄 · 스크립트 25개.</p>
     </div>
   </section>
 
   <section>
     <div class="kicker">무엇을 만들었나</div>
-    <h2 class="h">커밋 41개의 성격</h2>
-    <p class="sub">공개 저장소 41개 커밋을 여섯 갈래로 분류했다(비공개 16개는 대부분 지원 서류·피치덱이라 제외). 가장 큰 비중은 뜻밖에도 기능이 아니라 <b style="color:var(--ink)">문서·온보딩</b>이다 — 매 기능 뒤에 설명과 시연을 다시 맞추는 작업이 반복됐다는 뜻.</p>
+    <h2 class="h">커밋 54개의 성격</h2>
+    <p class="sub">공개 저장소 54개 커밋을 일곱 갈래로 분류했다(비공개 20개는 대부분 지원 서류·피치덱이라 제외). 가장 큰 비중은 뜻밖에도 기능이 아니라 <b style="color:var(--ink)">문서·온보딩</b>이다 — 매 기능 뒤에 설명과 시연을 다시 맞추는 작업이 반복됐다는 뜻.</p>
     <div class="chart-card">
       <div class="cat-list" id="catList"></div>
     </div>
@@ -542,7 +545,7 @@
     <div class="kicker">맺음</div>
     <div class="closing">
       <p>
-        작업 6일 동안 바뀐 것은 코드량이 아니라 <strong>질문의 위치</strong>다. 초반엔 "다음에 뭘 할까"를
+        작업 9일 동안 바뀐 것은 코드량이 아니라 <strong>질문의 위치</strong>다. 초반엔 "다음에 뭘 할까"를
         맡겼고, 중반엔 "이건 하지 말자"는 경계를 그었고, 후반엔 "이게 왜 재밌어야 하는가"를
         스스로 따졌다. 라그나로크에서 시작해 마비노기·리니지·로블록스를 가로지른 검토,
         그리고 온체인 저장이 SDK가 된다는 통찰은 20년 게임엔진 경력이 새로운 제약(가스비,
@@ -562,7 +565,6 @@
       </p>
       <p>다음 장은 이미 정해져 있다:</p>
       <ul class="next-list">
-        <li>GASOK 지원서 제출 (마감 2026-07-31)</li>
         <li>다가오는 토요일 21시(KST) — 장날 실전에서 온기·도깨비 데미지 2배가 라이브로 도는지 확인</li>
         <li>RPC 읽기 캐시·인덱서·구역 샤딩 (기술 문서 §7 스케일 로드맵)</li>
         <li>메인넷 이관 시 원정 단위 커밋-리빌로 던전 엔트로피 교체 — 결정론의 대가를 갚는 일</li>
@@ -603,7 +605,11 @@
     { label: "7/21 낮",   sub: "11–16시", n: 10, night: false },
     { label: "7/22 낮",   sub: "12–15시", n: 2, night: false },
     { label: "7/26 낮",   sub: "11–12시", n: 1, night: false },
-    { label: "7/26 저녁", sub: "19–22시", n: 6, night: false }
+    { label: "7/26 저녁", sub: "19–21시", n: 3, night: false },
+    { label: "7/26 밤",   sub: "21–24시", n: 7, night: true },
+    { label: "7/27 오전", sub: "07–11시", n: 6, night: false },
+    { label: "7/28 낮",   sub: "09–21시", n: 3, night: false },
+    { label: "7/29 아침", sub: "08–09시", n: 4, night: false }
   ];
   (function renderBars() {
     var svg = document.getElementById("barChart");
@@ -698,7 +704,20 @@
     [31146, "12e31b7", "07-26 19:44", "마을 충돌 정리"],
     [31573, "a2f49b9", "07-26 20:59", "결정론 코어 추출"],
     [31882, "3054e92", "07-26 20:59", "검증 가능한 공정성"],
-    [31884, "737ea69", "07-26 21:47", "문서 수치 현행화 (현재)"]
+    [31884, "737ea69", "07-26 21:47", "문서 수치 현행화"],
+    [31983, "ed62228", "07-26 23:25", "개발일지 시간 셈법"],
+    [31985, "8871bef", "07-27 07:27", "dojang-smoke 별칭"],
+    [32454, "8203241", "07-26 23:09", "배경음을 상태로"],
+    [32745, "fe6c02b", "07-26 23:10", "주민 걸음 순수 모듈"],
+    [34744, "899c1bb", "07-27 09:08", "에셋 반입 원장"],
+    [35304, "c933877", "07-27 09:24", "소리를 공간에 (믹서·리버브)"],
+    [35484, "d0fdd6a", "07-27 09:38", "글자꼴·표면 질감"],
+    [35488, "b25c2bf", "07-27 10:04", "CI 액션 최신 메이저"],
+    [37185, "44db80f", "07-28 09:24", "공개 프로토콜"],
+    [37234, "f2b3e0c", "07-28 09:30", "프로토콜 스모크 정리"],
+    [37234, "98a38ab", "07-28 20:38", "시연 영상 재촬영"],
+    [37588, "a8b827f", "07-29 08:57", "첫 방문자 환영 카드"],
+    [38263, "2470347", "07-29 08:58", "문서를 guide/로 (현재)"]
   ];
   (function renderGrowth() {
     var svg = document.getElementById("growthChart");
@@ -775,12 +794,13 @@
 
   /* ---------------- category bars ---------------- */
   var cats = [
-    { label: "문서 · UX · 온보딩", n: 18, color: "var(--violet)" },
+    { label: "문서 · UX · 온보딩", n: 22, color: "var(--violet)" },
+    { label: "에이전트 · 테스트", n: 10, color: "var(--warn)" },
     { label: "온체인 인프라", n: 7, color: "var(--brick)" },
-    { label: "에이전트 · 테스트", n: 6, color: "var(--warn)" },
     { label: "거래 · 경제", n: 5, color: "var(--gold)" },
+    { label: "연출 · 소리 · 에셋", n: 4, color: "var(--good)" },
     { label: "코업 · 소셜", n: 3, color: "var(--jade)" },
-    { label: "검증 · 신뢰", n: 2, color: "var(--ink-soft)" }
+    { label: "검증 · 신뢰", n: 3, color: "var(--ink-soft)" }
   ];
   (function renderCats() {
     var wrap = document.getElementById("catList");
