@@ -172,6 +172,13 @@ export default function Hud() {
     };
   }, []);
 
+  // 환영 카드가 첫 선택 클릭에 풍류를 켜 주면 아이콘도 따라온다
+  useEffect(() => {
+    const sync = () => setSoundOn(ambiencePreference());
+    window.addEventListener("giwa-ambience", sync);
+    return () => window.removeEventListener("giwa-ambience", sync);
+  }, []);
+
   async function toggleSound() {
     const next = !soundOn;
     setSoundOn(await setAmbience(next));

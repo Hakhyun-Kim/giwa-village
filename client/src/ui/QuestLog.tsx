@@ -23,6 +23,12 @@ interface Quest {
   check: (s: ReturnType<typeof useStore.getState>, ctx: QuestCtx) => boolean;
 }
 
+// 터치 기기에는 키보드가 없다 — 힌트를 화면 버튼 기준으로 안내한다
+// (TouchControls가 조이스틱·액션 버튼을 띄우는 것과 같은 판정을 쓴다)
+const TOUCH =
+  typeof window !== "undefined" &&
+  window.matchMedia("(pointer: coarse)").matches;
+
 const QUESTS: Quest[] = [
   {
     id: "walk",
@@ -30,7 +36,7 @@ const QUESTS: Quest[] = [
     objective: "광장을 15걸음 걸어보기",
     flavor:
       "어서 오게, 나그네! 나는 이 장터의 촌장일세. 자네 지갑이 곧 자네 몸이라네 — 우선 몸 좀 풀어볼까?",
-    hint: "W·A·S·D 키로 움직입니다",
+    hint: TOUCH ? "왼쪽 아래 조이스틱으로 움직입니다" : "W·A·S·D 키로 움직입니다",
     check: (_s, ctx) => ctx.walked >= 15,
   },
   {
@@ -48,7 +54,7 @@ const QUESTS: Quest[] = [
     objective: "광장 모닥불에 앉아보기",
     flavor:
       "다리도 쉴 겸 모닥불에 앉아보게. 우리 마을 모닥불은 묘해서, 혼자선 안 되고 함께 쬐어야 온기가 쌓인다네 — 공짜일세!",
-    hint: "🔥 모닥불 근처에서 X 키",
+    hint: TOUCH ? "🔥 모닥불 근처에서 '앉기' 버튼" : "🔥 모닥불 근처에서 X 키",
     check: (s) => s.selfSitting,
   },
   {
@@ -90,7 +96,9 @@ const QUESTS: Quest[] = [
     objective: "장터 도깨비 한 대 때리기",
     flavor:
       "쉿— 광장의 도깨비가 보이나? 혼자선 어림없지만 다 같이 때리면 잡히지. 가서 한 대 갈겨주게!",
-    hint: "🧿 도깨비 근처에서 R 키 (쿨다운 30초)",
+    hint: TOUCH
+      ? "🧿 도깨비 근처에서 '타격' 버튼 (쿨다운 30초)"
+      : "🧿 도깨비 근처에서 R 키 (쿨다운 30초)",
     check: (s) => (s.boss?.myContrib ?? 0) > 0,
   },
 ];

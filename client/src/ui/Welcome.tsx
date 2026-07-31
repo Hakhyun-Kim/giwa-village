@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import { startShowcase } from "../demo/showcase";
+import { setAmbience } from "../audio/ambience";
 
 // 첫 방문자에게 한 번만 묻는다 — "자동으로 둘러볼까요?"
 //
@@ -10,6 +11,11 @@ import { startShowcase } from "../demo/showcase";
 
 const STORAGE_KEY = "giwa-welcome";
 const QUEST_KEY = "giwa-quest-step"; // 이미 온보딩을 시작한 사람은 첫 방문자가 아니다
+
+// 터치 기기에는 ESC가 없다 — 시연 중단 안내를 화면의 건너뛰기 버튼으로 바꾼다
+const TOUCH =
+  typeof window !== "undefined" &&
+  window.matchMedia("(pointer: coarse)").matches;
 
 function seenBefore(): boolean {
   try {
@@ -50,6 +56,11 @@ export default function Welcome() {
   function choose(answer: "tour" | "self") {
     remember(answer);
     setAsking(false);
+    // 이 클릭이 곧 사용자 제스처다 — 자동재생 정책상 제스처 밖에서는 풍류를 켤 수
+    // 없으니, 첫 방문 선택과 함께 켠다. 이 카드는 첫 방문자에게만 뜨므로
+    // "꺼 두었던 선택"을 덮어쓸 일은 없다. HUD 아이콘은 아래 이벤트로 따라온다.
+    void setAmbience(true);
+    window.dispatchEvent(new Event("giwa-ambience"));
     if (answer === "tour") startShowcase();
   }
 
@@ -72,8 +83,9 @@ export default function Welcome() {
         </button>
       </div>
       <div className="welcome-note">
-        시연 중 언제든 <b>ESC</b>로 멈추고 직접 조작할 수 있습니다 · 테스트 ETH가
-        없으면 가스가 들지 않는 구경 모드로 보여드립니다
+        시연 중 언제든 <b>{TOUCH ? "건너뛰기 버튼" : "ESC"}</b>로 멈추고 직접
+        조작할 수 있습니다 · 테스트 ETH가 없으면 가스가 들지 않는 구경 모드로
+        보여드립니다
       </div>
     </div>
   );
