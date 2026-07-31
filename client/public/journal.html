@@ -271,7 +271,7 @@
   <span class="eyebrow"><span class="dot"></span>개발일지 · 기와장터 (GIWA Village)</span>
   <h1 class="title">지갑 하나가 마을이 되기까지,<br>작업 9일의 기록</h1>
   <p class="lede">
-    2026년 7월 18일 오후에 빈 저장소 하나로 시작해서 7월 29일까지 커밋 74개,
+    2026년 7월 18일 오후에 빈 저장소 하나로 시작해서 7월 29일까지 커밋 77개,
     온체인 컨트랙트 10종. 이 글은 그동안 <b style="color:var(--ink)">뭘 만들었는지</b>보다
     <b style="color:var(--ink)">어떤 질문을 던지면서 왔는지</b>를 git 기록 그대로 되짚어 본 것이다.
   </p>
@@ -290,16 +290,16 @@
     <div class="kicker">한눈에</div>
     <h2 class="h">숫자로 보는 작업 9일</h2>
     <div class="stats">
-      <div class="stat"><div class="n">74</div><div class="l">총 커밋 (공개 54 · 비공개 20)</div></div>
+      <div class="stat"><div class="n">77</div><div class="l">총 커밋 (공개 56 · 비공개 21)</div></div>
       <div class="stat"><div class="n">10</div><div class="l">온체인 컨트랙트 · 전부 Verified</div></div>
-      <div class="stat"><div class="n">38,263</div><div class="l">누적 삽입 라인 (공개 저장소)</div></div>
+      <div class="stat"><div class="n">38,385</div><div class="l">누적 삽입 라인 (공개 저장소)</div></div>
       <div class="stat"><div class="n">9</div><div class="l">작업일 (7/18 → 7/29)</div></div>
     </div>
     <p class="chart-note" style="margin-top:14px">
       <b style="color:var(--ink)">시간을 어떻게 셌나</b> — 예전 판에는 "43시간", "70시간"이라고 적었었다.
       사실 그건 첫 커밋과 마지막 커밋 사이의 <b style="color:var(--ink)">경과 시간</b>이었다.
       쉬지 않고 달리던 초반에는 실제 작업 시간과 얼추 비슷했는데, 지금은 아니다.
-      7/22와 7/26 사이에만 92.9시간이 비어 있어서, 같은 식으로 세면 "257시간"이 된다.
+      7/22와 7/26 사이에만 92.9시간이 비어 있어서, 같은 식으로 세면 "258시간"이 된다.
       대부분 쉰 시간을 실적처럼 적을 수는 없으니 부풀지 않는 값,
       <b style="color:var(--ink)">커밋이 찍힌 날의 수(9일)</b>로 바꿨다. 참고로 3시간 넘게 비면 쉰 걸로
       보고 세션을 잘라 합치면 약 26시간(세션 14개)인데, 세션 첫 커밋 전에 한 작업은 안 잡히니
@@ -342,7 +342,7 @@
     <div class="kicker">코드베이스</div>
     <h2 class="h">코드가 자라난 모양</h2>
     <p class="sub">
-      공개 저장소 54개 커밋의 누적 삽입 라인. 점을 지나가면 그때 무슨 커밋이었는지 뜬다.
+      공개 저장소 56개 커밋의 누적 삽입 라인. 점을 지나가면 그때 무슨 커밋이었는지 뜬다.
       초반에 가파른 건 최초 스캐폴드(9,845줄)와 풀온체인 전환(+2,341줄) 때문이고,
       그 뒤로는 완만하지만 꾸준한 계단이다.
     </p>
@@ -354,8 +354,8 @@
 
   <section>
     <div class="kicker">무엇을 만들었나</div>
-    <h2 class="h">커밋 54개의 성격</h2>
-    <p class="sub">공개 저장소 54개 커밋을 일곱 갈래로 나눠 봤다(비공개 20개는 대부분 서류·피치덱이라 뺐다). 제일 큰 덩어리가 기능이 아니라 <b style="color:var(--ink)">문서·온보딩</b>인 게 좀 의외인데, 기능 하나 넣을 때마다 설명과 시연을 다시 맞추는 일이 따라붙었다는 얘기다.</p>
+    <h2 class="h">커밋 56개의 성격</h2>
+    <p class="sub">공개 저장소 56개 커밋을 일곱 갈래로 나눠 봤다(비공개 21개는 대부분 서류·피치덱이라 뺐다). 제일 큰 덩어리가 기능이 아니라 <b style="color:var(--ink)">문서·온보딩</b>인 게 좀 의외인데, 기능 하나 넣을 때마다 설명과 시연을 다시 맞추는 일이 따라붙었다는 얘기다.</p>
     <div class="chart-card">
       <div class="cat-list" id="catList"></div>
     </div>
@@ -610,7 +610,7 @@
     { label: "7/26 밤",   sub: "21–24시", n: 7, night: true },
     { label: "7/27 오전", sub: "07–11시", n: 6, night: false },
     { label: "7/28 낮",   sub: "09–21시", n: 3, night: false },
-    { label: "7/29 아침", sub: "08–09시", n: 4, night: false }
+    { label: "7/29 아침", sub: "08–10시", n: 7, night: false }
   ];
   (function renderBars() {
     var svg = document.getElementById("barChart");
@@ -718,7 +718,9 @@
     [37234, "f2b3e0c", "07-28 09:30", "프로토콜 스모크 정리"],
     [37234, "98a38ab", "07-28 20:38", "시연 영상 재촬영"],
     [37588, "a8b827f", "07-29 08:57", "첫 방문자 환영 카드"],
-    [38263, "2470347", "07-29 08:58", "문서를 guide/로 (현재)"]
+    [38263, "2470347", "07-29 08:58", "문서를 guide/로"],
+    [38305, "35b8894", "07-29 09:21", "개발일지 숫자 재계산"],
+    [38385, "c453f5b", "07-29 09:48", "개발일지 문장 손질 (현재)"]
   ];
   (function renderGrowth() {
     var svg = document.getElementById("growthChart");
@@ -795,7 +797,7 @@
 
   /* ---------------- category bars ---------------- */
   var cats = [
-    { label: "문서 · UX · 온보딩", n: 22, color: "var(--violet)" },
+    { label: "문서 · UX · 온보딩", n: 24, color: "var(--violet)" },
     { label: "에이전트 · 테스트", n: 10, color: "var(--warn)" },
     { label: "온체인 인프라", n: 7, color: "var(--brick)" },
     { label: "거래 · 경제", n: 5, color: "var(--gold)" },
