@@ -259,27 +259,48 @@ try {
 
   // 주민 걸음 — 충돌을 넣은 뒤 튀던 것. 좌표를 시간에 따라 찍어야만 보인다.
   // 타이머는 부하에 따라 늘어지므로 거리가 아니라 **속도**로 본다.
+  //
+  // 표본을 고정 길이로 끊지 않는 이유: 주민은 2~10초씩 쉬었다 걷는다(wander.ts).
+  // 2.4초짜리 창이 여섯 명 모두의 '쉬는 참'과 겹칠 확률이 2% 남짓이라, 고정 창으로
+  // 재면 게이트가 가끔 남의 사정으로 빨간불이 된다(실제로 한 번 그랬다).
+  // 그래서 걸음이 보이면 그 자리에서 끊고, 안 보이면 15초까지 기다린다 —
+  // 15초를 다 쓰고도 아무도 안 걸으면 그건 흔들림이 아니라 진짜 회귀다.
   const walk = await page.evaluate(async () => {
-    const frames = [];
-    for (let i = 0; i < 24; i++) {
-      frames.push({ at: performance.now(), pos: window.__giwa.remotes() });
-      await new Promise((r) => setTimeout(r, 100));
-    }
+    const MIN = 24; // 2.4초 — 튀는 프레임을 잡으려면 이만큼은 찍는다
+    const MAX = 150; // 15초에서 끊는다
+    let prev = null;
+    let prevAt = 0;
     let topSpeed = 0;
     let moved = 0;
-    for (let i = 1; i < frames.length; i++) {
-      const dt = (frames[i].at - frames[i - 1].at) / 1000;
-      for (const [id, b] of Object.entries(frames[i].pos)) {
-        const a = frames[i - 1].pos[id];
-        if (!a || dt <= 0) continue;
-        const d = Math.hypot(b.x - a.x, b.z - a.z);
-        moved += d;
-        topSpeed = Math.max(topSpeed, d / dt);
+    let count = 0;
+    let secs = 0;
+    const started = performance.now();
+    for (let i = 0; i < MAX; i++) {
+      const at = performance.now();
+      const pos = window.__giwa.remotes();
+      if (i === 0) count = Object.keys(pos).length;
+      const dt = (at - prevAt) / 1000;
+      if (prev && dt > 0) {
+        for (const [id, b] of Object.entries(pos)) {
+          const a = prev[id];
+          if (!a) continue;
+          const d = Math.hypot(b.x - a.x, b.z - a.z);
+          moved += d;
+          topSpeed = Math.max(topSpeed, d / dt);
+        }
       }
+      prev = pos;
+      prevAt = at;
+      secs = (at - started) / 1000;
+      if (i + 1 >= MIN && moved > 0.5) break;
+      await new Promise((r) => setTimeout(r, 100));
     }
-    return { topSpeed, moved, count: Object.keys(frames[0].pos).length };
+    return { topSpeed, moved, count, secs };
   });
-  must(walk.count >= 1 && walk.moved > 0.5, `주민이 실제로 걷는다 (${walk.count}명 · ${walk.moved.toFixed(1)}m)`);
+  must(
+    walk.count >= 1 && walk.moved > 0.5,
+    `주민이 실제로 걷는다 (${walk.count}명 · ${walk.moved.toFixed(1)}m / ${walk.secs.toFixed(1)}초)`,
+  );
   // 걷는 속도는 2.4m/s — 튀는 프레임이 하나라도 있으면 여기서 몇 배로 잡힌다
   must(walk.topSpeed < 4, `걸음이 튀지 않는다 (최고 ${walk.topSpeed.toFixed(2)}m/s)`);
 
