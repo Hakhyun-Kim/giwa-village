@@ -56,7 +56,8 @@
     "playerRadius": 0.42,
     "npc": {
       "radius": 0.35,
-      "speed": 2.4
+      "speed": 2.4,
+      "tickMs": 50
     },
     "portal": [
       0,

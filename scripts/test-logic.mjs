@@ -655,7 +655,7 @@ it("그리는 쪽(Village.tsx)이 같은 배치표를 읽는다", () => {
 
 describe("주민 산책 — 벽을 비비지도, 한 틱에 튀지도 않는다");
 
-const { makeWanderer, tickWander, pickTarget, NPC_R, NPC_SPEED } = await import(
+const { makeWanderer, tickWander, pickTarget, NPC_R, NPC_SPEED, NPC_TICK_MS } = await import(
   pathToFileURL(path.join(ROOT, "client", "src", "demo", "wander.ts")).href
 );
 const { DEMO_STALLS } = await import(
@@ -705,7 +705,7 @@ it("목적지는 갈 수 있는 자리만 고른다", () => {
 });
 
 it("1분을 걸어도 한 틱에 한 걸음보다 더 가지 않는다 (튀지 않는다)", () => {
-  const dt = 0.05; // 데모가 도는 주기와 같은 20Hz
+  const dt = NPC_TICK_MS / 1000; // 데모가 실제로 도는 주기 그대로
   const step = NPC_SPEED * dt;
   let worst = 0;
   let insideTicks = 0;

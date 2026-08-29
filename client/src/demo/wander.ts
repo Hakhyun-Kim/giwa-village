@@ -21,6 +21,14 @@ import { collide, insideAny } from "../game/collide.ts";
 export const NPC_R = 0.35;
 /** 걷는 속도 (m/s). 플레이어(6)보다 느긋하다 */
 export const NPC_SPEED = 2.4;
+/**
+ * 시뮬이 도는 주기 (ms). 20Hz — 보간하는 쪽이 밟는 계단이 촘촘할수록 걸음이 부드럽다.
+ *
+ * 걸음 규칙에 함께 두는 이유: 한 틱 보폭이 `NPC_SPEED * NPC_TICK_MS/1000`으로
+ * 딱 떨어져야 "한 틱에 한 걸음을 넘지 않는가"를 검사하는 쪽(npm test)과 실브라우저에서
+ * 재는 쪽(smoke:boot)이 같은 자를 쓴다. 흩어져 있으면 주기만 바꿔도 검사가 조용히 어긋난다.
+ */
+export const NPC_TICK_MS = 50;
 /** 집 주변 이만큼 안에서만 논다 */
 const ROAM = 4;
 /** 목표에 이만큼 붙으면 도착 */

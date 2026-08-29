@@ -8,7 +8,7 @@ import { adoptLocalBurner, colorFromString } from "../wallet/wallet";
 import { DEMO_STALLS } from "./demoData";
 import { PERSONAS as DEMO_NPCS, randomLine } from "./personas";
 import { startOnchainVillage } from "../chain/village";
-import { makeWanderer, tickWander } from "./wander";
+import { makeWanderer, tickWander, NPC_TICK_MS } from "./wander";
 import type { PlayerInfo, Stall } from "../types";
 
 interface LocalPos {
@@ -110,11 +110,10 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
   s.setPlayers(players);
   s.setOnlineCount(DEMO_NPCS.length + 1);
 
-  // 20Hz. 보간하는 쪽(RemotePlayers)이 밟는 계단이 촘촘할수록 걸음이 부드럽다.
-  const TICK_MS = 50;
+  // 주기는 걸음 규칙 쪽에 있다(wander.ts) — 검사하는 쪽이 같은 자를 쓰게
   setInterval(() => {
     for (const { id, w } of npcs) {
-      tickWander(w, TICK_MS / 1000);
+      tickWander(w, NPC_TICK_MS / 1000);
       // 어떤 경우에도 매 틱 넘긴다 — 막혔다고 건너뛰면 그 사이 밀려난 만큼이
       // 다음 틱에 한꺼번에 반영돼 아바타가 튄다
       const t = remoteTargets.get(id);
@@ -124,7 +123,7 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
         t.rot = w.rot;
       }
     }
-  }, TICK_MS);
+  }, NPC_TICK_MS);
 
   setInterval(() => {
     const n = npcs[Math.floor(Math.random() * npcs.length)];

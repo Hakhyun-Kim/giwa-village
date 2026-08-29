@@ -97,7 +97,8 @@ export async function buildWorld() {
     world: {
       radius: collide.WORLD_RADIUS,
       playerRadius: collide.PLAYER_R,
-      npc: { radius: wander.NPC_R, speed: wander.NPC_SPEED },
+      /** tickMs: 주민 시뮬이 도는 주기 — 한 틱 보폭은 speed * tickMs/1000이다 */
+      npc: { radius: wander.NPC_R, speed: wander.NPC_SPEED, tickMs: wander.NPC_TICK_MS },
       portal: xyz(collide.PORTAL_POS),
       campfire: xyz(collide.CAMPFIRE_POS),
       boss: xyz(collide.BOSS_POS),

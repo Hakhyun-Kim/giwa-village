@@ -13,7 +13,10 @@
 // 로컬: npm run build -w client (VITE_DEMO=1) 후 npm run smoke:boot
 //       설치된 Chrome을 재사용하므로 브라우저 다운로드가 필요 없다.
 import { spawn } from "node:child_process";
+import fs from "node:fs";
 import { chromium } from "playwright";
+// 주민 걸음 기준은 구운 표에서 읽는다 — 스모크에 숫자 사본을 만들지 않기 위해
+import { WORLD_FILE } from "./lib/world.mjs";
 
 const PORT = 4179;
 const RPC_HOST = "giwa.io"; // 공개 테스트넷 RPC·포셋·익스플로러 — 우리 결함이 아니다
@@ -258,22 +261,32 @@ try {
   }
 
   // 주민 걸음 — 충돌을 넣은 뒤 튀던 것. 좌표를 시간에 따라 찍어야만 보인다.
-  // 타이머는 부하에 따라 늘어지므로 거리가 아니라 **속도**로 본다.
   //
   // 표본을 고정 길이로 끊지 않는 이유: 주민은 2~10초씩 쉬었다 걷는다(wander.ts).
   // 2.4초짜리 창이 여섯 명 모두의 '쉬는 참'과 겹칠 확률이 2% 남짓이라, 고정 창으로
   // 재면 게이트가 가끔 남의 사정으로 빨간불이 된다(실제로 한 번 그랬다).
   // 그래서 걸음이 보이면 그 자리에서 끊고, 안 보이면 15초까지 기다린다 —
   // 15초를 다 쓰고도 아무도 안 걸으면 그건 흔들림이 아니라 진짜 회귀다.
-  const walk = await page.evaluate(async () => {
+  //
+  // 튐은 속도(m/s)로 재지 않는다. 시뮬은 50ms 고정 틱이라 한 걸음이 정확히 0.12m인데,
+  // 100ms 표본에 틱이 둘 들어올 때도 셋 들어올 때도 있다 — 같은 걸음이 2.4m/s로도
+  // 3.6m/s로도 읽힌다. 한계를 4m/s로 두면 여유가 11%뿐이라 언젠가 앨리어싱만으로
+  // 빨간불이 되고(실측 3.59m/s까지 봤다), 반대로 러너에서 타이머가 늘어져 한 표본이
+  // 수 초를 덮으면 속도가 평균으로 뭉개져 아무것도 못 잡는다(CI에서 0.47m/s를 봤다).
+  // 그래서 "그 시간에 갈 수 있었던 최대 걸음"과 견준다 — 표본 간격이 늘어지든
+  // 줄어들든 기준이 함께 움직이므로, 남는 것은 진짜 튐뿐이다.
+  const npc = JSON.parse(fs.readFileSync(WORLD_FILE, "utf8")).world.npc;
+  const walk = await page.evaluate(async ({ speed, tickMs }) => {
     const MIN = 24; // 2.4초 — 튀는 프레임을 잡으려면 이만큼은 찍는다
     const MAX = 150; // 15초에서 끊는다
+    const STEP = (speed * tickMs) / 1000; // 한 틱 보폭
     let prev = null;
     let prevAt = 0;
-    let topSpeed = 0;
+    let over = 0; // 걸음 예산 대비 최악 — 표본 앨리어싱의 상한이 1.0이다
     let moved = 0;
     let count = 0;
     let secs = 0;
+    let gap = 0; // 표본이 가장 늘어진 간격 — 검사가 잠들었는지 로그로 남긴다
     const started = performance.now();
     for (let i = 0; i < MAX; i++) {
       const at = performance.now();
@@ -281,12 +294,15 @@ try {
       if (i === 0) count = Object.keys(pos).length;
       const dt = (at - prevAt) / 1000;
       if (prev && dt > 0) {
+        // 표본 경계에 걸치면 틱이 하나 더 들어온다 — 그 한 걸음을 예산에 얹는다
+        const budget = speed * dt + STEP;
+        gap = Math.max(gap, dt);
         for (const [id, b] of Object.entries(pos)) {
           const a = prev[id];
           if (!a) continue;
           const d = Math.hypot(b.x - a.x, b.z - a.z);
           moved += d;
-          topSpeed = Math.max(topSpeed, d / dt);
+          over = Math.max(over, d / budget);
         }
       }
       prev = pos;
@@ -295,14 +311,19 @@ try {
       if (i + 1 >= MIN && moved > 0.5) break;
       await new Promise((r) => setTimeout(r, 100));
     }
-    return { topSpeed, moved, count, secs };
-  });
+    return { over, moved, count, secs, gap };
+  }, npc);
   must(
     walk.count >= 1 && walk.moved > 0.5,
     `주민이 실제로 걷는다 (${walk.count}명 · ${walk.moved.toFixed(1)}m / ${walk.secs.toFixed(1)}초)`,
   );
-  // 걷는 속도는 2.4m/s — 튀는 프레임이 하나라도 있으면 여기서 몇 배로 잡힌다
-  must(walk.topSpeed < 4, `걸음이 튀지 않는다 (최고 ${walk.topSpeed.toFixed(2)}m/s)`);
+  // 1.0이 앨리어싱의 상한이고 진짜 튐은 3배를 넘는다(막힌 틱이 한꺼번에 반영되던
+  // 그 회귀가 그랬다). 사이를 1.6에서 끊는다 — 노점이 몸 위에 새로 열려 한 번
+  // 밀려나는 정도는 통과시키되, 순간이동은 잡는 자리다.
+  must(
+    walk.over < 1.6,
+    `걸음이 튀지 않는다 (걸음 예산의 ${walk.over.toFixed(2)}배 · 표본 최대 ${(walk.gap * 1000).toFixed(0)}ms)`,
+  );
 
   // 충돌 — 실제 프레임 위에서만 드러난다(로직은 npm test가 따로 본다).
   // 한옥 한가운데에 떨어뜨려 놓고, 프레임이 스스로 밖으로 밀어내는지 본다.
