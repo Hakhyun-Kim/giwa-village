@@ -2,7 +2,8 @@
 //
 // 온체인 컨트랙트(contracts/GiwaGuilds.sol)의 `doorRoll` 은 pure 함수다:
 //   b = keccak256(abi.encodePacked(seed, guildId, attempt, step, door))[0]
-//   b < 154 → 0(전진 +1) / b < 192 → 1(순풍 +2) / else → 2(함정)
+//   문별 경계는 DOOR_PROFILES에 있다. 돌문은 안정, 바람문은 균형,
+//   도깨비문은 고위험·고보너스라서 문을 고르는 것 자체가 결정이 된다.
 // 이 파일은 그 로직을 프레임워크 없이 재현해, 아래 넷이 "같은 코드"를 쓰게 한다:
 //   - 클라이언트: 즉시 시뮬레이션(옵티미스틱) — 귀환 전에 결과를 보여준다
 //   - 봇/MCP: 무엇을 고를지 판정
@@ -11,6 +12,13 @@
 import { encodePacked, hexToBytes, keccak256 } from "viem";
 
 export type DoorOutcome = "safe" | "bonus" | "trap";
+
+// DOOR_TABLE: 218/218,141/192,64/154
+export const DOOR_PROFILES = [
+  { id: 0, emoji: "🪨", name: "돌문", style: "안정", safeLt: 218, bonusLt: 218 },
+  { id: 1, emoji: "🌬️", name: "바람문", style: "균형", safeLt: 141, bonusLt: 192 },
+  { id: 2, emoji: "👹", name: "도깨비문", style: "승부", safeLt: 64, bonusLt: 154 },
+] as const;
 
 /** 문 결과가 올려주는 층수 (함정은 원정 실패라 0) */
 export const OUTCOME_CLIMB: Record<DoorOutcome, number> = {
@@ -28,6 +36,27 @@ export const OUTCOME_CLIMB: Record<DoorOutcome, number> = {
  * @param door    선택한 문 (0~2, uint8)
  */
 export function doorRoll(
+  seed: `0x${string}`,
+  guildId: bigint,
+  attempt: number,
+  step: number,
+  door: number,
+): DoorOutcome {
+  const digest = keccak256(
+    encodePacked(
+      ["bytes32", "uint256", "uint32", "uint256", "uint8"],
+      [seed, guildId, attempt, BigInt(step), door],
+    ),
+  );
+  const b = hexToBytes(digest)[0];
+  const profile = DOOR_PROFILES[door] ?? DOOR_PROFILES[2];
+  if (b < profile.safeLt) return "safe";
+  if (b < profile.bonusLt) return "bonus";
+  return "trap";
+}
+
+/** 이미 배포된 GiwaGuilds v1 호환 판정. v2 주소 전환 전 라이브 원정만 이 표를 쓴다. */
+export function legacyDoorRoll(
   seed: `0x${string}`,
   guildId: bigint,
   attempt: number,
@@ -74,6 +103,23 @@ export function resolveRun(
     steps.push(o);
     if (o === "trap") return { ok: false, climbed, trapAt: i, steps };
     climbed += OUTCOME_CLIMB[o];
+  }
+  return { ok: true, climbed, trapAt: null, steps };
+}
+
+export function resolveRunLegacy(
+  seed: `0x${string}`,
+  guildId: bigint,
+  attempt: number,
+  picks: number[],
+): RunResult {
+  const steps: DoorOutcome[] = [];
+  let climbed = 0;
+  for (let i = 0; i < picks.length; i++) {
+    const outcome = legacyDoorRoll(seed, guildId, attempt, i, picks[i]);
+    steps.push(outcome);
+    if (outcome === "trap") return { ok: false, climbed, trapAt: i, steps };
+    climbed += OUTCOME_CLIMB[outcome];
   }
   return { ok: true, climbed, trapAt: null, steps };
 }

@@ -2,8 +2,13 @@
 // 던전 플레이는 로컬에서 즉시 판정(keccak 재계산)하고 귀환만 온체인 정산한다.
 // 문 판정은 @giwa-village/core 의 doorRoll 단일 소스를 쓴다 — 온체인 settleRun 과
 // 바이트 단위로 동일하고, 봇·검증기도 같은 함수를 공유한다.
-import { decodeEventLog } from "viem";
-import { doorRoll, resolveRun } from "@giwa-village/core";
+import { decodeEventLog, parseAbi } from "viem";
+import {
+  doorRoll,
+  legacyDoorRoll,
+  resolveRun,
+  resolveRunLegacy,
+} from "@giwa-village/core";
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { GUILDS_ADDRESS, GUILDS_ABI } from "../config/guilds";
 import { useStore } from "../state/store";
@@ -110,7 +115,27 @@ const run: {
   attempt: number;
   seed: `0x${string}`;
   picks: number[];
-} = { guildId: "0", attempt: 0, seed: "0x", picks: [] };
+  ruleset: number;
+} = { guildId: "0", attempt: 0, seed: "0x", picks: [], ruleset: 1 };
+
+const RULESET_ABI = parseAbi([
+  "function RULESET_VERSION() view returns (uint8)",
+]);
+
+async function deployedRuleset(): Promise<number> {
+  try {
+    return Number(
+      await publicClient.readContract({
+        address: GUILDS_ADDRESS,
+        abi: RULESET_ABI,
+        functionName: "RULESET_VERSION",
+      }),
+    );
+  } catch {
+    // 현재 공개 테스트넷의 v1 컨트랙트에는 버전 함수가 없다.
+    return 1;
+  }
+}
 
 export async function chainDungeonEnter(): Promise<void> {
   const s = useStore.getState();
@@ -153,7 +178,7 @@ export async function chainDungeonEnter(): Promise<void> {
       abi: GUILDS_ABI,
       functionName: "currentEpoch",
     })) as bigint;
-    const [seed, seedBlock] = await Promise.all([
+    const [seed, seedBlock, ruleset] = await Promise.all([
       publicClient.readContract({
         address: GUILDS_ADDRESS,
         abi: GUILDS_ABI,
@@ -166,11 +191,13 @@ export async function chainDungeonEnter(): Promise<void> {
         functionName: "epochSeedBlock",
         args: [epoch],
       }) as Promise<bigint>,
+      deployedRuleset(),
     ]);
     run.guildId = guild.id;
     run.attempt = attempt;
     run.seed = seed;
     run.picks = [];
+    run.ruleset = ruleset;
     useStore.getState().setDungeon({
       guildId: guild.id,
       guildName: guild.name,
@@ -182,6 +209,7 @@ export async function chainDungeonEnter(): Promise<void> {
       floor: guild.dungeon.floor,
       tentative: 0,
       attempt,
+      ruleset,
       busy: false,
     });
   } catch (err) {
@@ -193,7 +221,8 @@ export function chainDungeonPick(door: number): void {
   const s = useStore.getState();
   const d = s.dungeon;
   if (!d || d.ended) return;
-  const outcome = doorRoll(run.seed, BigInt(run.guildId), run.attempt, run.picks.length, door);
+  const roll = run.ruleset >= 2 ? doorRoll : legacyDoorRoll;
+  const outcome = roll(run.seed, BigInt(run.guildId), run.attempt, run.picks.length, door);
   if (outcome === "trap") {
     run.picks = [];
     s.patchDungeon({ lastOutcome: "trap", lastDoor: door, tentative: 0, ended: true, busy: false });
@@ -215,6 +244,7 @@ export interface RunProof {
   attempt: number;
   picks: number[];
   onchainClimbed: number;
+  ruleset: number;
 }
 let lastProof: RunProof | null = null;
 
@@ -226,7 +256,8 @@ export function verifyLastRun():
   | { reproduced: number; onchain: number; matches: boolean; seed: `0x${string}` }
   | null {
   if (!lastProof) return null;
-  const sim = resolveRun(
+  const resolver = lastProof.ruleset >= 2 ? resolveRun : resolveRunLegacy;
+  const sim = resolver(
     lastProof.seed,
     BigInt(lastProof.guildId),
     lastProof.attempt,
@@ -246,7 +277,8 @@ export async function chainDungeonBank(): Promise<void> {
 
   // 귀환 전 로컬 재계산 — 함정이 섞였으면 온체인 settleRun 이 되돌릴(revert) 것이므로
   // 가스를 버리기 전에 코어로 먼저 막는다 (클라이언트 예측 = 온체인 판정과 동일 로직).
-  const sim = resolveRun(run.seed, BigInt(run.guildId), run.attempt, run.picks);
+  const resolver = run.ruleset >= 2 ? resolveRun : resolveRunLegacy;
+  const sim = resolver(run.seed, BigInt(run.guildId), run.attempt, run.picks);
   if (!sim.ok) {
     run.picks = [];
     s.patchDungeon({ lastOutcome: "trap", tentative: 0, ended: true, busy: false });
@@ -262,6 +294,7 @@ export async function chainDungeonBank(): Promise<void> {
     attempt: run.attempt,
     picks: [...run.picks],
     onchainClimbed: 0,
+    ruleset: run.ruleset,
   };
   try {
     const tx = await queueTx(() =>

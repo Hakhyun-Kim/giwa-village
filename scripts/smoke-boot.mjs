@@ -371,6 +371,40 @@ try {
     .catch(() => false);
   must(back, "ESC로 멈추면 촌장의 부탁이 다시 안내를 잇는다");
 
+  // 선택형 온보딩 — 무료 첫걸음 3개를 마친 상태에서 세 갈래가 모두 보여야 한다.
+  await page.evaluate(() => {
+    localStorage.setItem("giwa-welcome", "self");
+    localStorage.setItem("giwa-quest-step", "3");
+    localStorage.setItem("giwa-quest-version", "2");
+    localStorage.removeItem("giwa-quest-path");
+    localStorage.removeItem("giwa-quest-complete");
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => window.__giwa?.ready?.() === true, { timeout: 60000 });
+  await page.waitForSelector(".quest-paths", { timeout: 10000 });
+  const paths = await page.locator(".quest-paths button").allTextContents();
+  must(
+    paths.length === 3 && paths.some((t) => t.includes("장사꾼")) && paths.some((t) => t.includes("원정대")) && paths.some((t) => t.includes("장인")),
+    `촌장의 부탁이 세 가지 길을 제시한다 (${paths.length}개)`,
+  );
+  await page.getByRole("button", { name: /장인의 길/ }).click();
+  const artisan = await page.locator(".quest-title").textContent();
+  must(artisan?.includes("문양 공방") === true, "고른 길의 첫 부탁으로 이어진다 (장인의 길)");
+
+  // 온보딩 뒤 오늘의 부탁 — KST 날짜마다 세 무료 행동 중 하나만 고른다.
+  await page.evaluate(() => {
+    localStorage.setItem("giwa-quest-step", "900");
+    localStorage.setItem("giwa-quest-complete", "1");
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => window.__giwa?.ready?.() === true, { timeout: 60000 });
+  await page.waitForSelector(".daily-card", { timeout: 10000 });
+  const dailyChoices = await page.locator(".daily-choices button").count();
+  must(dailyChoices === 3, `오늘의 장터 부탁이 세 선택지를 준다 (${dailyChoices}개)`);
+  if (dailyChoices === 3) await page.locator(".daily-choices button").first().click();
+  const chosenDaily = await page.locator(".daily-card.compact").count();
+  must(chosenDaily === 1, "오늘의 부탁은 하나를 고르면 고정된다");
+
   // 몇 초 더 돌려 NPC 이동·주야 사이클·비컨 경로에서 터지는 것이 없는지 본다
   await wait(6000);
   must(errors.length === 0, `콘솔 에러 0 (${errors.length}건)`);

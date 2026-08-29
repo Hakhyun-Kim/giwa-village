@@ -7,6 +7,7 @@ import type {
   Guild,
   DungeonView,
 } from "../types";
+import { recordDaily } from "./daily";
 
 export type ConnectionStatus = "connecting" | "connected" | "offline";
 
@@ -29,6 +30,8 @@ interface VillageStore {
   selfName: string;
   selfColor: number;
   giftTarget: string | null;
+  /** 다른 주민을 클릭했을 때 여는 무료 소셜 행동 대상 */
+  socialTarget: string | null;
   feed: FeedEvent[];
   stalls: Stall[];
   stallView: string | null;
@@ -79,6 +82,7 @@ interface VillageStore {
   setSelfSitting: (v: boolean) => void;
   setSelfIdentity: (name: string, color: number) => void;
   setGiftTarget: (id: string | null) => void;
+  setSocialTarget: (id: string | null) => void;
   addFeed: (g: FeedEvent) => void;
   setStalls: (s: Stall[]) => void;
   setStallView: (id: string | null) => void;
@@ -122,6 +126,7 @@ export const useStore = create<VillageStore>((set) => ({
   selfName: "",
   selfColor: 0x5aa0e6,
   giftTarget: null,
+  socialTarget: null,
   feed: [],
   stalls: [],
   stallView: null,
@@ -188,9 +193,13 @@ export const useStore = create<VillageStore>((set) => ({
   setSelfSitting: (selfSitting) => set({ selfSitting }),
   setSelfIdentity: (selfName, selfColor) => set({ selfName, selfColor }),
   setGiftTarget: (giftTarget) => set({ giftTarget }),
+  setSocialTarget: (socialTarget) => set({ socialTarget }),
   addFeed: (g) => set((s) => ({ feed: [g, ...s.feed].slice(0, 6) })),
   setStalls: (stalls) => set({ stalls }),
-  setStallView: (stallView) => set({ stallView }),
+  setStallView: (stallView) => {
+    if (stallView) recordDaily("browse", 1, stallView);
+    set({ stallView });
+  },
   setStallOpenDialog: (stallOpenDialog) => set({ stallOpenDialog }),
   setCouponsOpen: (couponsOpen) => set({ couponsOpen }),
   bumpCoupons: () => set((s) => ({ couponsVersion: s.couponsVersion + 1 })),

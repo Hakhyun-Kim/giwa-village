@@ -6,8 +6,11 @@
 //
 // 참조 구현: contracts/GiwaGuilds.sol · contracts/GiwaBoss.sol
 export {
+  DOOR_PROFILES,
   doorRoll,
+  legacyDoorRoll,
   resolveRun,
+  resolveRunLegacy,
   safeDoorAt,
   OUTCOME_CLIMB,
   type DoorOutcome,

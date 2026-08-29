@@ -141,10 +141,13 @@ export default function Hud() {
   const selfSitting = useStore((s) => s.selfSitting);
   const nearBoss = useStore((s) => s.nearBoss);
   const boss = useStore((s) => s.boss);
+  const bossSlain = !!boss?.slain;
+  const bossNextStrikeAt = boss?.nextStrikeAt ?? 0;
   const pendingTx = useStore((s) => s.pendingTx);
   const [festival, setFestival] = useState(() => marketDayLabel());
   const [phase, setPhase] = useState(() => currentDaylight().label);
   const [soundOn, setSoundOn] = useState(false);
+  const [bossNow, setBossNow] = useState(() => Date.now() / 1000);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -153,6 +156,13 @@ export default function Hud() {
     }, 60000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!nearBoss || bossSlain || bossNextStrikeAt <= 0) return;
+    setBossNow(Date.now() / 1000);
+    const id = setInterval(() => setBossNow(Date.now() / 1000), 1000);
+    return () => clearInterval(id);
+  }, [nearBoss, bossSlain, bossNextStrikeAt]);
 
   // 지난 방문에 켜 뒀다면 상태를 복원한다. 다만 자동재생 정책상 소리는
   // 사용자가 화면을 한 번 건드린 뒤에야 날 수 있어, 첫 입력까지 기다린다.
@@ -239,6 +249,10 @@ export default function Hud() {
     setTimeout(() => setCopied(false), 1200);
   }
 
+  const bossCooldown = boss
+    ? Math.max(0, Math.ceil(boss.nextStrikeAt - bossNow))
+    : 0;
+
   return (
     <div className="hud">
       <div className="hud-card hud-topleft">
@@ -322,7 +336,11 @@ export default function Hud() {
       <div className="hud-bottom">
         {nearBoss && boss && !boss.slain ? (
           <div className="hud-card hud-prompt">
-            <b>R</b> — 도깨비 타격 (쿨다운 30초 · 함께 때려잡으세요)
+            {bossCooldown > 0 ? (
+              <>🕰 다음 타격까지 <b>{bossCooldown}초</b> · 이모트로 동료를 응원하세요</>
+            ) : (
+              <><b>R</b> — 도깨비 타격 준비 완료 · 함께 때려잡으세요</>
+            )}
           </div>
         ) : nearFire ? (
           <div className="hud-card hud-prompt">

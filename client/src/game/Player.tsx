@@ -7,7 +7,8 @@ import { sendBeacon } from "../chain/presence";
 import { strikeBoss, refreshBoss } from "../chain/boss";
 import { touchInput } from "./touch";
 import { bossHit, feel, tickFeel } from "./feel";
-import { localPos, sendMove, sendEmote } from "../net/colyseus";
+import { localPos, sendMove } from "../net/colyseus";
+import { performSocialEmote } from "./social";
 import { useStore } from "../state/store";
 import { sfxStep } from "../audio/sfx";
 import { syncListener } from "../audio/audio";
@@ -48,13 +49,7 @@ export default function Player() {
       keys.current.add(e.code);
       if (e.repeat) return;
       if (e.code === "KeyE") {
-        sendEmote("👋");
-        const id = useStore.getState().selfId;
-        if (id) {
-          useStore.getState().setEmote(id, "👋");
-          const at = useStore.getState().emotes[id]?.at;
-          if (at) setTimeout(() => useStore.getState().clearEmote(id, at), 2200);
-        }
+        performSocialEmote("👋");
       }
       if (e.code === "KeyF" && useStore.getState().nearPortal) {
         // 길드 코업 던전 — 서버리스(데모)에선 완전 온체인으로 동작
@@ -76,6 +71,14 @@ export default function Player() {
           void strikeBoss()
             .then(() => refreshBoss())
             .catch(() => {});
+        } else if (b && !b.slain) {
+          const id = useStore.getState().selfId;
+          if (id) {
+            const left = Math.max(1, Math.ceil(b.nextStrikeAt - Date.now() / 1000));
+            useStore.getState().setSay(id, `🕰 ${left}초 뒤 다시!`);
+            const at = useStore.getState().says[id]?.at;
+            if (at) setTimeout(() => useStore.getState().clearSay(id, at), 1500);
+          }
         }
       }
       if (e.code === "KeyX" && useStore.getState().nearFire) {

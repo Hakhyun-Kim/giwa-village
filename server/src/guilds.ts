@@ -223,7 +223,7 @@ export class GuildRegistry {
 
   /**
    * 문 결과: 시드·길드·원정 회차·층·문 번호로 결정
-   * (60% 전진, 15% 순풍 +2, 25% 함정). 회차가 섞이므로 재입장해서 함정
+   * 돌문(안정)·바람문(균형)·도깨비문(승부)은 위험/보너스가 다르다. 회차가 섞이므로 재입장해서 함정
    * 위치를 외우는 것이 불가능하고, 회차가 기록되므로 사후 검증은 가능하다.
    */
   doorOutcome(
@@ -238,9 +238,12 @@ export class GuildRegistry {
       .update(`${seedHash}:${guildId}:${attempt}:${floor}:${door}`)
       .digest();
     const roll = digest[0];
-    if (roll < 154) return "safe"; // 154/256 ≈ 60%
-    if (roll < 192) return "bonus"; // 38/256 ≈ 15%
-    return "trap"; // 64/256 = 25%
+    // DOOR_TABLE: 218/218,141/192,64/154
+    const safeLt = [218, 141, 64][door] ?? 64;
+    const bonusLt = [218, 192, 154][door] ?? 154;
+    if (roll < safeLt) return "safe";
+    if (roll < bonusLt) return "bonus";
+    return "trap";
   }
 
   /** 원정 수확 확정 — 길드 층수에 누적 */

@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import {
   doorRoll,
+  DOOR_PROFILES,
   resolveRun,
   safeDoorAt,
   strikeDamage,
@@ -60,18 +61,23 @@ const ok = (name) => {
   ok(`safeDoorAt 은 항상 비-함정 문 (${checked}/50 스텝 확인)`);
 }
 
-// 4) 분포 sanity — 컨트랙트 의도 ≈ 60% / 15% / 25%
+// 4) 문별 분포 sanity — 돌(안정) / 바람(균형) / 도깨비(승부)
 {
-  const c = { safe: 0, bonus: 0, trap: 0 };
-  const N = 6000;
-  for (let i = 0; i < N; i++) {
-    c[doorRoll(SEED, BigInt(i % 40), i % 7, (i * 3) % 90, i % 3)]++;
+  const N = 12000;
+  for (const profile of DOOR_PROFILES) {
+    const c = { safe: 0, bonus: 0, trap: 0 };
+    for (let i = 0; i < N; i++) {
+      c[doorRoll(SEED, BigInt(i % 97), i % 41, i % 113, profile.id)]++;
+    }
+    const pct = (k) => (100 * c[k]) / N;
+    const expectedSafe = (100 * profile.safeLt) / 256;
+    const expectedBonus = (100 * (profile.bonusLt - profile.safeLt)) / 256;
+    const expectedTrap = (100 * (256 - profile.bonusLt)) / 256;
+    assert.ok(Math.abs(pct("safe") - expectedSafe) < 3, `${profile.name} safe ${pct("safe").toFixed(1)}%`);
+    assert.ok(Math.abs(pct("bonus") - expectedBonus) < 3, `${profile.name} bonus ${pct("bonus").toFixed(1)}%`);
+    assert.ok(Math.abs(pct("trap") - expectedTrap) < 3, `${profile.name} trap ${pct("trap").toFixed(1)}%`);
   }
-  const pct = (k) => (100 * c[k]) / N;
-  assert.ok(Math.abs(pct("safe") - 60) < 5, `safe ${pct("safe").toFixed(1)}%`);
-  assert.ok(Math.abs(pct("bonus") - 15) < 5, `bonus ${pct("bonus").toFixed(1)}%`);
-  assert.ok(Math.abs(pct("trap") - 25) < 5, `trap ${pct("trap").toFixed(1)}%`);
-  ok(`분포 ≈ 60/15/25 (실측 ${pct("safe").toFixed(0)}/${pct("bonus").toFixed(0)}/${pct("trap").toFixed(0)})`);
+  ok("문별 분포가 돌(안정)·바람(균형)·도깨비(승부) 표와 일치");
 }
 
 // 5) 보스 데미지 — 결정론 + 항상 strikeRange 안, 장날 2배

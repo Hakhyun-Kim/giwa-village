@@ -93,6 +93,8 @@ export interface DungeonView {
   floor: number;
   tentative: number;
   attempt: number;
+  /** 1=배포된 동일 확률 문, 2=돌/바람/도깨비 위험표 */
+  ruleset?: number;
   lastOutcome?: "safe" | "bonus" | "trap";
   lastDoor?: number;
   ended?: boolean;

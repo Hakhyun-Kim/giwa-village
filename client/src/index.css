@@ -389,6 +389,25 @@ body,
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
+.social-modal { width: min(390px, 88vw); }
+.social-emotes {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+  margin: 16px 0 4px;
+}
+.social-emote {
+  cursor: pointer;
+  border: 1px solid #2a3040;
+  border-radius: 10px;
+  background: #1c2331;
+  color: #d8e0ec;
+  padding: 9px 4px 7px;
+  font-size: 11px;
+}
+.social-emote:hover { border-color: #ffd66b; transform: translateY(-2px); }
+.social-emote span { display: block; font-size: 23px; margin-bottom: 3px; }
+
 .gift-emoji {
   font-size: 44px;
   line-height: 1;
@@ -844,10 +863,13 @@ body,
   border: 1px solid #2a3040;
   background: #1c2331;
   border-radius: 12px;
-  font-size: 34px;
-  padding: 12px 18px;
+  min-width: 92px;
+  padding: 10px 8px;
   transition: transform 0.1s, border-color 0.1s;
 }
+.dungeon-door span { display: block; font-size: 30px; }
+.dungeon-door b { display: block; margin-top: 3px; color: #eef2f8; font-size: 11px; }
+.dungeon-door em { display: block; margin-top: 3px; color: #8ea0bd; font-size: 9px; font-style: normal; }
 
 .dungeon-door:hover:not(:disabled) {
   transform: translateY(-3px);
@@ -1189,6 +1211,67 @@ body,
   border-color: #7de08a;
   box-shadow: 0 0 18px rgba(125, 224, 138, 0.35);
 }
+.quest-path-card { width: min(430px, calc(100vw - 28px)); }
+.quest-paths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 9px; }
+.quest-paths button {
+  cursor: pointer;
+  border: 1px solid #2a3040;
+  border-radius: 9px;
+  background: #1c2331;
+  color: #eef2f8;
+  padding: 8px 5px;
+}
+.quest-paths button:hover { border-color: #ffd66b; }
+.quest-paths span { display: block; font-size: 21px; }
+.quest-paths b { display: block; margin-top: 3px; font-size: 11px; }
+.quest-paths em { display: block; margin-top: 3px; color: #8ea0bd; font-size: 9.5px; font-style: normal; }
+
+/* 온보딩 뒤에 열리는 KST 일일 선택 — 무료 행동 하나만 골라 도장을 받는다 */
+.daily-card {
+  position: absolute;
+  left: 14px;
+  top: 190px;
+  z-index: 29;
+  width: min(430px, calc(100vw - 28px));
+  padding: 11px 12px;
+  border: 1px solid #3a3325;
+  border-left: 3px solid #7de08a;
+  border-radius: 12px;
+  background: rgba(22, 27, 38, 0.94);
+  color: #eef2f8;
+  pointer-events: auto;
+}
+.daily-card.compact { width: 250px; }
+.quest-card + .daily-card { top: 310px; }
+.daily-card.done { border-color: #ffd66b; }
+.daily-head { color: #ffd66b; font-size: 13px; font-weight: 700; }
+.daily-note { margin-top: 5px; color: #9eabc0; font-size: 11.5px; }
+.daily-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 9px; }
+.daily-choices button {
+  cursor: pointer;
+  border: 1px solid #2a3040;
+  border-radius: 9px;
+  background: #1c2331;
+  color: #eef2f8;
+  padding: 8px 5px;
+}
+.daily-choices button:hover { border-color: #7de08a; }
+.daily-choices span { display: block; font-size: 20px; }
+.daily-choices b { display: block; margin-top: 3px; font-size: 11px; }
+.daily-choices em { display: block; margin-top: 3px; color: #8ea0bd; font-size: 9.5px; font-style: normal; }
+.daily-progress { height: 4px; margin-top: 8px; border-radius: 4px; overflow: hidden; background: #2a3040; }
+.daily-progress i { display: block; height: 100%; background: #7de08a; transition: width 0.25s; }
+.daily-reward {
+  cursor: pointer;
+  margin-top: 8px;
+  border: 1px solid #6e5a2c;
+  border-radius: 7px;
+  background: #2a2417;
+  color: #ffd66b;
+  padding: 5px 8px;
+  font-size: 10.5px;
+}
+.touch-btn:disabled { opacity: 0.55; cursor: default; }
 .quest-head {
   display: flex;
   align-items: center;

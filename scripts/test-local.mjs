@@ -195,6 +195,7 @@ try {
 
   // ── 길드 · 던전 (GiwaGuilds) ────────────────────────────────────────────
   section("길드 · 백층 던전 (GiwaGuilds)");
+  check("던전 문 전략표 v2", Number(await read(C.GiwaGuilds, "RULESET_VERSION")) === 2);
   await send(wM, {
     address: C.GiwaGuilds.address, abi: C.GiwaGuilds.abi,
     functionName: "createGuild", args: ["기와길드", "🏯"],

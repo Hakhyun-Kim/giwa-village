@@ -256,47 +256,46 @@ it("쇼케이스는 한낮으로 고정된다 (데모 영상 보호)", () => {
 
 describe("던전 문 확률 — 컨트랙트·서버·코어가 같은 표를 본다");
 
-/** 문 판정 함수 본문에서 `< 숫자)` 형태의 경계 둘을 뽑는다 */
-function doorThresholds(relPath, anchor) {
+/** 세 언어에 적힌 DOOR_TABLE 표식을 읽는다: safeLt/bonusLt 쌍 3개 */
+function doorThresholds(relPath) {
   const src = fs.readFileSync(path.join(ROOT, ...relPath.split("/")), "utf8");
-  const at = src.indexOf(anchor);
-  if (at < 0) throw new Error(`${relPath}: '${anchor}' 를 찾지 못했습니다`);
-  const region = src.slice(at, at + 700);
-  const nums = [...region.matchAll(/<\s*(\d{2,3})\s*\)/g)].map((m) => Number(m[1]));
-  if (nums.length < 2) throw new Error(`${relPath}: 경계 둘을 못 읽었습니다 (${nums})`);
-  return nums.slice(0, 2);
+  const match = src.match(/DOOR_TABLE:\s*([^\r\n]+)/);
+  if (!match) throw new Error(`${relPath}: DOOR_TABLE 표식을 찾지 못했습니다`);
+  const pairs = [...match[1].matchAll(/(\d{2,3})\/(\d{2,3})/g)].map((m) => [
+    Number(m[1]),
+    Number(m[2]),
+  ]);
+  if (pairs.length !== 3) throw new Error(`${relPath}: 문 3개의 경계를 못 읽었습니다`);
+  return pairs;
 }
 
 const doorTable = {
-  컨트랙트: doorThresholds("contracts/GiwaGuilds.sol", "function doorRoll"),
-  서버: doorThresholds("server/src/guilds.ts", "doorOutcome("),
-  코어: doorThresholds("core/src/dungeon.ts", "export function doorRoll"),
+  컨트랙트: doorThresholds("contracts/GiwaGuilds.sol"),
+  서버: doorThresholds("server/src/guilds.ts"),
+  코어: doorThresholds("core/src/dungeon.ts"),
 };
 
 it("세 구현의 경계값이 같다", () => {
-  const [a, b] = doorTable.컨트랙트;
   for (const [who, t] of Object.entries(doorTable)) {
-    eq(t[0], a, `${who} 안전 경계: `);
-    eq(t[1], b, `${who} 순풍 경계: `);
+    eq(JSON.stringify(t), JSON.stringify(doorTable.컨트랙트), `${who} 문 표: `);
   }
-  console.log(`     safe<${a} · bonus<${b} · trap≥${b} (of 256)`);
+  console.log(`     돌 ${doorTable.컨트랙트[0].join("/")} · 바람 ${doorTable.컨트랙트[1].join("/")} · 도깨비 ${doorTable.컨트랙트[2].join("/")}`);
 });
 
-it("귀환할지 더 오를지가 진짜 선택이다 (탐욕이 늘 옳으면 결정이 아니다)", () => {
+it("세 문 모두 귀환/전진 손익분기가 있고 위험·보너스가 서로 다르다", () => {
   // 한 걸음의 기대값: 안전 +1층, 순풍 +2층, 함정이면 지금까지 쌓은 잠정 층수를 전부 잃는다.
   // 따라서 잠정 t층에서 계속 오를 기대값은  p안전·1 + p순풍·2 − p함정·t.
   // 이게 0이 되는 t가 '슬슬 돌아가야 하는' 지점 — 그 지점이 존재해야 게임이 된다.
-  const [safeLt, bonusLt] = doorTable.컨트랙트;
-  const pSafe = safeLt / 256;
-  const pBonus = (bonusLt - safeLt) / 256;
-  const pTrap = (256 - bonusLt) / 256;
-  ok(pTrap > 0, "함정이 없으면 오르기만 하면 됩니다");
-  const breakeven = (pSafe + 2 * pBonus) / pTrap;
-  console.log(`     손익분기 ${breakeven.toFixed(2)}층에서 귀환이 유리해진다`);
-  ok(
-    breakeven >= 2 && breakeven <= 8,
-    `손익분기 ${breakeven.toFixed(2)}층 — 2~8층 밖이면 한쪽 선택만 정답이 됩니다`,
-  );
+  const breaks = doorTable.컨트랙트.map(([safeLt, bonusLt]) => {
+    const pSafe = safeLt / 256;
+    const pBonus = (bonusLt - safeLt) / 256;
+    const pTrap = (256 - bonusLt) / 256;
+    const breakeven = (pSafe + 2 * pBonus) / pTrap;
+    ok(breakeven >= 2 && breakeven <= 8, `손익분기 ${breakeven.toFixed(2)}층이 범위 밖입니다`);
+    return breakeven;
+  });
+  ok(new Set(doorTable.컨트랙트.map(String)).size === 3, "세 문 확률표가 같으면 선택이 아닙니다");
+  console.log(`     손익분기 돌 ${breaks[0].toFixed(2)} · 바람 ${breaks[1].toFixed(2)} · 도깨비 ${breaks[2].toFixed(2)}층`);
 });
 
 // ── 풍류(배경음·효과음) ───────────────────────────────────────────────────
@@ -525,6 +524,35 @@ it("HUD의 <button>에 붙은 클래스가 pointer-events:auto 를 가진다", (
     );
   }
   console.log(`     검사한 버튼 클래스: ${classes.join(", ")}`);
+});
+
+// ── 재미 루프 — 소셜·선택형 온보딩·KST 일일 부탁 ────────────────────────
+describe("재미 루프 — 무료 소셜 행동과 매일 하나의 선택");
+
+const playerFunSrc = fs.readFileSync(path.join(ROOT, "client/src/game/social.ts"), "utf8");
+const questFunSrc = fs.readFileSync(path.join(ROOT, "client/src/ui/QuestLog.tsx"), "utf8");
+const presenceFunSrc = fs.readFileSync(path.join(ROOT, "client/src/chain/presence.ts"), "utf8");
+const { DAILY_GOALS, kstDate } = await import(
+  pathToFileURL(path.join(ROOT, "client/src/state/daily.ts")).href
+);
+
+it("이모트 5종이 서버/체인 비컨과 같은 아이콘 표를 쓴다", () => {
+  for (const icon of ["👋", "🙇", "👏", "💃", "🍻"]) {
+    ok(playerFunSrc.includes(`icon: "${icon}"`), `${icon} 소셜 메뉴가 없습니다`);
+    ok(presenceFunSrc.includes(`"${icon}"`), `${icon} 비컨 코드가 없습니다`);
+  }
+});
+
+it("무료 첫걸음 뒤 장사꾼·원정대·장인의 길을 고른다", () => {
+  for (const pathName of ["장사꾼의 길", "원정대의 길", "장인의 길"]) {
+    ok(questFunSrc.includes(pathName), `${pathName}이 없습니다`);
+  }
+  ok(questFunSrc.indexOf('id: "sit"') < questFunSrc.indexOf("const PATHS"), "무료 온기 전에 갈라지면 안 됩니다");
+});
+
+it("오늘의 부탁은 KST 날짜를 쓰고 세 무료 행동 중 하나다", () => {
+  eq(kstDate(new Date("2026-08-29T15:30:00Z")), "2026-08-30", "KST 자정 경계: ");
+  eq(Object.keys(DAILY_GOALS).sort().join(","), "browse,craft,greet", "일일 선택지: ");
 });
 
 // ── 마을 충돌 ─────────────────────────────────────────────────────────────

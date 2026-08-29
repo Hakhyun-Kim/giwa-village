@@ -11,6 +11,7 @@ function pressKey(code: string) {
 /** 모바일 터치 조작 — 가상 조이스틱(왼쪽) + 상황별 액션 버튼(오른쪽) */
 export default function TouchControls() {
   const [isTouch, setIsTouch] = useState(false);
+  const [now, setNow] = useState(() => Date.now() / 1000);
   const baseRef = useRef<HTMLDivElement>(null);
   const knobRef = useRef<HTMLDivElement>(null);
   const activeId = useRef<number | null>(null);
@@ -20,14 +21,24 @@ export default function TouchControls() {
   const nearBoss = useStore((s) => s.nearBoss);
   const selfSitting = useStore((s) => s.selfSitting);
   const boss = useStore((s) => s.boss);
+  const bossSlain = !!boss?.slain;
+  const bossNextStrikeAt = boss?.nextStrikeAt ?? 0;
 
   useEffect(() => {
     setIsTouch(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
+  useEffect(() => {
+    if (!nearBoss || bossSlain || bossNextStrikeAt <= 0) return;
+    setNow(Date.now() / 1000);
+    const id = setInterval(() => setNow(Date.now() / 1000), 1000);
+    return () => clearInterval(id);
+  }, [nearBoss, bossSlain, bossNextStrikeAt]);
+
   if (!isTouch) return null;
 
   const RADIUS = 52;
+  const bossCooldown = boss ? Math.max(0, Math.ceil(boss.nextStrikeAt - now)) : 0;
 
   function setKnob(dx: number, dz: number) {
     if (knobRef.current) {
@@ -80,9 +91,13 @@ export default function TouchControls() {
       </div>
       <div className="touch-actions">
         {nearBoss && boss && !boss.slain && (
-          <button className="touch-btn boss" onClick={() => pressKey("KeyR")}>
+          <button
+            className="touch-btn boss"
+            onClick={() => pressKey("KeyR")}
+            disabled={bossCooldown > 0}
+          >
             🧿
-            <span>타격</span>
+            <span>{bossCooldown > 0 ? `${bossCooldown}초` : "타격"}</span>
           </button>
         )}
         {nearFire && (

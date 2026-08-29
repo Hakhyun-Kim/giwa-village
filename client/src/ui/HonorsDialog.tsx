@@ -25,6 +25,9 @@ export default function HonorsDialog() {
   const [warmth, setWarmth] = useState<number | null>(null);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now() / 1000);
+  const boxPendingBlock = box?.pendingBlock ?? 0;
+  const boxNextOpenAt = box?.nextOpenAt ?? 0;
 
   useEffect(() => {
     if (!open || !walletAddress) return;
@@ -39,6 +42,13 @@ export default function HonorsDialog() {
       .then((h) => setWarmth(h.warmth))
       .catch(() => {});
   }, [open, walletAddress]);
+
+  useEffect(() => {
+    if (!open || !box || boxPendingBlock !== 0) return;
+    setNow(Date.now() / 1000);
+    const id = setInterval(() => setNow(Date.now() / 1000), 1000);
+    return () => clearInterval(id);
+  }, [open, box, boxPendingBlock, boxNextOpenAt]);
 
   if (!open) return null;
 
@@ -106,7 +116,8 @@ export default function HonorsDialog() {
   }
 
   const canOpenBox =
-    !!box && (box.pendingBlock !== 0 || Date.now() / 1000 >= box.nextOpenAt);
+    !!box && (box.pendingBlock !== 0 || now >= box.nextOpenAt);
+  const boxCooldown = box ? Math.max(0, Math.ceil(box.nextOpenAt - now)) : 0;
   const lastDef = TRINKET_DEFS.find((d) => d.id === lastKind);
 
   return (
@@ -185,7 +196,7 @@ export default function HonorsDialog() {
                     ? "🎁 개봉하기"
                     : canOpenBox
                       ? "🎁 상자 열기"
-                      : "쿨다운 중…"}
+                      : `${boxCooldown}초 후`}
               </button>
             </div>
             {lastDef && (

@@ -5,22 +5,7 @@ import { CanvasTexture, Color, Group, Mesh, NearestFilter } from "three";
 import { honorCharmColor } from "../chain/honors";
 import { trinketColor } from "../chain/boxes";
 import { patternCanvas } from "../chain/workshop";
-
-export interface AvatarVariant {
-  hat: 0 | 1 | 2 | 3; // 0 없음, 1 갓, 2 패랭이, 3 두건
-  headScale: number;
-  bodyWidth: number;
-}
-
-export function variantFrom(seed: string): AvatarVariant {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 33 + seed.charCodeAt(i)) >>> 0;
-  return {
-    hat: (h % 4) as AvatarVariant["hat"],
-    headScale: 0.9 + ((h >> 3) % 25) / 100,
-    bodyWidth: 0.85 + ((h >> 8) % 30) / 100,
-  };
-}
+import { variantFrom, type AvatarVariant } from "./avatarVariant";
 
 interface AvatarProps {
   color: number;
@@ -158,6 +143,12 @@ export default function Avatar({
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
+    if (body.current) {
+      body.current.rotation.x = 0;
+      body.current.rotation.z = 0;
+    }
+    if (leftArm.current) leftArm.current.rotation.z = 0;
+    if (rightArm.current) rightArm.current.rotation.z = 0;
     if (sitting) {
       // 앉은 자세: 몸을 낮추고 다리를 앞으로
       if (body.current) body.current.position.y = -0.34;
@@ -178,15 +169,32 @@ export default function Avatar({
     if (leftLeg.current) leftLeg.current.rotation.x = -swing * 0.8;
     if (rightLeg.current) rightLeg.current.rotation.x = swing * 0.8;
 
-    if (rightArm.current) {
-      if (emote) {
-        // wave: arm raised, oscillating
-        rightArm.current.rotation.x = 0;
-        rightArm.current.rotation.z = -2.4 + Math.sin(t * 12) * 0.35;
-      } else {
-        rightArm.current.rotation.z = 0;
-        rightArm.current.rotation.x = -swing * 0.9;
+    if (rightArm.current) rightArm.current.rotation.x = -swing * 0.9;
+
+    if (emote === "👋" && rightArm.current) {
+      rightArm.current.rotation.x = 0;
+      rightArm.current.rotation.z = -2.4 + Math.sin(t * 12) * 0.35;
+    } else if (emote === "🙇") {
+      if (body.current) body.current.rotation.x = 0.5;
+      if (leftArm.current) leftArm.current.rotation.x = -0.25;
+      if (rightArm.current) rightArm.current.rotation.x = -0.25;
+    } else if (emote === "👏") {
+      const clap = 0.78 + Math.abs(Math.sin(t * 10)) * 0.45;
+      if (leftArm.current) {
+        leftArm.current.rotation.x = -0.7;
+        leftArm.current.rotation.z = -clap;
       }
+      if (rightArm.current) {
+        rightArm.current.rotation.x = -0.7;
+        rightArm.current.rotation.z = clap;
+      }
+    } else if (emote === "💃") {
+      if (body.current) body.current.rotation.z = Math.sin(t * 7) * 0.22;
+      if (leftArm.current) leftArm.current.rotation.z = 1.8;
+      if (rightArm.current) rightArm.current.rotation.z = -1.8;
+    } else if (emote === "🍻" && rightArm.current) {
+      rightArm.current.rotation.x = -0.6;
+      rightArm.current.rotation.z = -2.05;
     }
   });
 
@@ -265,9 +273,9 @@ export default function Avatar({
         </Html>
       )}
 
-      {/* 이모트가 떠 있으면 그 위로 비켜 준다 */}
-      {say && !emote && (
-        <Html position={[0, 3.0, 0]} center distanceFactor={14} zIndexRange={[19, 0]}>
+      {/* 이모트와 한마디가 함께 뜨면 합동 장단 문구를 위로 비켜 준다 */}
+      {say && (
+        <Html position={[0, emote ? 3.55 : 3.0, 0]} center distanceFactor={14} zIndexRange={[19, 0]}>
           <div className="speech-bubble">{say}</div>
         </Html>
       )}

@@ -25,7 +25,7 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
 
   function onClick(e: { stopPropagation: () => void }) {
     e.stopPropagation();
-    if (giftable) useStore.getState().setGiftTarget(id);
+    useStore.getState().setSocialTarget(id);
   }
 
   useFrame((_, rawDt) => {
@@ -57,10 +57,8 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
       ref={group}
       onClick={onClick}
       onPointerOver={(e) => {
-        if (giftable) {
-          e.stopPropagation();
-          document.body.style.cursor = "pointer";
-        }
+        e.stopPropagation();
+        document.body.style.cursor = "pointer";
       }}
       onPointerOut={() => {
         document.body.style.cursor = "auto";

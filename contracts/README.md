@@ -26,6 +26,10 @@ node scripts/verify-contracts.mjs                  # Blockscout standard-input �
 | **GiwaBoss** | `0x8f50d882fc936f481f5f66d76156ebdf816cc6ae` | `boss` | 주간 도깨비 토벌 — strike(쿨다운 30초, 블록해시 데미지+온기 보정, 장날 2배), 개인·길드 기여, 소울바운드 전리품 |
 | **GiwaProfile** | `0xefe0e8d69661fd67f5fe2368f9b1f7ff6d395416` | (SDK) | 소셜 프로필 애그리게이터 — profileOf 1콜로 길드·칭호·장신구·문양·온기·전리품 집계 (외부 dApp용, [sdk/](../sdk/README.md)) |
 
+> `GiwaGuilds.sol` 소스는 `RULESET_VERSION=2` 문 전략표까지 포함한다. 위 공개 주소는
+> 아직 v1이므로 클라이언트는 버전 함수가 없으면 기존 동일 확률 표로 자동 폴백한다.
+> v2를 새로 배포·검증하고 주소를 갱신하기 전까지 라이브 원정 결과는 바뀌지 않는다.
+
 기존 Dojang(`0xd5077b…`)·UPNameRegistry(`0x091D00…`)는 외부 발행 컨트랙트로
 읽기만 한다 (`client/src/config/dojang.ts` · `client/src/wallet/upid.ts`).
 

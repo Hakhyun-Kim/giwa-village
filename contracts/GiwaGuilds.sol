@@ -8,6 +8,7 @@ pragma solidity ^0.8.24;
 ///   컨트랙트가 전 과정을 재계산·검증해 길드 기록에 확정한다.
 /// - 기록은 양도 불가 상태값 (토큰 아님 — 규제 안전선)
 contract GiwaGuilds {
+    uint8 public constant RULESET_VERSION = 2;
     struct DungeonState {
         uint32 epoch;
         uint16 floor; // 이번 주 확정 층
@@ -147,6 +148,7 @@ contract GiwaGuilds {
     }
 
     /// 문 결과 — 0 전진(+1) / 1 순풍(+2) / 2 함정. step은 원정 내 스텝 번호(0부터).
+    /// 돌문(안정) / 바람문(균형) / 도깨비문(승부)은 서로 다른 위험·보너스 표를 쓴다.
     function doorRoll(
         bytes32 seed,
         uint256 guildId,
@@ -155,9 +157,12 @@ contract GiwaGuilds {
         uint8 door
     ) public pure returns (uint8) {
         uint8 b = uint8(keccak256(abi.encodePacked(seed, guildId, attempt, step, door))[0]);
-        if (b < 154) return 0; // ≈60%
-        if (b < 192) return 1; // ≈15%
-        return 2; // ≈25%
+        // DOOR_TABLE: 218/218,141/192,64/154
+        uint16 safeLt = door == 0 ? 218 : door == 1 ? 141 : 64;
+        uint16 bonusLt = door == 0 ? 218 : door == 1 ? 192 : 154;
+        if (b < safeLt) return 0;
+        if (b < bonusLt) return 1;
+        return 2;
     }
 
     /// 귀환 — 문 선택 배열을 재계산·검증해 길드 기록에 확정한다.

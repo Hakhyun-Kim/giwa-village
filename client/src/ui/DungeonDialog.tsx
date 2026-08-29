@@ -3,6 +3,7 @@ import { useStore } from "../state/store";
 import { dungeonEnter, dungeonPick, dungeonBank } from "../net/colyseus";
 import { verifyLastRun } from "../chain/guilds";
 import { giwaSepolia, DUNGEON_URL } from "../config/giwa";
+import { DOOR_PROFILES } from "@giwa-village/core";
 
 type Proof = ReturnType<typeof verifyLastRun>;
 
@@ -27,11 +28,12 @@ export default function DungeonDialog() {
         ),
       )
     : undefined;
+  const myGuildId = myGuild?.id;
 
   // 다이얼로그가 열리면 원정 세션을 시작한다
   useEffect(() => {
-    if (open && myGuild) dungeonEnter();
-  }, [open, myGuild?.id]);
+    if (open && myGuildId) dungeonEnter();
+  }, [open, myGuildId]);
 
   if (!open) return null;
 
@@ -142,14 +144,32 @@ export default function DungeonDialog() {
                     : "문을 골라 오르세요 — 욕심은 함정을 부른다"}
                 </div>
                 <div className="dungeon-doors">
-                  {[0, 1, 2].map((d) => (
+                  {(dungeon.ruleset === 2
+                    ? DOOR_PROFILES
+                    : [
+                        { id: 0, emoji: "🚪", name: "왼쪽 문", style: "동일 확률" },
+                        { id: 1, emoji: "🚪", name: "가운데 문", style: "동일 확률" },
+                        { id: 2, emoji: "🚪", name: "오른쪽 문", style: "동일 확률" },
+                      ]
+                  ).map((door) => (
                     <button
-                      key={d}
+                      key={door.id}
                       className="dungeon-door"
                       disabled={dungeon.busy}
-                      onClick={() => dungeonPick(d)}
+                      onClick={() => dungeonPick(door.id)}
+                      title={`${door.name} · ${door.style}`}
                     >
-                      🚪
+                      <span>{door.emoji}</span>
+                      <b>{door.name}</b>
+                      <em>
+                        {dungeon.ruleset !== 2
+                          ? "함정 25% · 순풍 15%"
+                          : door.id === 0
+                          ? "함정 15%"
+                          : door.id === 1
+                            ? "함정 25% · 순풍 20%"
+                            : "함정 40% · 순풍 35%"}
+                      </em>
                     </button>
                   ))}
                 </div>

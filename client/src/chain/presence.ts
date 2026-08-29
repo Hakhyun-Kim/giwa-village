@@ -23,7 +23,15 @@ const READ_INTERVAL_MS = 2500;
 const PEER_STALE_MS = 60000;
 const MIN_BEACON_BALANCE = 0.0003; // 이보다 적으면 관전 모드 (읽기는 무료)
 
-const EMOTE_ICONS: Record<number, string> = { 1: "👋", 2: "🎁", 3: "🛍️" };
+const EMOTE_ICONS: Record<number, string> = {
+  1: "👋",
+  2: "🎁",
+  3: "🛍️",
+  5: "🙇",
+  6: "👏",
+  7: "💃",
+  8: "🍻",
+};
 
 interface Peer {
   x: number;

@@ -20,6 +20,8 @@ import WorkshopDialog from "./ui/WorkshopDialog";
 import QuestLog from "./ui/QuestLog";
 import Welcome from "./ui/Welcome";
 import TouchControls from "./ui/TouchControls";
+import SocialDialog from "./ui/SocialDialog";
+import DailyRequest from "./ui/DailyRequest";
 import { joinVillage, leaveVillage } from "./net/colyseus";
 import { useStore } from "./state/store";
 import { colorFromString, loadBurner } from "./wallet/wallet";
@@ -98,6 +100,7 @@ export default function App() {
       <Hud />
       <GiftFeed />
       <GiftDialog />
+      <SocialDialog />
       <StallDialog />
       <StallOpenDialog />
       <CouponBox />
@@ -107,6 +110,7 @@ export default function App() {
       <SellerLedgerDialog />
       <WorkshopDialog />
       <QuestLog />
+      <DailyRequest />
       <Welcome />
       <TouchControls />
     </div>

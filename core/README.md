@@ -14,6 +14,7 @@
 | 함수 | 대응 온체인 | 용도 |
 |---|---|---|
 | `doorRoll(seed, guildId, attempt, step, door)` | `GiwaGuilds.doorRoll` | 던전 문 1개 판정 (safe/bonus/trap) |
+| `legacyDoorRoll(...)` | 배포된 GiwaGuilds v1 | v2 주소 전환 전 동일 확률 문 호환 |
 | `resolveRun(seed, guildId, attempt, picks)` | `GiwaGuilds.settleRun` 재계산 루프 | 문 배열 전체 판정 — 옵티미스틱 시뮬 + 검증 |
 | `safeDoorAt(seed, guildId, attempt, step)` | — | 봇/AI 주민이 비-함정 문 선택 |
 | `strikeDamage(prevBlockHash, striker, ts, warmth, marketDay)` | `GiwaBoss.strike` | 보스 실제 데미지 재현 (검증기) |

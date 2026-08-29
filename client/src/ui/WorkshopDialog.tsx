@@ -14,6 +14,7 @@ import {
 } from "../chain/village";
 import { refreshSelfHonor } from "../chain/village";
 import { shortAddress } from "../wallet/wallet";
+import { recordDaily } from "../state/daily";
 
 const DEFAULT_PALETTE = [1, 3, 5, 8]; // 검정·홍·금·하늘
 
@@ -44,6 +45,8 @@ export default function WorkshopDialog() {
   }
 
   function paint(i: number) {
+    recordDaily("craft", 1, String(i));
+    window.dispatchEvent(new Event("giwa-workshop-paint"));
     setCells((c) => {
       const next = [...c];
       next[i] = pen;
