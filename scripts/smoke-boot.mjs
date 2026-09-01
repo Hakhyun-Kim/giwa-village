@@ -117,9 +117,11 @@ try {
   await page.waitForSelector("canvas", { timeout: 30000 });
   must(true, "3D 캔버스 부팅");
 
-  await page.waitForFunction(() => window.__giwa?.ready?.() === true, {
-    timeout: 60000,
-  });
+  await page.waitForFunction(
+    () => window.__giwa?.ready?.() === true,
+    undefined,
+    { timeout: 60000 },
+  );
   const snap = await page.evaluate(() => {
     const s = window.__giwa.state();
     return {
@@ -211,7 +213,9 @@ try {
 
   // 반입한 소리 조각이 실제로 로드되고, 모닥불이 **자리 소리**로 걸리는가.
   // (파일이 없으면 panner가 0이고, 그때도 마을은 조용해지지 않아야 한다)
-  await page.waitForFunction(() => window.__audio.panner > 0, { timeout: 15000 }).catch(() => {});
+  await page
+    .waitForFunction(() => window.__audio.panner > 0, undefined, { timeout: 15000 })
+    .catch(() => {});
   const fire = await page.evaluate(() => window.__audio.panner);
   must(fire > 0, `모닥불이 자리 소리로 걸린다 (panner ${fire}개)`);
 
@@ -354,7 +358,11 @@ try {
   // (전체 시연은 몇 분짜리라 게이트에 넣지 않는다 — 시작과 중단만 본다)
   await page.evaluate(() => localStorage.removeItem("giwa-welcome"));
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => window.__giwa?.ready?.() === true, { timeout: 60000 });
+  await page.waitForFunction(
+    () => window.__giwa?.ready?.() === true,
+    undefined,
+    { timeout: 60000 },
+  );
   await page.waitForSelector("button.welcome-yes", { timeout: 15000 });
   await page.locator("button.welcome-yes").click();
   const started = await page
@@ -380,7 +388,11 @@ try {
     localStorage.removeItem("giwa-quest-complete");
   });
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => window.__giwa?.ready?.() === true, { timeout: 60000 });
+  await page.waitForFunction(
+    () => window.__giwa?.ready?.() === true,
+    undefined,
+    { timeout: 60000 },
+  );
   await page.waitForSelector(".quest-paths", { timeout: 10000 });
   const paths = await page.locator(".quest-paths button").allTextContents();
   must(
@@ -397,7 +409,11 @@ try {
     localStorage.setItem("giwa-quest-complete", "1");
   });
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => window.__giwa?.ready?.() === true, { timeout: 60000 });
+  await page.waitForFunction(
+    () => window.__giwa?.ready?.() === true,
+    undefined,
+    { timeout: 60000 },
+  );
   await page.waitForSelector(".daily-card", { timeout: 10000 });
   const dailyChoices = await page.locator(".daily-choices button").count();
   must(dailyChoices === 3, `오늘의 장터 부탁이 세 선택지를 준다 (${dailyChoices}개)`);

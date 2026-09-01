@@ -14,12 +14,12 @@
         "fromBlock": 31040869
       },
       "honors": {
-        "address": "0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f",
-        "fromBlock": 31040874
+        "address": "0xeaa8674f1ba265cc6134d7cbc02e36310cc6a8e2",
+        "fromBlock": 34636627
       },
       "guilds": {
-        "address": "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638",
-        "fromBlock": 31040873
+        "address": "0xea796ffd37c4a1116d5c7d8f71448ac39ffaa31b",
+        "fromBlock": 34636623
       },
       "presence": {
         "address": "0x4d600672cefae3c8462f3d9feb2cb739001e7a93",
@@ -42,12 +42,12 @@
         "fromBlock": 31092098
       },
       "boss": {
-        "address": "0x8f50d882fc936f481f5f66d76156ebdf816cc6ae",
-        "fromBlock": 31119693
+        "address": "0x11dbe73cc9185cd4c7c278bedf7065ea6f459d63",
+        "fromBlock": 34636631
       },
       "profile": {
-        "address": "0xefe0e8d69661fd67f5fe2368f9b1f7ff6d395416",
-        "fromBlock": 31119697
+        "address": "0xf4c2a73ac75fd9fee1856cc2b7c929b1fc66fdf3",
+        "fromBlock": 34636632
       }
     }
   },

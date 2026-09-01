@@ -53,20 +53,20 @@ git 기록으로 되짚은 작업 기록. 🔍 **[AI Self-Audit](https://hakhyun
 
 설계 원칙은 **"가치는 전부 온체인, 존재감은 비컨"** — 거래·소유·기록은 컨트랙트가
 들고, 실시간 위치만 저장 없는 이벤트로 흘린다. 그래서 **게임 서버가 없어도 멀티플레이가
-된다.** 컨트랙트 10종 전부 Blockscout 검증됨 (카탈로그: [contracts/README.md](contracts/README.md)).
+된다.** 현행 주소와 소스 검증 상태는 [contracts/README.md](contracts/README.md)에 모아 둔다.
 
 | 컨트랙트 | 역할 |
 |---|---|
 | [**GiwaMarketV3**](https://sepolia-explorer.giwa.io/address/0x1f34506cda6619fc3124d68742a8fd5e7ba436e2) | 노점 레지스트리·에스크로(분쟁/환불)·ERC-1155 쿠폰(선물·소각) |
-| [**GiwaGuilds**](https://sepolia-explorer.giwa.io/address/0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638) | 길드·백층 던전 (블록해시 시드·settleRun 재계산 검증) |
+| [**GiwaGuilds**](https://sepolia-explorer.giwa.io/address/0xea796ffd37c4a1116d5c7d8f71448ac39ffaa31b) | 길드·백층 던전 v2 (문별 전략·블록해시 시드·settleRun 재계산 검증) |
 | [**GiwaPresence**](https://sepolia-explorer.giwa.io/address/0x4d600672cefae3c8462f3d9feb2cb739001e7a93) | 저장 없는 위치+속도 비컨 → 클라 데드레커닝 |
-| [**GiwaHonors**](https://sepolia-explorer.giwa.io/address/0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f) | 소울바운드 칭호 5종 (온체인 상태로 자격 검증) |
+| [**GiwaHonors**](https://sepolia-explorer.giwa.io/address/0xeaa8674f1ba265cc6134d7cbc02e36310cc6a8e2) | 소울바운드 칭호 5종 (v1 획득 상태 보존·온체인 자격 검증) |
 | [**GiwaOffers**](https://sepolia-explorer.giwa.io/address/0x534a29c47667b54eab6995517705cfbc423bb909) | 흥정 에스크로 (MarketV3 조합 즉시 체결) |
 | [**GiwaBoxes**](https://sepolia-explorer.giwa.io/address/0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e) | 랜덤박스(무료·블록해시)·소울바운드 장신구 8종 |
 | [**GiwaHearth**](https://sepolia-explorer.giwa.io/address/0xf780265d5f49abd8c7e5d18d81d33426f62f3365) | 모닥불 온기 (함께·장날 2배) |
 | [**GiwaWorkshop**](https://sepolia-explorer.giwa.io/address/0x664762337e529f853949a94e6ed50e6d8016c975) | 문양 공방 UGC (등록·판매·착용, 대금 창작자 직송) |
-| [**GiwaBoss**](https://sepolia-explorer.giwa.io/address/0x8f50d882fc936f481f5f66d76156ebdf816cc6ae) | 주간 도깨비 토벌 (개인·길드 기여, 소울바운드 전리품) |
-| [**GiwaProfile**](https://sepolia-explorer.giwa.io/address/0xefe0e8d69661fd67f5fe2368f9b1f7ff6d395416) | 소셜 프로필 애그리게이터 — 1콜로 길드·칭호·장신구·문양·온기·전리품 ([SDK](sdk/README.md) 진입점) |
+| [**GiwaBoss**](https://sepolia-explorer.giwa.io/address/0x11dbe73cc9185cd4c7c278bedf7065ea6f459d63) | 주간 도깨비 토벌 (개인·길드 기여, v1 전리품 보존) |
+| [**GiwaProfile**](https://sepolia-explorer.giwa.io/address/0xf4c2a73ac75fd9fee1856cc2b7c929b1fc66fdf3) | 소셜 프로필 애그리게이터 — v2 길드 묶음을 1콜로 집계 ([SDK](sdk/README.md) 진입점) |
 
 여기에 GIWA 네이티브 읽기 연동 둘이 붙는다 — **Dojang Verified Address**(업비트가
 신원을 보증한 상인 뱃지)와 **UP.ID 이름표**. 자세한 것은
@@ -92,7 +92,7 @@ git 기록으로 되짚은 작업 기록. 🔍 **[AI Self-Audit](https://hakhyun
 npm install
 npm run showcase   # 자동 시연 — 설명 없이 보기만 해도 전체 플로우가 지나간다
 npm run playtest   # 듀얼 테스트 창 (클라이언트 2개 + 봇 주민)
-npm test           # 로직 59건 · 체인 없음 · 1초 미만
+npm test           # 로직 62건 · 체인 없음 · 1초 미만
 ```
 
 ## 구조

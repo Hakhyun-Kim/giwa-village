@@ -14,6 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPublicClient, defineChain, formatEther, http, parseAbi } from "viem";
+import { deployedAddresses } from "./lib/deployments.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const RPC = process.env.GIWA_RPC_URL || "https://sepolia-rpc.giwa.io";
@@ -47,18 +48,7 @@ console.log("실가스 테스트 (GIWA Sepolia)\n");
 
 // ── 배포된 컨트랙트가 살아 있는가 ──────────────────────────────────────────
 
-const DEPLOYED = {
-  GiwaMarketV3: "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2",
-  GiwaGuilds: "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638",
-  GiwaPresence: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93",
-  GiwaHonors: "0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f",
-  GiwaOffers: "0x534a29c47667b54eab6995517705cfbc423bb909",
-  GiwaBoxes: "0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e",
-  GiwaHearth: "0xf780265d5f49abd8c7e5d18d81d33426f62f3365",
-  GiwaWorkshop: "0x664762337e529f853949a94e6ed50e6d8016c975",
-  GiwaBoss: "0x8f50d882fc936f481f5f66d76156ebdf816cc6ae",
-  GiwaProfile: "0xefe0e8d69661fd67f5fe2368f9b1f7ff6d395416",
-};
+const DEPLOYED = deployedAddresses;
 
 console.log("배포된 컨트랙트 (읽기 — 가스 0):");
 const id = await pub.getChainId();
@@ -68,6 +58,64 @@ for (const [name, addr] of Object.entries(DEPLOYED)) {
   const code = await pub.getBytecode({ address: addr });
   check(name, !!code && code !== "0x", `${(code?.length ?? 0) / 2 - 1} bytes`);
 }
+
+const WIRING_ABI = parseAbi([
+  "function RULESET_VERSION() view returns (uint8)",
+  "function guilds() view returns (address)",
+  "function honors() view returns (address)",
+  "function boss() view returns (address)",
+  "function legacyGuilds() view returns (address)",
+  "function legacyHonors() view returns (address)",
+  "function legacyBoss() view returns (address)",
+]);
+const ruleset = await pub.readContract({
+  address: DEPLOYED.GiwaGuilds,
+  abi: WIRING_ABI,
+  functionName: "RULESET_VERSION",
+});
+check("GiwaGuilds 규칙표", ruleset === 2, `v${ruleset}`);
+for (const name of ["GiwaHonors", "GiwaBoss", "GiwaProfile"]) {
+  const guilds = await pub.readContract({
+    address: DEPLOYED[name],
+    abi: WIRING_ABI,
+    functionName: "guilds",
+  });
+  check(`${name} → GiwaGuilds`, guilds.toLowerCase() === DEPLOYED.GiwaGuilds.toLowerCase());
+}
+const [profileHonors, profileBoss] = await Promise.all([
+  pub.readContract({ address: DEPLOYED.GiwaProfile, abi: WIRING_ABI, functionName: "honors" }),
+  pub.readContract({ address: DEPLOYED.GiwaProfile, abi: WIRING_ABI, functionName: "boss" }),
+]);
+check("GiwaProfile → GiwaHonors", profileHonors.toLowerCase() === DEPLOYED.GiwaHonors.toLowerCase());
+check("GiwaProfile → GiwaBoss", profileBoss.toLowerCase() === DEPLOYED.GiwaBoss.toLowerCase());
+
+const [legacyGuilds, legacyHonors, legacyBoss] = await Promise.all([
+  pub.readContract({ address: DEPLOYED.GiwaGuilds, abi: WIRING_ABI, functionName: "legacyGuilds" }),
+  pub.readContract({ address: DEPLOYED.GiwaHonors, abi: WIRING_ABI, functionName: "legacyHonors" }),
+  pub.readContract({ address: DEPLOYED.GiwaBoss, abi: WIRING_ABI, functionName: "legacyBoss" }),
+]);
+check("GiwaGuilds v1 이전 원본", legacyGuilds !== "0x0000000000000000000000000000000000000000");
+check("GiwaHonors v1 폴백", legacyHonors !== "0x0000000000000000000000000000000000000000");
+check("GiwaBoss v1 폴백", legacyBoss !== "0x0000000000000000000000000000000000000000");
+
+const GUILDS_ABI = parseAbi([
+  "struct DungeonState { uint32 epoch; uint16 floor; uint16 best; uint32 runs; uint32 attempts; }",
+  "struct Guild { string name; string emblem; address founder; uint64 createdAt; address[] members; DungeonState d; }",
+  "function allGuilds() view returns (Guild[])",
+]);
+const [oldGuilds, newGuilds] = await Promise.all([
+  pub.readContract({ address: legacyGuilds, abi: GUILDS_ABI, functionName: "allGuilds" }),
+  pub.readContract({ address: DEPLOYED.GiwaGuilds, abi: GUILDS_ABI, functionName: "allGuilds" }),
+]);
+const guildStatePreserved = oldGuilds.length === newGuilds.length && oldGuilds.every((old, i) => {
+  const fresh = newGuilds[i];
+  return old.name === fresh.name &&
+    old.founder.toLowerCase() === fresh.founder.toLowerCase() &&
+    old.members.map((address) => address.toLowerCase()).join(",") ===
+      fresh.members.map((address) => address.toLowerCase()).join(",") &&
+    fresh.d.best >= old.d.best && fresh.d.runs >= old.d.runs;
+});
+check("v1 길드·회원·최고 기록 보존", guildStatePreserved, `길드 ${newGuilds.length}개`);
 
 // ── 마을 상태 ──────────────────────────────────────────────────────────────
 
@@ -102,6 +150,20 @@ if (fs.existsSync(walletsFile)) {
   const A = JSON.parse(fs.readFileSync(walletsFile, "utf8")).find((w) => w.slot === "A");
   const bal = await pub.getBalance({ address: A.address });
   check("슬롯 A 잔액", bal > 0n, `${formatEther(bal)} ETH`);
+  const HONOR_ABI = parseAbi(["function profileOf(address) view returns (uint256,uint256)"]);
+  const TROPHY_ABI = parseAbi(["function trophiesOf(address) view returns (uint32)"]);
+  const [oldHonor, newHonor, oldTrophies, newTrophies] = await Promise.all([
+    pub.readContract({ address: legacyHonors, abi: HONOR_ABI, functionName: "profileOf", args: [A.address] }),
+    pub.readContract({ address: DEPLOYED.GiwaHonors, abi: HONOR_ABI, functionName: "profileOf", args: [A.address] }),
+    pub.readContract({ address: legacyBoss, abi: TROPHY_ABI, functionName: "trophiesOf", args: [A.address] }),
+    pub.readContract({ address: DEPLOYED.GiwaBoss, abi: TROPHY_ABI, functionName: "trophiesOf", args: [A.address] }),
+  ]);
+  check(
+    "슬롯 A 칭호 보유·장착 보존",
+    oldHonor[0] === newHonor[0] && oldHonor[1] === newHonor[1],
+    `mask ${newHonor[0]} · equipped ${newHonor[1]}`,
+  );
+  check("슬롯 A 전리품 보존", oldTrophies === newTrophies, `${newTrophies}개`);
   if (bal < 5000000000000000n) {
     console.log("     ↳ 여유가 적습니다. 실거래 테스트는 아끼고 test:local을 쓰세요.");
   }

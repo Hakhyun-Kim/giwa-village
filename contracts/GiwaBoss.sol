@@ -11,6 +11,10 @@ interface IBossHearth {
     function isMarketDay(uint256 ts) external pure returns (bool);
 }
 
+interface ILegacyBoss {
+    function trophiesOf(address who) external view returns (uint32);
+}
+
 /// 기와장터 도깨비 토벌 — 주간 보스, 함께 때려잡는 동시성 코업.
 /// 참가비 없음(가스만), 보상은 양도 불가 전리품 카운터 — 규제 안전선 유지.
 /// 데미지는 블록 해시 롤 + 온기 보정, 장날(토 21시 KST)엔 2배.
@@ -22,6 +26,7 @@ contract GiwaBoss {
 
     IBossGuilds public immutable guilds;
     IBossHearth public immutable hearth;
+    ILegacyBoss public immutable legacyBoss;
 
     mapping(uint256 => uint128) public dealtOf; // week => 누적 데미지
     mapping(uint256 => bool) public slainOf;
@@ -29,15 +34,22 @@ contract GiwaBoss {
     mapping(uint256 => mapping(uint256 => uint128)) public guildContribOf; // week => guildId
     mapping(uint256 => mapping(address => uint64)) private _lastStrike;
     mapping(uint256 => mapping(address => bool)) private _claimed;
-    mapping(address => uint32) public trophiesOf; // 양도 불가 전리품
+    mapping(address => uint32) private _earnedTrophies; // v2에서 얻은 양도 불가 전리품
 
     event Struck(address indexed who, uint256 indexed week, uint128 dmg, uint128 remaining);
     event Slain(uint256 indexed week, address indexed lastHitter);
     event Trophy(address indexed who, uint256 indexed week, uint32 trophies);
 
-    constructor(address guilds_, address hearth_) {
+    constructor(address guilds_, address hearth_, address legacyBoss_) {
         guilds = IBossGuilds(guilds_);
         hearth = IBossHearth(hearth_);
+        legacyBoss = ILegacyBoss(legacyBoss_);
+    }
+
+    /// 이전 배포본의 전리품과 v2 획득분을 합쳐 상태 이전 없이도 보존한다.
+    function trophiesOf(address who) public view returns (uint32) {
+        uint32 legacy = address(legacyBoss) == address(0) ? 0 : legacyBoss.trophiesOf(who);
+        return legacy + _earnedTrophies[who];
     }
 
     function week() public view returns (uint256) {
@@ -78,8 +90,8 @@ contract GiwaBoss {
         require(contribOf[w][msg.sender] > 0, "no-contrib");
         require(!_claimed[w][msg.sender], "claimed");
         _claimed[w][msg.sender] = true;
-        trophiesOf[msg.sender] += 1;
-        emit Trophy(msg.sender, w, trophiesOf[msg.sender]);
+        _earnedTrophies[msg.sender] += 1;
+        emit Trophy(msg.sender, w, trophiesOf(msg.sender));
     }
 
     function statusOf(address who)
@@ -102,6 +114,6 @@ contract GiwaBoss {
         nextStrikeAt = _lastStrike[w][who] + COOLDOWN;
         uint256 prev = w - 1;
         prevClaimable = slainOf[prev] && contribOf[prev][who] > 0 && !_claimed[prev][who];
-        trophies = trophiesOf[who];
+        trophies = trophiesOf(who);
     }
 }

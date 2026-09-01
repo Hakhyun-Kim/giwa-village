@@ -26,12 +26,32 @@ const cmd = argv.slice(sep + 1);
 // ── 실행 ───────────────────────────────────────────────────────────────────
 
 console.log(`[render] 실행: ${cmd.join(" ")}`);
-const run = spawnSync(cmd[0], cmd.slice(1), {
+let executable = cmd[0];
+let commandArgs = cmd.slice(1);
+if (process.platform === "win32" && ["npm", "npx"].includes(cmd[0])) {
+  // .cmd는 shell:false로 직접 실행할 수 없고, shell:true는 인자 주입 경고를 만든다.
+  // npm이 쓰는 JS 진입점을 node로 직접 실행하면 양쪽을 모두 피할 수 있다.
+  const bundled = path.join(
+    path.dirname(process.execPath),
+    "node_modules",
+    "npm",
+    "bin",
+    `${cmd[0]}-cli.js`,
+  );
+  const cli = cmd[0] === "npm" && process.env.npm_execpath
+    ? process.env.npm_execpath
+    : bundled;
+  if (!fs.existsSync(cli)) throw new Error(`${cmd[0]} CLI를 찾지 못했습니다: ${cli}`);
+  executable = process.execPath;
+  commandArgs = [cli, ...commandArgs];
+}
+const run = spawnSync(executable, commandArgs, {
   cwd: ROOT,
   encoding: "utf8",
-  shell: process.platform === "win32",
+  shell: false,
   env: { ...process.env, FORCE_COLOR: "0", NO_COLOR: "1" },
 });
+if (run.error) throw run.error;
 const raw = `${run.stdout ?? ""}${run.stderr ?? ""}`;
 // eslint-disable-next-line no-control-regex
 const lines = raw.replace(/\[[0-9;]*m/g, "").split(/\r?\n/);

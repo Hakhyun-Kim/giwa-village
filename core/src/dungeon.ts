@@ -55,26 +55,6 @@ export function doorRoll(
   return "trap";
 }
 
-/** 이미 배포된 GiwaGuilds v1 호환 판정. v2 주소 전환 전 라이브 원정만 이 표를 쓴다. */
-export function legacyDoorRoll(
-  seed: `0x${string}`,
-  guildId: bigint,
-  attempt: number,
-  step: number,
-  door: number,
-): DoorOutcome {
-  const digest = keccak256(
-    encodePacked(
-      ["bytes32", "uint256", "uint32", "uint256", "uint8"],
-      [seed, guildId, attempt, BigInt(step), door],
-    ),
-  );
-  const b = hexToBytes(digest)[0];
-  if (b < 154) return "safe";
-  if (b < 192) return "bonus";
-  return "trap";
-}
-
 export interface RunResult {
   /** 함정 없이 완주했는가 — settleRun 이 통과시키는 조건 그대로 */
   ok: boolean;
@@ -103,23 +83,6 @@ export function resolveRun(
     steps.push(o);
     if (o === "trap") return { ok: false, climbed, trapAt: i, steps };
     climbed += OUTCOME_CLIMB[o];
-  }
-  return { ok: true, climbed, trapAt: null, steps };
-}
-
-export function resolveRunLegacy(
-  seed: `0x${string}`,
-  guildId: bigint,
-  attempt: number,
-  picks: number[],
-): RunResult {
-  const steps: DoorOutcome[] = [];
-  let climbed = 0;
-  for (let i = 0; i < picks.length; i++) {
-    const outcome = legacyDoorRoll(seed, guildId, attempt, i, picks[i]);
-    steps.push(outcome);
-    if (outcome === "trap") return { ok: false, climbed, trapAt: i, steps };
-    climbed += OUTCOME_CLIMB[outcome];
   }
   return { ok: true, climbed, trapAt: null, steps };
 }

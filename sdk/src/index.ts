@@ -26,15 +26,15 @@ export const giwaSepolia = defineChain({
 /** 배포 주소 (GIWA Sepolia · 전부 Blockscout Verified) */
 export const ADDRESSES = {
   market: "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2",
-  guilds: "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638",
+  guilds: "0xea796ffd37c4a1116d5c7d8f71448ac39ffaa31b",
   presence: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93",
-  honors: "0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f",
+  honors: "0xeaa8674f1ba265cc6134d7cbc02e36310cc6a8e2",
   offers: "0x534a29c47667b54eab6995517705cfbc423bb909",
   boxes: "0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e",
   hearth: "0xf780265d5f49abd8c7e5d18d81d33426f62f3365",
   workshop: "0x664762337e529f853949a94e6ed50e6d8016c975",
-  boss: "0x8f50d882fc936f481f5f66d76156ebdf816cc6ae",
-  profile: "0xefe0e8d69661fd67f5fe2368f9b1f7ff6d395416",
+  boss: "0x11dbe73cc9185cd4c7c278bedf7065ea6f459d63",
+  profile: "0xf4c2a73ac75fd9fee1856cc2b7c929b1fc66fdf3",
 } as const;
 
 const PROFILE_ABI = parseAbi([

@@ -14,11 +14,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPublicClient, createWalletClient, defineChain, http, parseAbi } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { HEARTH_ADDRESS } from "../client/src/config/hearth.ts";
+import { BOSS_ADDRESS } from "../client/src/config/boss.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const RPC = process.env.GIWA_RPC_URL || "https://sepolia-rpc.giwa.io";
-const HEARTH = process.env.GIWA_HEARTH_ADDRESS || "0xf780265d5f49abd8c7e5d18d81d33426f62f3365";
-const BOSS = process.env.GIWA_BOSS_ADDRESS || "0x8f50d882fc936f481f5f66d76156ebdf816cc6ae";
+const HEARTH = process.env.GIWA_HEARTH_ADDRESS || HEARTH_ADDRESS;
+const BOSS = process.env.GIWA_BOSS_ADDRESS || BOSS_ADDRESS;
 const LIVE = process.argv.includes("--live");
 
 const chain = defineChain({

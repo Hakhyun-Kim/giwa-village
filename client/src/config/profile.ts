@@ -1,7 +1,7 @@
 // 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
-export const PROFILE_ADDRESS = "0xefe0e8d69661fd67f5fe2368f9b1f7ff6d395416" as `0x${string}`;
-export const PROFILE_DEPLOY_TX = "0x32c0b8949637f92a1b809d71753e08d8c09b9ab8563c081af0a4b97d35e43af3";
-export const PROFILE_DEPLOY_BLOCK = 31119697n;
+export const PROFILE_ADDRESS = "0xf4c2a73ac75fd9fee1856cc2b7c929b1fc66fdf3" as `0x${string}`;
+export const PROFILE_DEPLOY_TX = "0x4f2c32d4ecc4ade796610fb880cb9efc2baf57a9498cc585818846cb1c3c9652";
+export const PROFILE_DEPLOY_BLOCK = 34636632n;
 export const PROFILE_ABI = [
   {
     "inputs": [

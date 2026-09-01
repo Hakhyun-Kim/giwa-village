@@ -144,14 +144,7 @@ export default function DungeonDialog() {
                     : "문을 골라 오르세요 — 욕심은 함정을 부른다"}
                 </div>
                 <div className="dungeon-doors">
-                  {(dungeon.ruleset === 2
-                    ? DOOR_PROFILES
-                    : [
-                        { id: 0, emoji: "🚪", name: "왼쪽 문", style: "동일 확률" },
-                        { id: 1, emoji: "🚪", name: "가운데 문", style: "동일 확률" },
-                        { id: 2, emoji: "🚪", name: "오른쪽 문", style: "동일 확률" },
-                      ]
-                  ).map((door) => (
+                  {DOOR_PROFILES.map((door) => (
                     <button
                       key={door.id}
                       className="dungeon-door"
@@ -162,9 +155,7 @@ export default function DungeonDialog() {
                       <span>{door.emoji}</span>
                       <b>{door.name}</b>
                       <em>
-                        {dungeon.ruleset !== 2
-                          ? "함정 25% · 순풍 15%"
-                          : door.id === 0
+                        {door.id === 0
                           ? "함정 15%"
                           : door.id === 1
                             ? "함정 25% · 순풍 20%"

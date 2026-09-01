@@ -298,6 +298,15 @@ it("세 문 모두 귀환/전진 손익분기가 있고 위험·보너스가 서
   console.log(`     손익분기 돌 ${breaks[0].toFixed(2)} · 바람 ${breaks[1].toFixed(2)} · 도깨비 ${breaks[2].toFixed(2)}층`);
 });
 
+it("첫 원정 시드는 지연될 수 있는 RPC 조회보다 영수증을 우선한다", () => {
+  const chainGuilds = fs.readFileSync(
+    path.join(ROOT, "client", "src", "chain", "guilds.ts"),
+    "utf8",
+  );
+  ok(/eventName\s*===\s*"SeedPinned"/.test(chainGuilds), "SeedPinned 영수증을 읽지 않습니다");
+  ok(/receiptSeed\s*&&\s*receiptSeedBlock/.test(chainGuilds), "영수증 시드 우선 분기가 없습니다");
+});
+
 // ── 풍류(배경음·효과음) ───────────────────────────────────────────────────
 // 소리는 귀로만 확인되므로 규칙을 코드 밖에 두면 아무도 못 지킨다. track.ts는
 // Web Audio를 모르는 순수 표라 여기서 그대로 불러 검사한다.
@@ -787,6 +796,42 @@ const rebuilt = serializeWorld(await buildWorld());
 it("world.json이 지금 배치표와 일치한다 (굽는 것을 잊으면 여기서 걸린다)", () => {
   ok(rebuilt === worldText, "world.json이 낡았습니다 — npm run export-world 를 실행하세요");
   eq(world.version, WORLD_VERSION, "판: ");
+});
+
+it("공개 컨트랙트 표가 현재 배포 주소를 가리킨다", () => {
+  const docs = ["README.md", "contracts/README.md", "client/public/tech.html"].map((rel) => ({
+    rel,
+    text: fs.readFileSync(path.join(ROOT, ...rel.split("/")), "utf8").toLowerCase(),
+  }));
+  for (const [name, deployment] of Object.entries(world.chain.contracts)) {
+    for (const doc of docs) {
+      ok(doc.text.includes(deployment.address.toLowerCase()), `${doc.rel}: ${name} 주소가 낡았습니다`);
+    }
+  }
+});
+
+it("SDK·MCP가 현재 배포 주소를 한 벌로 쓴다", () => {
+  const consumers = [
+    {
+      name: "SDK",
+      source: fs.readFileSync(path.join(ROOT, "sdk", "src", "index.ts"), "utf8").toLowerCase(),
+      contracts: Object.keys(world.chain.contracts),
+    },
+    {
+      name: "MCP",
+      source: fs.readFileSync(path.join(ROOT, "mcp", "src", "village.mjs"), "utf8").toLowerCase(),
+      contracts: ["market", "guilds", "presence", "offers", "hearth", "boss", "profile"],
+    },
+  ];
+  for (const consumer of consumers) {
+    for (const name of consumer.contracts) {
+      const deployment = world.chain.contracts[name];
+      ok(
+        consumer.source.includes(deployment.address.toLowerCase()),
+        `${consumer.name}: ${name} 주소가 낡았습니다`,
+      );
+    }
+  }
 });
 
 it("world.json만 읽고 걸어도 같은 벽에 막힌다", () => {

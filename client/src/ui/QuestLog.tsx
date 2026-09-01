@@ -176,6 +176,14 @@ function savedStep(): number {
   }
 }
 
+function saveValue(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* 저장소가 막혀도 현재 세션의 온보딩은 계속된다 */
+  }
+}
+
 function savedPath(step: number): QuestPath | null {
   try {
     const value = localStorage.getItem(PATH_KEY);
@@ -241,8 +249,8 @@ export default function QuestLog() {
         const next = step + 1;
         setJustDone(false);
         setStep(next);
-        localStorage.setItem(STORAGE_KEY, String(next));
-        if (next >= quests.length) localStorage.setItem(COMPLETE_KEY, "1");
+        saveValue(STORAGE_KEY, String(next));
+        if (next >= quests.length) saveValue(COMPLETE_KEY, "1");
         window.dispatchEvent(new Event("giwa-quest"));
         setExpanded(true);
       }, 1700);
@@ -254,16 +262,16 @@ export default function QuestLog() {
 
   function skip() {
     setStep(900);
-    localStorage.setItem(STORAGE_KEY, "900");
-    localStorage.setItem(COMPLETE_KEY, "1");
+    saveValue(STORAGE_KEY, "900");
+    saveValue(COMPLETE_KEY, "1");
     window.dispatchEvent(new Event("giwa-quest"));
   }
 
   function choosePath(next: QuestPath) {
     setPath(next);
-    localStorage.setItem(PATH_KEY, next);
-    localStorage.setItem(VERSION_KEY, "2");
-    localStorage.setItem(STORAGE_KEY, String(FREE_QUESTS.length));
+    saveValue(PATH_KEY, next);
+    saveValue(VERSION_KEY, "2");
+    saveValue(STORAGE_KEY, String(FREE_QUESTS.length));
   }
 
   if (choosing) {

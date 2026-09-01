@@ -1,7 +1,7 @@
 // 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
-export const BOSS_ADDRESS = "0x8f50d882fc936f481f5f66d76156ebdf816cc6ae" as `0x${string}`;
-export const BOSS_DEPLOY_TX = "0x0f86db07a8c295f9b45c038cfa433f8e9364c6e6f25ee0eaa2ad9e4ca2f6f721";
-export const BOSS_DEPLOY_BLOCK = 31119693n;
+export const BOSS_ADDRESS = "0x11dbe73cc9185cd4c7c278bedf7065ea6f459d63" as `0x${string}`;
+export const BOSS_DEPLOY_TX = "0x0ec62e8ab7d86cb5da973fa844f283fe32508d80c7b3bbb6eab471bedb328106";
+export const BOSS_DEPLOY_BLOCK = 34636631n;
 export const BOSS_ABI = [
   {
     "inputs": [
@@ -13,6 +13,11 @@ export const BOSS_ABI = [
       {
         "internalType": "address",
         "name": "hearth_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "legacyBoss_",
         "type": "address"
       }
     ],
@@ -240,6 +245,19 @@ export const BOSS_ABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "legacyBoss",
+    "outputs": [
+      {
+        "internalType": "contract ILegacyBoss",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -324,7 +342,7 @@ export const BOSS_ABI = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "who",
         "type": "address"
       }
     ],

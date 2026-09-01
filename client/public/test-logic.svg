@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="602" height="2212" viewBox="0 0 602 2212" role="img" aria-label="npm test — 로직 검증 · 체인 없음 실행 결과">
-  <rect width="602" height="2212" rx="12" fill="#17141D"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="602" height="2275" viewBox="0 0 602 2275" role="img" aria-label="npm test — 로직 검증 · 체인 없음 실행 결과">
+  <rect width="602" height="2275" rx="12" fill="#17141D"/>
   <rect width="602" height="34" rx="12" fill="#241F2E"/>
   <rect y="22" width="602" height="12" fill="#241F2E"/>
   <circle cx="20" cy="17" r="5" fill="#DD6B5A"/>
@@ -48,68 +48,71 @@
   <text x="38.3" y="808" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="808" fill="#EDE7DA">세 구현의 경계값이 같다</text>
   <text x="22.0" y="829" fill="#B4A99A">     손익분기 돌 5.74 · 바람 3.80 · 도깨비 2.39층</text>
   <text x="38.3" y="850" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="850" fill="#EDE7DA">세 문 모두 귀환/전진 손익분기가 있고 위험·보너스가 서로 다르다</text>
-  <text x="22.0" y="871" fill="#B4A99A"></text>
-  <text x="22.0" y="892" fill="#C79A3F" font-weight="600">풍류 — 상태가 트랙을 정하고, 임계는 화면과 하나다</text>
-  <text x="38.3" y="913" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="913" fill="#EDE7DA">도깨비 곁에서는 트랙이 바뀐다</text><text x="279.9" y="913" fill="#8E8478"> — 빨라지고 북이 붙는다</text>
-  <text x="22.0" y="934" fill="#B4A99A">     스텝 0.34s → 0.22s</text>
-  <text x="38.3" y="955" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="955" fill="#EDE7DA">깎을수록 빨라진다 (진행도가 템포를 올린다)</text>
-  <text x="38.3" y="976" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="976" fill="#EDE7DA">심장박동은 이름표가 붉어지는 바로 그 순간에 켜진다</text>
-  <text x="38.3" y="997" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="997" fill="#EDE7DA">그리는 쪽(Village.tsx)이 같은 임계 함수를 쓴다</text>
-  <text x="22.0" y="1018" fill="#B4A99A"></text>
-  <text x="22.0" y="1039" fill="#C79A3F" font-weight="600">효과음 — 마을이 삑삑거리지 않게 하는 규율</text>
-  <text x="22.0" y="1060" fill="#B4A99A">     타격 최소 간격 70ms</text>
-  <text x="38.3" y="1081" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1081" fill="#EDE7DA">타격 레이트 리밋이 45~70ms 안에 있다 (연타가 기관총이 되지 않게)</text>
-  <text x="38.3" y="1102" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1102" fill="#EDE7DA">효과음이 오디오 컨텍스트를 새로 열지 않는다</text>
-  <text x="22.0" y="1123" fill="#B4A99A">     낱개 9개 + 묶음 2종 확인</text>
-  <text x="38.3" y="1144" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1144" fill="#EDE7DA">반입한 소리가 가리키는 파일이 실제로 있다</text>
-  <text x="38.3" y="1165" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1165" fill="#EDE7DA">자동으로 나가는 전송(프레즌스 비컨)은 소리를 내지 않는다</text>
-  <text x="22.0" y="1186" fill="#B4A99A"></text>
-  <text x="22.0" y="1207" fill="#C79A3F" font-weight="600">에셋 원장 — 출처 없는 바이너리는 들어올 수 없다</text>
-  <text x="38.3" y="1228" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1228" fill="#EDE7DA">client/src에는 여전히 바이너리를 두지 않는다 (에셋은 public 아래)</text>
-  <text x="38.3" y="1249" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1249" fill="#EDE7DA">public의 모든 에셋이 원장에 적힌 자리 안에 있다</text>
-  <text x="22.0" y="1270" fill="#B4A99A">     6건 · CC0-1.0 · CC-BY-4.0 · OFL-1.1</text>
-  <text x="38.3" y="1291" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1291" fill="#EDE7DA">라이선스가 허용 목록(CC0·CC-BY·OFL) 안에 있다</text>
-  <text x="38.3" y="1312" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1312" fill="#EDE7DA">표기가 필요한 라이선스는 저작자 이름이 있다</text>
-  <text x="22.0" y="1333" fill="#B4A99A">     4,042KB / 20,480KB</text>
-  <text x="38.3" y="1354" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1354" fill="#EDE7DA">용량이 예산 안에 있다</text>
-  <text x="38.3" y="1375" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1375" fill="#EDE7DA">사람이 읽는 원장(ASSETS.md)이 최신이다</text>
-  <text x="22.0" y="1396" fill="#B4A99A"></text>
-  <text x="22.0" y="1417" fill="#C79A3F" font-weight="600">HUD — .hud는 pointer-events:none 이라 버튼마다 되살려야 한다</text>
-  <text x="22.0" y="1438" fill="#B4A99A">     검사한 버튼 클래스: hud-btn, hud-sound</text>
-  <text x="38.3" y="1459" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1459" fill="#EDE7DA">HUD의 &lt;button&gt;에 붙은 클래스가 pointer-events:auto 를 가진다</text>
-  <text x="22.0" y="1480" fill="#B4A99A"></text>
-  <text x="22.0" y="1501" fill="#C79A3F" font-weight="600">재미 루프 — 무료 소셜 행동과 매일 하나의 선택</text>
-  <text x="38.3" y="1522" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1522" fill="#EDE7DA">이모트 5종이 서버/체인 비컨과 같은 아이콘 표를 쓴다</text>
-  <text x="38.3" y="1543" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1543" fill="#EDE7DA">무료 첫걸음 뒤 장사꾼·원정대·장인의 길을 고른다</text>
-  <text x="38.3" y="1564" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1564" fill="#EDE7DA">오늘의 부탁은 KST 날짜를 쓰고 세 무료 행동 중 하나다</text>
-  <text x="22.0" y="1585" fill="#B4A99A"></text>
-  <text x="22.0" y="1606" fill="#C79A3F" font-weight="600">마을 충돌 — 로컬에서만, 배치표 한 곳에서</text>
-  <text x="38.3" y="1627" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1627" fill="#EDE7DA">한옥 안으로 걸어 들어가지 못한다</text>
-  <text x="38.3" y="1648" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1648" fill="#EDE7DA">분수 안에 들어가지 못한다</text>
-  <text x="38.3" y="1669" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1669" fill="#EDE7DA">벽에 비스듬히 부딪히면 미끄러진다 (제자리에 붙지 않는다)</text>
-  <text x="38.3" y="1690" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1690" fill="#EDE7DA">상호작용 지점은 막지 않는다</text><text x="264.9" y="1690" fill="#8E8478"> — 모닥불·도깨비·포털에 닿는다</text>
-  <text x="38.3" y="1711" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1711" fill="#EDE7DA">첫 등장 자리(0, 5)와 광장이 비어 있다</text>
-  <text x="38.3" y="1732" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1732" fill="#EDE7DA">마을 밖으로 나가지 못한다</text>
-  <text x="38.3" y="1753" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1753" fill="#EDE7DA">노점은 열려 있을 때만 막는다 (닫히면 유령 벽이 남지 않는다)</text>
-  <text x="22.0" y="1774" fill="#B4A99A">     콜라이더 38개 (한옥 6채 포함)</text>
-  <text x="38.3" y="1795" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1795" fill="#EDE7DA">그리는 쪽(Village.tsx)이 같은 배치표를 읽는다</text>
-  <text x="22.0" y="1816" fill="#B4A99A"></text>
-  <text x="22.0" y="1837" fill="#C79A3F" font-weight="600">주민 산책 — 벽을 비비지도, 한 틱에 튀지도 않는다</text>
-  <text x="22.0" y="1858" fill="#B4A99A">     집이 노점·건물과 겹치는 주민 4/6명 — 세울 때 밖으로</text>
-  <text x="38.3" y="1879" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1879" fill="#EDE7DA">상인은 자기 좌판 안에 서 있다</text><text x="281.2" y="1879" fill="#8E8478"> — 그래서 세울 때 한 번 밖으로 내보낸다</text>
-  <text x="38.3" y="1900" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1900" fill="#EDE7DA">목적지는 갈 수 있는 자리만 고른다</text>
-  <text x="22.0" y="1921" fill="#B4A99A">     1분에 23~29m 걷고, 최대 보폭 0.120m</text>
-  <text x="38.3" y="1942" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1942" fill="#EDE7DA">1분을 걸어도 한 틱에 한 걸음보다 더 가지 않는다 (튀지 않는다)</text>
-  <text x="22.0" y="1963" fill="#B4A99A"></text>
-  <text x="22.0" y="1984" fill="#C79A3F" font-weight="600">공개 프로토콜 — 남이 만든 클라이언트도 같은 마을에 선다</text>
-  <text x="38.3" y="2005" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2005" fill="#EDE7DA">world.json이 지금 배치표와 일치한다 (굽는 것을 잊으면 여기서 걸린다)</text>
-  <text x="22.0" y="2026" fill="#B4A99A">     막힌 지점 2118개 · 최대 오차 0.418mm</text>
-  <text x="38.3" y="2047" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2047" fill="#EDE7DA">world.json만 읽고 걸어도 같은 벽에 막힌다</text>
-  <text x="22.0" y="2068" fill="#B4A99A">     메시지 24종 전부 문서에 있음</text>
-  <text x="38.3" y="2089" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2089" fill="#EDE7DA">PROTOCOL.md가 서버의 메시지를 하나도 빠뜨리지 않는다</text>
-  <text x="38.3" y="2110" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2110" fill="#EDE7DA">문서가 가리키는 상수가 실제 서버 값과 같다</text>
-  <text x="22.0" y="2131" fill="#B4A99A"></text>
-  <text x="22.0" y="2152" fill="#392F44">──────────────────────────────────────────────────</text>
-  <text x="22.0" y="2173" fill="#3FAE73" font-weight="700">전부 통과 (59건) · 가스 0</text>
+  <text x="38.3" y="871" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="871" fill="#EDE7DA">첫 원정 시드는 지연될 수 있는 RPC 조회보다 영수증을 우선한다</text>
+  <text x="22.0" y="892" fill="#B4A99A"></text>
+  <text x="22.0" y="913" fill="#C79A3F" font-weight="600">풍류 — 상태가 트랙을 정하고, 임계는 화면과 하나다</text>
+  <text x="38.3" y="934" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="934" fill="#EDE7DA">도깨비 곁에서는 트랙이 바뀐다</text><text x="279.9" y="934" fill="#8E8478"> — 빨라지고 북이 붙는다</text>
+  <text x="22.0" y="955" fill="#B4A99A">     스텝 0.34s → 0.22s</text>
+  <text x="38.3" y="976" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="976" fill="#EDE7DA">깎을수록 빨라진다 (진행도가 템포를 올린다)</text>
+  <text x="38.3" y="997" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="997" fill="#EDE7DA">심장박동은 이름표가 붉어지는 바로 그 순간에 켜진다</text>
+  <text x="38.3" y="1018" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1018" fill="#EDE7DA">그리는 쪽(Village.tsx)이 같은 임계 함수를 쓴다</text>
+  <text x="22.0" y="1039" fill="#B4A99A"></text>
+  <text x="22.0" y="1060" fill="#C79A3F" font-weight="600">효과음 — 마을이 삑삑거리지 않게 하는 규율</text>
+  <text x="22.0" y="1081" fill="#B4A99A">     타격 최소 간격 70ms</text>
+  <text x="38.3" y="1102" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1102" fill="#EDE7DA">타격 레이트 리밋이 45~70ms 안에 있다 (연타가 기관총이 되지 않게)</text>
+  <text x="38.3" y="1123" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1123" fill="#EDE7DA">효과음이 오디오 컨텍스트를 새로 열지 않는다</text>
+  <text x="22.0" y="1144" fill="#B4A99A">     낱개 9개 + 묶음 2종 확인</text>
+  <text x="38.3" y="1165" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1165" fill="#EDE7DA">반입한 소리가 가리키는 파일이 실제로 있다</text>
+  <text x="38.3" y="1186" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1186" fill="#EDE7DA">자동으로 나가는 전송(프레즌스 비컨)은 소리를 내지 않는다</text>
+  <text x="22.0" y="1207" fill="#B4A99A"></text>
+  <text x="22.0" y="1228" fill="#C79A3F" font-weight="600">에셋 원장 — 출처 없는 바이너리는 들어올 수 없다</text>
+  <text x="38.3" y="1249" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1249" fill="#EDE7DA">client/src에는 여전히 바이너리를 두지 않는다 (에셋은 public 아래)</text>
+  <text x="38.3" y="1270" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1270" fill="#EDE7DA">public의 모든 에셋이 원장에 적힌 자리 안에 있다</text>
+  <text x="22.0" y="1291" fill="#B4A99A">     6건 · CC0-1.0 · CC-BY-4.0 · OFL-1.1</text>
+  <text x="38.3" y="1312" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1312" fill="#EDE7DA">라이선스가 허용 목록(CC0·CC-BY·OFL) 안에 있다</text>
+  <text x="38.3" y="1333" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1333" fill="#EDE7DA">표기가 필요한 라이선스는 저작자 이름이 있다</text>
+  <text x="22.0" y="1354" fill="#B4A99A">     4,042KB / 20,480KB</text>
+  <text x="38.3" y="1375" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1375" fill="#EDE7DA">용량이 예산 안에 있다</text>
+  <text x="38.3" y="1396" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1396" fill="#EDE7DA">사람이 읽는 원장(ASSETS.md)이 최신이다</text>
+  <text x="22.0" y="1417" fill="#B4A99A"></text>
+  <text x="22.0" y="1438" fill="#C79A3F" font-weight="600">HUD — .hud는 pointer-events:none 이라 버튼마다 되살려야 한다</text>
+  <text x="22.0" y="1459" fill="#B4A99A">     검사한 버튼 클래스: hud-btn, hud-sound</text>
+  <text x="38.3" y="1480" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1480" fill="#EDE7DA">HUD의 &lt;button&gt;에 붙은 클래스가 pointer-events:auto 를 가진다</text>
+  <text x="22.0" y="1501" fill="#B4A99A"></text>
+  <text x="22.0" y="1522" fill="#C79A3F" font-weight="600">재미 루프 — 무료 소셜 행동과 매일 하나의 선택</text>
+  <text x="38.3" y="1543" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1543" fill="#EDE7DA">이모트 5종이 서버/체인 비컨과 같은 아이콘 표를 쓴다</text>
+  <text x="38.3" y="1564" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1564" fill="#EDE7DA">무료 첫걸음 뒤 장사꾼·원정대·장인의 길을 고른다</text>
+  <text x="38.3" y="1585" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1585" fill="#EDE7DA">오늘의 부탁은 KST 날짜를 쓰고 세 무료 행동 중 하나다</text>
+  <text x="22.0" y="1606" fill="#B4A99A"></text>
+  <text x="22.0" y="1627" fill="#C79A3F" font-weight="600">마을 충돌 — 로컬에서만, 배치표 한 곳에서</text>
+  <text x="38.3" y="1648" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1648" fill="#EDE7DA">한옥 안으로 걸어 들어가지 못한다</text>
+  <text x="38.3" y="1669" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1669" fill="#EDE7DA">분수 안에 들어가지 못한다</text>
+  <text x="38.3" y="1690" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1690" fill="#EDE7DA">벽에 비스듬히 부딪히면 미끄러진다 (제자리에 붙지 않는다)</text>
+  <text x="38.3" y="1711" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1711" fill="#EDE7DA">상호작용 지점은 막지 않는다</text><text x="264.9" y="1711" fill="#8E8478"> — 모닥불·도깨비·포털에 닿는다</text>
+  <text x="38.3" y="1732" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1732" fill="#EDE7DA">첫 등장 자리(0, 5)와 광장이 비어 있다</text>
+  <text x="38.3" y="1753" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1753" fill="#EDE7DA">마을 밖으로 나가지 못한다</text>
+  <text x="38.3" y="1774" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1774" fill="#EDE7DA">노점은 열려 있을 때만 막는다 (닫히면 유령 벽이 남지 않는다)</text>
+  <text x="22.0" y="1795" fill="#B4A99A">     콜라이더 38개 (한옥 6채 포함)</text>
+  <text x="38.3" y="1816" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1816" fill="#EDE7DA">그리는 쪽(Village.tsx)이 같은 배치표를 읽는다</text>
+  <text x="22.0" y="1837" fill="#B4A99A"></text>
+  <text x="22.0" y="1858" fill="#C79A3F" font-weight="600">주민 산책 — 벽을 비비지도, 한 틱에 튀지도 않는다</text>
+  <text x="22.0" y="1879" fill="#B4A99A">     집이 노점·건물과 겹치는 주민 4/6명 — 세울 때 밖으로</text>
+  <text x="38.3" y="1900" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1900" fill="#EDE7DA">상인은 자기 좌판 안에 서 있다</text><text x="281.2" y="1900" fill="#8E8478"> — 그래서 세울 때 한 번 밖으로 내보낸다</text>
+  <text x="38.3" y="1921" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1921" fill="#EDE7DA">목적지는 갈 수 있는 자리만 고른다</text>
+  <text x="22.0" y="1942" fill="#B4A99A">     1분에 23~29m 걷고, 최대 보폭 0.120m</text>
+  <text x="38.3" y="1963" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1963" fill="#EDE7DA">1분을 걸어도 한 틱에 한 걸음보다 더 가지 않는다 (튀지 않는다)</text>
+  <text x="22.0" y="1984" fill="#B4A99A"></text>
+  <text x="22.0" y="2005" fill="#C79A3F" font-weight="600">공개 프로토콜 — 남이 만든 클라이언트도 같은 마을에 선다</text>
+  <text x="38.3" y="2026" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2026" fill="#EDE7DA">world.json이 지금 배치표와 일치한다 (굽는 것을 잊으면 여기서 걸린다)</text>
+  <text x="38.3" y="2047" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2047" fill="#EDE7DA">공개 컨트랙트 표가 현재 배포 주소를 가리킨다</text>
+  <text x="38.3" y="2068" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2068" fill="#EDE7DA">SDK·MCP가 현재 배포 주소를 한 벌로 쓴다</text>
+  <text x="22.0" y="2089" fill="#B4A99A">     막힌 지점 2118개 · 최대 오차 0.418mm</text>
+  <text x="38.3" y="2110" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2110" fill="#EDE7DA">world.json만 읽고 걸어도 같은 벽에 막힌다</text>
+  <text x="22.0" y="2131" fill="#B4A99A">     메시지 24종 전부 문서에 있음</text>
+  <text x="38.3" y="2152" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2152" fill="#EDE7DA">PROTOCOL.md가 서버의 메시지를 하나도 빠뜨리지 않는다</text>
+  <text x="38.3" y="2173" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="2173" fill="#EDE7DA">문서가 가리키는 상수가 실제 서버 값과 같다</text>
+  <text x="22.0" y="2194" fill="#B4A99A"></text>
+  <text x="22.0" y="2215" fill="#392F44">──────────────────────────────────────────────────</text>
+  <text x="22.0" y="2236" fill="#3FAE73" font-weight="700">전부 통과 (62건) · 가스 0</text>
   </g>
 </svg>

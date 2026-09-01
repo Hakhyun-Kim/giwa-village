@@ -1,6 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+interface ILegacyGiwaGuilds {
+    struct DungeonState {
+        uint32 epoch;
+        uint16 floor;
+        uint16 best;
+        uint32 runs;
+        uint32 attempts;
+    }
+
+    struct Guild {
+        string name;
+        string emblem;
+        address founder;
+        uint64 createdAt;
+        address[] members;
+        DungeonState d;
+    }
+
+    function allGuilds() external view returns (Guild[] memory);
+}
+
 /// 기와장터 길드 + 백층 던전 (비동기 코업) — 완전 온체인 정산
 /// - 시드: 주차(에포크)마다 첫 원정 시점의 직전 블록 해시로 고정 (검증 가능)
 /// - 문 결과: keccak(시드, 길드, 원정회차, 스텝, 문) — 서버도 플레이어도 조작 불가
@@ -9,6 +30,7 @@ pragma solidity ^0.8.24;
 /// - 기록은 양도 불가 상태값 (토큰 아님 — 규제 안전선)
 contract GiwaGuilds {
     uint8 public constant RULESET_VERSION = 2;
+    address public immutable legacyGuilds;
     struct DungeonState {
         uint32 epoch;
         uint16 floor; // 이번 주 확정 층
@@ -37,6 +59,8 @@ contract GiwaGuilds {
     mapping(uint256 => mapping(uint32 => bool)) private _attemptSettled;
     // 회차 입장자 — 본인이 시작한 원정만 정산할 수 있다
     mapping(uint256 => mapping(uint32 => address)) private _runner;
+    // 입장한 주차가 지나면 원정은 만료된다. 이전 주 선택을 새 주 기록에 얹지 않는다.
+    mapping(uint256 => mapping(uint32 => uint32)) private _attemptEpoch;
 
     mapping(uint256 => bytes32) public epochSeed;
     mapping(uint256 => uint64) public epochSeedBlock;
@@ -47,6 +71,40 @@ contract GiwaGuilds {
     event SeedPinned(uint256 indexed epoch, uint64 blockNumber, bytes32 seed);
     event ExpeditionStarted(uint256 indexed guildId, address indexed member, uint32 attempt, uint256 epoch);
     event RunSettled(uint256 indexed guildId, address indexed member, uint32 attempt, uint16 climbed, uint16 floor);
+    event LegacyImported(address indexed source, uint256 guilds);
+
+    /// v1 주소를 넘기면 길드·회원·주간/최고 기록을 한 번 복사한다.
+    /// 진행 중이던 원정은 복사하지 않고 만료시킨다. 새 설치는 address(0)을 쓴다.
+    constructor(address legacyGuilds_) {
+        legacyGuilds = legacyGuilds_;
+        if (legacyGuilds_ == address(0)) return;
+
+        ILegacyGiwaGuilds.Guild[] memory previous =
+            ILegacyGiwaGuilds(legacyGuilds_).allGuilds();
+        for (uint256 i; i < previous.length; i++) {
+            ILegacyGiwaGuilds.Guild memory old = previous[i];
+            Guild storage g = _guilds.push();
+            g.name = old.name;
+            g.emblem = old.emblem;
+            g.founder = old.founder;
+            g.createdAt = old.createdAt;
+            g.d = DungeonState({
+                epoch: old.d.epoch,
+                floor: old.d.floor,
+                best: old.d.best,
+                runs: old.d.runs,
+                attempts: old.d.attempts
+            });
+            _nameTaken[keccak256(bytes(old.name))] = true;
+            for (uint256 j; j < old.members.length; j++) {
+                address member = old.members[j];
+                require(_memberGuild[member] == 0, "duplicate-member");
+                g.members.push(member);
+                _memberGuild[member] = i + 1;
+            }
+        }
+        emit LegacyImported(legacyGuilds_, previous.length);
+    }
 
     function currentEpoch() public view returns (uint256) {
         return block.timestamp / EPOCH_SECONDS;
@@ -143,6 +201,7 @@ contract GiwaGuilds {
         }
         g.d.attempts += 1;
         _runner[idPlus1 - 1][g.d.attempts] = msg.sender;
+        _attemptEpoch[idPlus1 - 1][g.d.attempts] = uint32(e);
         emit ExpeditionStarted(idPlus1 - 1, msg.sender, g.d.attempts, e);
         return (g.d.attempts, epochSeed[e]);
     }
@@ -181,10 +240,12 @@ contract GiwaGuilds {
         require(picks.length >= 1 && picks.length <= MAX_PICKS, "picks");
         require(attempt >= 1 && attempt <= g.d.attempts, "attempt");
         require(_runner[gid][attempt] == msg.sender, "runner");
+        uint256 e = currentEpoch();
+        require(_attemptEpoch[gid][attempt] == e, "expired");
         require(!_attemptSettled[gid][attempt], "settled");
         _attemptSettled[gid][attempt] = true;
 
-        bytes32 seed = epochSeed[currentEpoch()];
+        bytes32 seed = epochSeed[e];
         require(seed != bytes32(0), "seed");
 
         uint16 climbed;

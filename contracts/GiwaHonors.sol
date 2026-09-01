@@ -45,6 +45,10 @@ interface IGiwaGuilds {
     function currentEpoch() external view returns (uint256);
 }
 
+interface ILegacyHonors {
+    function profileOf(address who) external view returns (uint256 mask, uint256 equippedId);
+}
+
 /// 기와장터 칭호 — 소울바운드 기록 (전송 함수 자체가 없다: 규제 안전선).
 /// 조건은 전부 다른 컨트랙트의 온체인 상태로 검증하므로 서버·운영자 개입이 없다.
 /// 장착(equip)한 칭호는 클라이언트가 이름표 배지(코스메틱)로 그린다.
@@ -55,20 +59,30 @@ contract GiwaHonors {
 
     IGiwaMarketStalls public immutable market;
     IGiwaGuilds public immutable guilds;
+    ILegacyHonors public immutable legacyHonors;
 
     mapping(address => uint256) private _ownedMask; // 비트마스크 (1 << id)
     mapping(address => uint256) private _equipped; // 0 = 없음
+    mapping(address => bool) private _equipmentSet; // 명시적 해제(0)와 미설정을 구분
 
     event HonorClaimed(address indexed who, uint256 indexed id);
     event HonorEquipped(address indexed who, uint256 indexed id);
 
-    constructor(address market_, address guilds_) {
+    constructor(address market_, address guilds_, address legacyHonors_) {
         market = IGiwaMarketStalls(market_);
         guilds = IGiwaGuilds(guilds_);
+        legacyHonors = ILegacyHonors(legacyHonors_);
     }
 
-    function profileOf(address who) external view returns (uint256 mask, uint256 equippedId) {
-        return (_ownedMask[who], _equipped[who]);
+    /// v1에서 얻은 소울바운드 칭호도 그대로 보인다. 새 획득분은 비트 OR로 합친다.
+    function profileOf(address who) public view returns (uint256 mask, uint256 equippedId) {
+        uint256 legacyMask;
+        uint256 legacyEquipped;
+        if (address(legacyHonors) != address(0)) {
+            (legacyMask, legacyEquipped) = legacyHonors.profileOf(who);
+        }
+        mask = _ownedMask[who] | legacyMask;
+        equippedId = _equipmentSet[who] ? _equipped[who] : legacyEquipped;
     }
 
     function eligible(address who, uint256 id) public view returns (bool) {
@@ -98,7 +112,8 @@ contract GiwaHonors {
 
     function claim(uint256 id) external {
         require(id >= 1 && id <= MAX_ID, "id");
-        require(_ownedMask[msg.sender] & (1 << id) == 0, "owned");
+        (uint256 owned, ) = profileOf(msg.sender);
+        require(owned & (1 << id) == 0, "owned");
         require(eligible(msg.sender, id), "not-eligible");
         _ownedMask[msg.sender] |= (1 << id);
         emit HonorClaimed(msg.sender, id);
@@ -106,8 +121,10 @@ contract GiwaHonors {
 
     /// 장착 — 0이면 해제. 보유한 칭호만.
     function equip(uint256 id) external {
-        require(id == 0 || (_ownedMask[msg.sender] & (1 << id)) != 0, "not-owned");
+        (uint256 owned, ) = profileOf(msg.sender);
+        require(id == 0 || (owned & (1 << id)) != 0, "not-owned");
         _equipped[msg.sender] = id;
+        _equipmentSet[msg.sender] = true;
         emit HonorEquipped(msg.sender, id);
     }
 }

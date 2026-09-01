@@ -1,7 +1,7 @@
 // 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
-export const HONORS_ADDRESS = "0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f" as `0x${string}`;
-export const HONORS_DEPLOY_TX = "0x73ea1833d5bb96f5fba165e7c24156234c50a5568ec4a91e06567a0fee8c093c";
-export const HONORS_DEPLOY_BLOCK = 31040874n;
+export const HONORS_ADDRESS = "0xeaa8674f1ba265cc6134d7cbc02e36310cc6a8e2" as `0x${string}`;
+export const HONORS_DEPLOY_TX = "0x4c53e0a5f4c52370413b9e6282b152a261d518ba41063498d82eee2588b9a53a";
+export const HONORS_DEPLOY_BLOCK = 34636627n;
 export const HONORS_ABI = [
   {
     "inputs": [
@@ -13,6 +13,11 @@ export const HONORS_ABI = [
       {
         "internalType": "address",
         "name": "guilds_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "legacyHonors_",
         "type": "address"
       }
     ],
@@ -126,6 +131,19 @@ export const HONORS_ABI = [
     "outputs": [
       {
         "internalType": "contract IGiwaGuilds",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "legacyHonors",
+    "outputs": [
+      {
+        "internalType": "contract ILegacyHonors",
         "name": "",
         "type": "address"
       }

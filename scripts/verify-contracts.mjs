@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { DEPLOYMENTS } from "./lib/deployments.mjs";
 
 const require = createRequire(import.meta.url);
 const solc = require("solc");
@@ -12,16 +13,16 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = "https://sepolia-explorer.giwa.io/api/v2/smart-contracts";
 
 const TARGETS = [
-  { file: "GiwaMarketV3.sol", name: "GiwaMarketV3", address: "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2" },
-  { file: "GiwaGuilds.sol", name: "GiwaGuilds", address: "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638" },
-  { file: "GiwaPresence.sol", name: "GiwaPresence", address: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93" },
-  { file: "GiwaHonors.sol", name: "GiwaHonors", address: "0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f" },
-  { file: "GiwaOffers.sol", name: "GiwaOffers", address: "0x534a29c47667b54eab6995517705cfbc423bb909" },
-  { file: "GiwaBoxes.sol", name: "GiwaBoxes", address: "0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e" },
-  { file: "GiwaHearth.sol", name: "GiwaHearth", address: "0xf780265d5f49abd8c7e5d18d81d33426f62f3365" },
-  { file: "GiwaWorkshop.sol", name: "GiwaWorkshop", address: "0x664762337e529f853949a94e6ed50e6d8016c975" },
-  { file: "GiwaBoss.sol", name: "GiwaBoss", address: "0x8f50d882fc936f481f5f66d76156ebdf816cc6ae" },
-  { file: "GiwaProfile.sol", name: "GiwaProfile", address: "0xefe0e8d69661fd67f5fe2368f9b1f7ff6d395416" },
+  { file: "GiwaMarketV3.sol", name: "GiwaMarketV3" },
+  { file: "GiwaGuilds.sol", name: "GiwaGuilds" },
+  { file: "GiwaPresence.sol", name: "GiwaPresence" },
+  { file: "GiwaHonors.sol", name: "GiwaHonors" },
+  { file: "GiwaOffers.sol", name: "GiwaOffers" },
+  { file: "GiwaBoxes.sol", name: "GiwaBoxes" },
+  { file: "GiwaHearth.sol", name: "GiwaHearth" },
+  { file: "GiwaWorkshop.sol", name: "GiwaWorkshop" },
+  { file: "GiwaBoss.sol", name: "GiwaBoss" },
+  { file: "GiwaProfile.sol", name: "GiwaProfile" },
 ];
 
 const ver = "v" + solc.version().replace(/\.Emscripten.*$/, "");
@@ -30,7 +31,8 @@ console.log("[verify] solc", ver);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 for (const t of TARGETS) {
-  const status = await fetch(`${BASE}/${t.address}`).then((r) => r.json());
+  const address = DEPLOYMENTS[t.name].address;
+  const status = await fetch(`${BASE}/${address}`).then((r) => r.json());
   if (status?.is_verified) {
     console.log(`[verify] ${t.name} — 이미 검증됨`);
     continue;
@@ -54,7 +56,7 @@ for (const t of TARGETS) {
     new Blob([JSON.stringify(input)], { type: "application/json" }),
     "input.json",
   );
-  const res = await fetch(`${BASE}/${t.address}/verification/via/standard-input`, {
+  const res = await fetch(`${BASE}/${address}/verification/via/standard-input`, {
     method: "POST",
     body: form,
   });
@@ -65,7 +67,7 @@ for (const t of TARGETS) {
   let ok = false;
   for (let i = 0; i < 18; i++) {
     await sleep(5000);
-    const s = await fetch(`${BASE}/${t.address}`).then((r) => r.json()).catch(() => null);
+    const s = await fetch(`${BASE}/${address}`).then((r) => r.json()).catch(() => null);
     if (s?.is_verified) {
       ok = true;
       break;

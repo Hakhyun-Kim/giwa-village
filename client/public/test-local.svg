@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1126" height="1708" viewBox="0 0 1126 1708" role="img" aria-label="npm run test:local — 컨트랙트 10종 · 테스트넷 가스 0 실행 결과">
-  <rect width="1126" height="1708" rx="12" fill="#17141D"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1126" height="1876" viewBox="0 0 1126 1876" role="img" aria-label="npm run test:local — 컨트랙트 10종 · 테스트넷 가스 0 실행 결과">
+  <rect width="1126" height="1876" rx="12" fill="#17141D"/>
   <rect width="1126" height="34" rx="12" fill="#241F2E"/>
   <rect y="22" width="1126" height="12" fill="#241F2E"/>
   <circle cx="20" cy="17" r="5" fill="#DD6B5A"/>
@@ -33,59 +33,67 @@
   <text x="38.3" y="493" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="493" fill="#EDE7DA">모델을 부르지 않고 거절</text>
   <text x="22.0" y="514" fill="#B4A99A"></text>
   <text x="22.0" y="535" fill="#C79A3F" font-weight="600">길드 · 백층 던전 (GiwaGuilds)</text>
-  <text x="38.3" y="556" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="556" fill="#EDE7DA">길드 창설</text>
-  <text x="38.3" y="577" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="577" fill="#EDE7DA">길드 가입</text>
-  <text x="38.3" y="598" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="598" fill="#EDE7DA">주차 시드가 블록해시로 고정됨</text><text x="279.9" y="598" fill="#8E8478"> — 0x300c0aceaf…</text>
-  <text x="38.3" y="619" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="619" fill="#EDE7DA">귀환 정산</text><text x="128.0" y="619" fill="#8E8478"> — 층수 기록 — 6문 통과 · best 7층</text>
-  <text x="38.3" y="640" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="640" fill="#EDE7DA">같은 회차 이중 정산 거부</text><text x="242.9" y="640" fill="#8E8478"> — 거부됨</text>
-  <text x="22.0" y="661" fill="#B4A99A"></text>
-  <text x="22.0" y="682" fill="#C79A3F" font-weight="600">소울바운드 칭호 (GiwaHonors)</text>
-  <text x="38.3" y="703" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="703" fill="#EDE7DA">개점 칭호 자격 있음</text>
-  <text x="38.3" y="724" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="724" fill="#EDE7DA">개점·창설자 칭호 보유 + 장착</text>
-  <text x="38.3" y="745" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="745" fill="#EDE7DA">자격 없는 칭호 클레임 거부</text><text x="257.9" y="745" fill="#8E8478"> — 거부됨</text>
-  <text x="22.0" y="766" fill="#B4A99A"></text>
-  <text x="22.0" y="787" fill="#C79A3F" font-weight="600">랜덤박스 (GiwaBoxes)</text>
-  <text x="38.3" y="808" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="808" fill="#EDE7DA">열지 않고 개봉 불가</text><text x="204.6" y="808" fill="#8E8478"> — "wait"</text>
-  <text x="38.3" y="829" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="829" fill="#EDE7DA">열기</text><text x="89.6" y="829" fill="#8E8478"> — 결과가 이 블록 해시로 봉인됨 — 블록 28</text>
-  <text x="38.3" y="850" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="850" fill="#EDE7DA">개봉 대기 중 재열기 불가</text><text x="242.9" y="850" fill="#8E8478"> — "pending"</text>
-  <text x="38.3" y="871" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="871" fill="#EDE7DA">장신구 획득</text><text x="143.0" y="871" fill="#8E8478"> — mask 256</text>
-  <text x="38.3" y="892" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="892" fill="#EDE7DA">개봉 후 재개봉 불가 (대기 상태 소진)</text><text x="335.8" y="892" fill="#8E8478"> — "wait"</text>
-  <text x="22.0" y="913" fill="#B4A99A"></text>
-  <text x="22.0" y="934" fill="#C79A3F" font-weight="600">문양 공방 UGC (GiwaWorkshop)</text>
-  <text x="38.3" y="955" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="955" fill="#EDE7DA">문양 등록</text>
-  <text x="38.3" y="976" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="976" fill="#EDE7DA">판매 대금이 창작자에게 직송</text><text x="264.9" y="976" fill="#8E8478"> — +0.002 ETH</text>
-  <text x="38.3" y="997" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="997" fill="#EDE7DA">구매자 소유 기록</text>
-  <text x="38.3" y="1018" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1018" fill="#EDE7DA">착용 반영</text>
-  <text x="22.0" y="1039" fill="#B4A99A"></text>
-  <text x="22.0" y="1060" fill="#C79A3F" font-weight="600">프레즌스 비컨 (GiwaPresence)</text>
-  <text x="38.3" y="1081" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1081" fill="#EDE7DA">비컨 이벤트 발생</text>
-  <text x="38.3" y="1102" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1102" fill="#EDE7DA">저장 없음 (컨트랙트 스토리지 미사용)</text>
-  <text x="22.0" y="1123" fill="#B4A99A"></text>
-  <text x="22.0" y="1144" fill="#C79A3F" font-weight="600">모닥불 온기 (GiwaHearth) — 10분 창 시간 여행</text>
-  <text x="38.3" y="1165" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1165" fill="#EDE7DA">혼자서는 수령 불가 (창도 안 닫힘)</text><text x="312.5" y="1165" fill="#8E8478"> — 거부됨</text>
-  <text x="38.3" y="1186" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1186" fill="#EDE7DA">두 사람이 같은 창에 모임</text>
-  <text x="38.3" y="1207" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1207" fill="#EDE7DA">창이 닫힌 뒤 온기 +1 (평일)</text>
-  <text x="22.0" y="1228" fill="#B4A99A"></text>
-  <text x="22.0" y="1249" fill="#C79A3F" font-weight="600">장날 온기 2배 (토 21시 KST) — 실시간을 기다리지 않고 검증</text>
-  <text x="38.3" y="1270" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1270" fill="#EDE7DA">컨트랙트가 장날로 인식</text><text x="226.6" y="1270" fill="#8E8478"> — 2026-07-25T12:01:00.000Z</text>
-  <text x="38.3" y="1291" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1291" fill="#EDE7DA">장날엔 온기 2배로 적립</text><text x="227.8" y="1291" fill="#8E8478"> — +2 (평일 +1)</text>
-  <text x="38.3" y="1312" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1312" fill="#EDE7DA">클라이언트 구현이 같은 규칙을 쓴다 (소스 확인)</text>
-  <text x="38.3" y="1333" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1333" fill="#EDE7DA">컨트랙트 ↔ 클라이언트 장날 판정 일치</text><text x="334.6" y="1333" fill="#8E8478"> — 표본 64개</text>
-  <text x="22.0" y="1354" fill="#B4A99A"></text>
-  <text x="22.0" y="1375" fill="#C79A3F" font-weight="600">도깨비 토벌 (GiwaBoss) — 쿨다운 30초 시간 여행</text>
-  <text x="38.3" y="1396" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1396" fill="#EDE7DA">타격</text><text x="89.6" y="1396" fill="#8E8478"> — 체력 감소·기여 기록 — 남은 체력 1964 · 내 기여 36</text>
-  <text x="38.3" y="1417" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1417" fill="#EDE7DA">쿨다운 중에는 재타격 거부</text><text x="249.8" y="1417" fill="#8E8478"> — "cooldown"</text>
-  <text x="38.3" y="1438" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1438" fill="#EDE7DA">쿨다운(30초) 경과 후 재타격 성공</text><text x="305.6" y="1438" fill="#8E8478"> — 누적 기여 94</text>
-  <text x="38.3" y="1459" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1459" fill="#EDE7DA">온기가 데미지에 반영됨 (온기 보유자)</text>
-  <text x="22.0" y="1480" fill="#B4A99A"></text>
-  <text x="22.0" y="1501" fill="#C79A3F" font-weight="600">프로필 애그리게이터 (GiwaProfile)</text>
-  <text x="38.3" y="1522" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1522" fill="#EDE7DA">길드 집계</text>
-  <text x="38.3" y="1543" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1543" fill="#EDE7DA">칭호 집계</text>
-  <text x="38.3" y="1564" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1564" fill="#EDE7DA">온기 집계</text><text x="128.0" y="1564" fill="#8E8478"> — 온기 3</text>
-  <text x="38.3" y="1585" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1585" fill="#EDE7DA">한 번의 호출로 전부</text><text x="204.6" y="1585" fill="#8E8478"> — guild·honor·trinket·wear·warmth·trophies</text>
-  <text x="22.0" y="1606" fill="#B4A99A"></text>
-  <text x="22.0" y="1627" fill="#392F44">──────────────────────────────────────────────────────────</text>
-  <text x="22.0" y="1648" fill="#3FAE73" font-weight="700">전부 통과 · 컨트랙트 10종 · 테스트넷 가스 0</text>
-  <text x="22.0" y="1669" fill="#C79A3F" font-weight="600">장날·쿨다운·10분 창은 시간을 점프해 검증했습니다 (실시간 대기 없음)</text>
+  <text x="38.3" y="556" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="556" fill="#EDE7DA">던전 문 전략표 v2</text>
+  <text x="38.3" y="577" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="577" fill="#EDE7DA">길드 창설</text>
+  <text x="38.3" y="598" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="598" fill="#EDE7DA">길드 가입</text>
+  <text x="38.3" y="619" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="619" fill="#EDE7DA">주차 시드가 블록해시로 고정됨</text><text x="279.9" y="619" fill="#8E8478"> — 0x4a7be705e5…</text>
+  <text x="38.3" y="640" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="640" fill="#EDE7DA">귀환 정산</text><text x="128.0" y="640" fill="#8E8478"> — 층수 기록 — 6문 통과 · best 6층</text>
+  <text x="38.3" y="661" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="661" fill="#EDE7DA">같은 회차 이중 정산 거부</text><text x="242.9" y="661" fill="#8E8478"> — 거부됨</text>
+  <text x="38.3" y="682" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="682" fill="#EDE7DA">주차가 지난 원정은 새 주 기록에 정산할 수 없음</text><text x="411.2" y="682" fill="#8E8478"> — "expired"</text>
+  <text x="22.0" y="703" fill="#B4A99A"></text>
+  <text x="22.0" y="724" fill="#C79A3F" font-weight="600">소울바운드 칭호 (GiwaHonors)</text>
+  <text x="38.3" y="745" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="745" fill="#EDE7DA">개점 칭호 자격 있음</text>
+  <text x="38.3" y="766" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="766" fill="#EDE7DA">개점·창설자 칭호 보유 + 장착</text>
+  <text x="38.3" y="787" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="787" fill="#EDE7DA">자격 없는 칭호 클레임 거부</text><text x="257.9" y="787" fill="#8E8478"> — 거부됨</text>
+  <text x="22.0" y="808" fill="#B4A99A"></text>
+  <text x="22.0" y="829" fill="#C79A3F" font-weight="600">랜덤박스 (GiwaBoxes)</text>
+  <text x="38.3" y="850" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="850" fill="#EDE7DA">열지 않고 개봉 불가</text><text x="204.6" y="850" fill="#8E8478"> — "wait"</text>
+  <text x="38.3" y="871" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="871" fill="#EDE7DA">열기</text><text x="89.6" y="871" fill="#8E8478"> — 결과가 이 블록 해시로 봉인됨 — 블록 32</text>
+  <text x="38.3" y="892" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="892" fill="#EDE7DA">개봉 대기 중 재열기 불가</text><text x="242.9" y="892" fill="#8E8478"> — "pending"</text>
+  <text x="38.3" y="913" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="913" fill="#EDE7DA">장신구 획득</text><text x="143.0" y="913" fill="#8E8478"> — mask 128</text>
+  <text x="38.3" y="934" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="934" fill="#EDE7DA">개봉 후 재개봉 불가 (대기 상태 소진)</text><text x="335.8" y="934" fill="#8E8478"> — "wait"</text>
+  <text x="22.0" y="955" fill="#B4A99A"></text>
+  <text x="22.0" y="976" fill="#C79A3F" font-weight="600">문양 공방 UGC (GiwaWorkshop)</text>
+  <text x="38.3" y="997" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="997" fill="#EDE7DA">문양 등록</text>
+  <text x="38.3" y="1018" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1018" fill="#EDE7DA">판매 대금이 창작자에게 직송</text><text x="264.9" y="1018" fill="#8E8478"> — +0.002 ETH</text>
+  <text x="38.3" y="1039" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1039" fill="#EDE7DA">구매자 소유 기록</text>
+  <text x="38.3" y="1060" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1060" fill="#EDE7DA">착용 반영</text>
+  <text x="22.0" y="1081" fill="#B4A99A"></text>
+  <text x="22.0" y="1102" fill="#C79A3F" font-weight="600">프레즌스 비컨 (GiwaPresence)</text>
+  <text x="38.3" y="1123" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1123" fill="#EDE7DA">비컨 이벤트 발생</text>
+  <text x="38.3" y="1144" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1144" fill="#EDE7DA">저장 없음 (컨트랙트 스토리지 미사용)</text>
+  <text x="22.0" y="1165" fill="#B4A99A"></text>
+  <text x="22.0" y="1186" fill="#C79A3F" font-weight="600">모닥불 온기 (GiwaHearth) — 10분 창 시간 여행</text>
+  <text x="38.3" y="1207" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1207" fill="#EDE7DA">혼자서는 수령 불가 (창도 안 닫힘)</text><text x="312.5" y="1207" fill="#8E8478"> — 거부됨</text>
+  <text x="38.3" y="1228" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1228" fill="#EDE7DA">두 사람이 같은 창에 모임</text>
+  <text x="38.3" y="1249" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1249" fill="#EDE7DA">창이 닫힌 뒤 온기 +1 (평일)</text>
+  <text x="22.0" y="1270" fill="#B4A99A"></text>
+  <text x="22.0" y="1291" fill="#C79A3F" font-weight="600">장날 온기 2배 (토 21시 KST) — 실시간을 기다리지 않고 검증</text>
+  <text x="38.3" y="1312" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1312" fill="#EDE7DA">컨트랙트가 장날로 인식</text><text x="226.6" y="1312" fill="#8E8478"> — 2026-09-05T12:01:00.000Z</text>
+  <text x="38.3" y="1333" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1333" fill="#EDE7DA">장날엔 온기 2배로 적립</text><text x="227.8" y="1333" fill="#8E8478"> — +2 (평일 +1)</text>
+  <text x="38.3" y="1354" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1354" fill="#EDE7DA">클라이언트 구현이 같은 규칙을 쓴다 (소스 확인)</text>
+  <text x="38.3" y="1375" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1375" fill="#EDE7DA">컨트랙트 ↔ 클라이언트 장날 판정 일치</text><text x="334.6" y="1375" fill="#8E8478"> — 표본 64개</text>
+  <text x="22.0" y="1396" fill="#B4A99A"></text>
+  <text x="22.0" y="1417" fill="#C79A3F" font-weight="600">도깨비 토벌 (GiwaBoss) — 쿨다운 30초 시간 여행</text>
+  <text x="38.3" y="1438" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1438" fill="#EDE7DA">타격</text><text x="89.6" y="1438" fill="#8E8478"> — 체력 감소·기여 기록 — 남은 체력 1968 · 내 기여 32</text>
+  <text x="38.3" y="1459" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1459" fill="#EDE7DA">쿨다운 중에는 재타격 거부</text><text x="249.8" y="1459" fill="#8E8478"> — "cooldown"</text>
+  <text x="38.3" y="1480" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1480" fill="#EDE7DA">쿨다운(30초) 경과 후 재타격 성공</text><text x="305.6" y="1480" fill="#8E8478"> — 누적 기여 86</text>
+  <text x="38.3" y="1501" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1501" fill="#EDE7DA">온기가 데미지에 반영됨 (온기 보유자)</text>
+  <text x="22.0" y="1522" fill="#B4A99A"></text>
+  <text x="22.0" y="1543" fill="#C79A3F" font-weight="600">프로필 애그리게이터 (GiwaProfile)</text>
+  <text x="38.3" y="1564" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1564" fill="#EDE7DA">길드 집계</text>
+  <text x="38.3" y="1585" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1585" fill="#EDE7DA">칭호 집계</text>
+  <text x="38.3" y="1606" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1606" fill="#EDE7DA">온기 집계</text><text x="128.0" y="1606" fill="#8E8478"> — 온기 3</text>
+  <text x="38.3" y="1627" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1627" fill="#EDE7DA">한 번의 호출로 전부</text><text x="204.6" y="1627" fill="#8E8478"> — guild·honor·trinket·wear·warmth·trophies</text>
+  <text x="22.0" y="1648" fill="#B4A99A"></text>
+  <text x="22.0" y="1669" fill="#C79A3F" font-weight="600">v2 마이그레이션 — 길드·칭호·전리품 상태 보존</text>
+  <text x="38.3" y="1690" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1690" fill="#EDE7DA">길드·회원·최고층 기록 이전</text><text x="257.9" y="1690" fill="#8E8478"> — 길드 1개 · 회원 2명 · best 6</text>
+  <text x="38.3" y="1711" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1711" fill="#EDE7DA">기존 칭호 보유·장착 상태 폴백</text><text x="281.2" y="1711" fill="#8E8478"> — mask 6 · equipped 2</text>
+  <text x="38.3" y="1732" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1732" fill="#EDE7DA">기존 전리품 카운터 폴백</text>
+  <text x="38.3" y="1753" fill="#3FAE73" font-weight="700">✅</text><text x="59.5" y="1753" fill="#EDE7DA">새 프로필이 마이그레이션 묶음을 집계</text>
+  <text x="22.0" y="1774" fill="#B4A99A"></text>
+  <text x="22.0" y="1795" fill="#392F44">──────────────────────────────────────────────────────────</text>
+  <text x="22.0" y="1816" fill="#3FAE73" font-weight="700">전부 통과 · 컨트랙트 10종 · 테스트넷 가스 0</text>
+  <text x="22.0" y="1837" fill="#C79A3F" font-weight="600">장날·쿨다운·10분 창은 시간을 점프해 검증했습니다 (실시간 대기 없음)</text>
   </g>
 </svg>

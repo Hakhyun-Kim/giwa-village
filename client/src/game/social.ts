@@ -1,5 +1,4 @@
-import { sendEmote } from "../net/colyseus";
-import { localPos } from "../net/colyseus";
+import { localPos, sendEmote } from "../net/colyseus";
 import { useStore, remoteTargets } from "../state/store";
 import { recordDaily } from "../state/daily";
 
@@ -29,9 +28,13 @@ export function performSocialEmote(icon: string, targetId?: string): void {
   s.setEmote(selfId, icon);
   const at = useStore.getState().emotes[selfId]?.at;
   if (at) clearLater(selfId, at, "emote", 2400);
-  recordDaily("greet");
-
-  const candidates = targetId ? [targetId] : Object.keys(s.players);
+  const nearby = Object.keys(s.players).filter((id) => {
+    const p = remoteTargets.get(id);
+    return !!p && Math.hypot(p.x - localPos.x, p.z - localPos.z) <= 6;
+  });
+  const candidates = targetId ? [targetId] : nearby;
+  // 일일 인사는 실제 주민을 향했을 때만 센다. 광장에서 혼자 E를 연타한 것은 제외한다.
+  if (candidates.some((id) => id in s.players)) recordDaily("greet");
   const partner = candidates.find((id) => {
     if (s.emotes[id]?.icon !== icon) return false;
     const p = remoteTargets.get(id);

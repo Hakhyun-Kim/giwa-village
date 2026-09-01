@@ -15,6 +15,7 @@ import { privateKeyToAccount } from "viem/accounts";
 const require = createRequire(import.meta.url);
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const CHAIN_ID = 91342; // GIWA Sepolia와 같게 — 코드의 체인 가드를 그대로 통과시킨다
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 /** anvil이 미리 넣어 주는 결정론적 계정 (Foundry 문서에 공개된 값 — 실자산 없음) */
 export const ANVIL_KEYS = [
@@ -139,14 +140,22 @@ export async function startChain({ port = 8545 } = {}) {
 /** 마을 컨트랙트 전체. 순서·생성자 인자는 deploy-village.mjs와 같다. */
 export const TARGETS = [
   { file: "GiwaMarketV3.sol", name: "GiwaMarketV3" },
-  { file: "GiwaGuilds.sol", name: "GiwaGuilds" },
+  { file: "GiwaGuilds.sol", name: "GiwaGuilds", args: () => [ZERO_ADDRESS] },
   { file: "GiwaPresence.sol", name: "GiwaPresence" },
-  { file: "GiwaHonors.sol", name: "GiwaHonors", args: (d) => [d.GiwaMarketV3, d.GiwaGuilds] },
+  {
+    file: "GiwaHonors.sol",
+    name: "GiwaHonors",
+    args: (d) => [d.GiwaMarketV3, d.GiwaGuilds, ZERO_ADDRESS],
+  },
   { file: "GiwaOffers.sol", name: "GiwaOffers", args: (d) => [d.GiwaMarketV3] },
   { file: "GiwaBoxes.sol", name: "GiwaBoxes" },
   { file: "GiwaHearth.sol", name: "GiwaHearth" },
   { file: "GiwaWorkshop.sol", name: "GiwaWorkshop" },
-  { file: "GiwaBoss.sol", name: "GiwaBoss", args: (d) => [d.GiwaGuilds, d.GiwaHearth] },
+  {
+    file: "GiwaBoss.sol",
+    name: "GiwaBoss",
+    args: (d) => [d.GiwaGuilds, d.GiwaHearth, ZERO_ADDRESS],
+  },
   {
     file: "GiwaProfile.sol",
     name: "GiwaProfile",

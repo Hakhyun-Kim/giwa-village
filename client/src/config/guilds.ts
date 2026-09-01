@@ -1,8 +1,19 @@
 // 자동 생성 파일 — scripts/deploy-village.mjs 가 기록한다. 직접 수정 금지.
-export const GUILDS_ADDRESS = "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638" as `0x${string}`;
-export const GUILDS_DEPLOY_TX = "0x8b47aa102e8bf20f37b89f9c6e43b56902187063f1b493a5c84f12a3c1795b46";
-export const GUILDS_DEPLOY_BLOCK = 31040873n;
+export const GUILDS_ADDRESS = "0xea796ffd37c4a1116d5c7d8f71448ac39ffaa31b" as `0x${string}`;
+export const GUILDS_DEPLOY_TX = "0x28905183f41ac347e07b2a1efcef26ddd816a63c02c08a0000d5622254dddfdd";
+export const GUILDS_DEPLOY_BLOCK = 34636623n;
 export const GUILDS_ABI = [
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "legacyGuilds_",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
   {
     "anonymous": false,
     "inputs": [
@@ -101,6 +112,25 @@ export const GUILDS_ABI = [
       }
     ],
     "name": "GuildLeft",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "source",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "guilds",
+        "type": "uint256"
+      }
+    ],
+    "name": "LegacyImported",
     "type": "event"
   },
   {
@@ -212,6 +242,19 @@ export const GUILDS_ABI = [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "RULESET_VERSION",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -549,6 +592,19 @@ export const GUILDS_ABI = [
     "name": "leaveGuild",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "legacyGuilds",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

@@ -26,6 +26,7 @@
     "stall-smoke": "node scripts/stall-smoke.mjs",
     "deploy-market": "node scripts/deploy-market.mjs",
     "market-smoke": "node scripts/market-smoke.mjs",
+    "guild-smoke": "node scripts/guild-v2-smoke.mjs",
     "wallets": "node scripts/gen-wallets.mjs",
     "bridge": "node scripts/bridge-deposit.mjs",
     "faucet": "node scripts/faucet-check.mjs",

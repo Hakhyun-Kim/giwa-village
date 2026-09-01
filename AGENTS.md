@@ -110,8 +110,8 @@ sdk/     외부에서 프로필을 읽는 패키지
 ## 5. 검증 — 가스를 아끼는 순서
 
 ```bash
-npm test                     # 로직 59건 · 체인 없음 · 1초 미만 (저장할 때마다)
-npm run test:local           # 컨트랙트 10종 E2E 49건 · 로컬 anvil · 가스 0
+npm test                     # 로직 62건 · 체인 없음 · 1초 미만 (저장할 때마다)
+npm run test:local           # 컨트랙트 10종 E2E 54건 · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)
 npm run test:chain -- --yes  # 실배포본·Dojang·UP.ID 읽기 확인
 npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다)

@@ -393,7 +393,6 @@ export class VillageRoom extends Room {
         floor: guild.dungeon.floor,
         tentative: 0,
         attempt,
-        ruleset: 2,
       });
     });
 

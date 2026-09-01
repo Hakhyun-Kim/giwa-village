@@ -8,9 +8,7 @@
 export {
   DOOR_PROFILES,
   doorRoll,
-  legacyDoorRoll,
   resolveRun,
-  resolveRunLegacy,
   safeDoorAt,
   OUTCOME_CLIMB,
   type DoorOutcome,

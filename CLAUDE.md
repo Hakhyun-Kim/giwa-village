@@ -181,9 +181,9 @@ DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 �
 ## 5. 검증 — 가스를 아끼는 순서
 
 ```bash
-npm test                     # 로직 59건 · 체인 없음 · 1초 미만 (저장할 때마다)
+npm test                     # 로직 62건 · 체인 없음 · 1초 미만 (저장할 때마다)
 npm run export-world         # 배치표를 client/public/world.json 으로 굽는다
-npm run test:local           # 컨트랙트 10종 E2E 49건 · 로컬 anvil · 가스 0
+npm run test:local           # 컨트랙트 10종 E2E 54건 · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)
 npm run smoke:protocol       # PROTOCOL.md만 보고 짠 클라이언트로 룸에 입장 (서버 자동 기동)
 npm run test:chain -- --yes  # 실배포본·Dojang·UP.ID 읽기 확인

@@ -43,7 +43,12 @@ async function shouldRevert(label, fn, expect = "") {
     check(label, false, "revert 되어야 하는데 통과했습니다");
   } catch (err) {
     const msg = err.shortMessage ?? err.message ?? "";
-    check(label, true, expect && msg.includes(expect) ? `"${expect}"` : "거부됨");
+    const matched = !expect || msg.includes(expect);
+    check(
+      label,
+      matched,
+      matched ? (expect ? `"${expect}"` : "거부됨") : `예상 "${expect}", 실제 ${msg}`,
+    );
   }
 }
 
@@ -238,6 +243,22 @@ try {
       functionName: "settleRun", args: [attempt, picks],
     }),
   );
+  await chain.mine(2);
+  await send(wB, {
+    address: C.GiwaGuilds.address, abi: C.GiwaGuilds.abi,
+    functionName: "enterExpedition", args: [],
+  });
+  const epochSeconds = Number(await read(C.GiwaGuilds, "EPOCH_SECONDS"));
+  const now = await chain.now();
+  await chain.increaseTime(epochSeconds - (now % epochSeconds) + 1);
+  await shouldRevert(
+    "주차가 지난 원정은 새 주 기록에 정산할 수 없음",
+    () => send(wB, {
+      address: C.GiwaGuilds.address, abi: C.GiwaGuilds.abi,
+      functionName: "settleRun", args: [2, [0]],
+    }),
+    "expired",
+  );
 
   // ── 칭호 (GiwaHonors) ───────────────────────────────────────────────────
   section("소울바운드 칭호 (GiwaHonors)");
@@ -427,6 +448,66 @@ try {
   check("칭호 집계", p.honorMask > 0n && p.honorEquipped === 2n);
   check("온기 집계", p.warmth >= 3, `온기 ${p.warmth}`);
   check("한 번의 호출로 전부", true, "guild·honor·trinket·wear·warmth·trophies");
+
+  // ── v1 → v2 상태 보존 재배포 ───────────────────────────────────────────
+  section("v2 마이그레이션 — 길드·칭호·전리품 상태 보존");
+  const deployOne = async (name, args) => {
+    const artifact = artifacts[name];
+    const hash = await wM.deployContract({
+      abi: artifact.abi,
+      bytecode: artifact.bytecode,
+      account: merchant,
+      args,
+    });
+    const receipt = await chain.pub.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success" || !receipt.contractAddress) {
+      throw new Error(`${name} 마이그레이션 배포 실패`);
+    }
+    return { address: receipt.contractAddress, abi: artifact.abi };
+  };
+  const guildsV2 = await deployOne("GiwaGuilds", [C.GiwaGuilds.address]);
+  const imported = await read(guildsV2, "allGuilds");
+  check(
+    "길드·회원·최고층 기록 이전",
+    imported.length === 1 && imported[0].members.length === 2 && imported[0].d.best === guild.d.best,
+    `길드 ${imported.length}개 · 회원 ${imported[0]?.members.length ?? 0}명 · best ${imported[0]?.d.best ?? 0}`,
+  );
+  const honorsV2 = await deployOne("GiwaHonors", [
+    C.GiwaMarketV3.address,
+    guildsV2.address,
+    C.GiwaHonors.address,
+  ]);
+  const migratedHonor = await read(honorsV2, "profileOf", [merchant.address]);
+  check(
+    "기존 칭호 보유·장착 상태 폴백",
+    migratedHonor[0] === mask && migratedHonor[1] === equipped,
+    `mask ${migratedHonor[0]} · equipped ${migratedHonor[1]}`,
+  );
+  const bossV2 = await deployOne("GiwaBoss", [
+    guildsV2.address,
+    C.GiwaHearth.address,
+    C.GiwaBoss.address,
+  ]);
+  check(
+    "기존 전리품 카운터 폴백",
+    (await read(bossV2, "trophiesOf", [merchant.address])) ===
+      (await read(C.GiwaBoss, "trophiesOf", [merchant.address])),
+  );
+  const profileV2 = await deployOne("GiwaProfile", [
+    guildsV2.address,
+    honorsV2.address,
+    C.GiwaBoxes.address,
+    C.GiwaHearth.address,
+    C.GiwaWorkshop.address,
+    bossV2.address,
+  ]);
+  const migratedProfile = await read(profileV2, "profileOf", [merchant.address]);
+  check(
+    "새 프로필이 마이그레이션 묶음을 집계",
+    migratedProfile.guildName === "기와길드" &&
+      migratedProfile.honorMask === mask &&
+      migratedProfile.warmth === p.warmth,
+  );
 
   console.log(`\n${"─".repeat(58)}`);
   console.log(

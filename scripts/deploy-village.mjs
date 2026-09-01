@@ -14,23 +14,27 @@ import {
   http,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-
-const require = createRequire(import.meta.url);
-const solc = require("solc");
+import { deployedAddresses } from "./lib/deployments.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MAX_CODE = 24576; // EIP-170
 
 const TARGETS = [
   { file: "GiwaMarketV3.sol", name: "GiwaMarketV3", out: "market.ts", prefix: "MARKET" },
-  { file: "GiwaGuilds.sol", name: "GiwaGuilds", out: "guilds.ts", prefix: "GUILDS" },
+  {
+    file: "GiwaGuilds.sol",
+    name: "GiwaGuilds",
+    out: "guilds.ts",
+    prefix: "GUILDS",
+    args: (deployed) => [deployed.GiwaGuilds],
+  },
   { file: "GiwaPresence.sol", name: "GiwaPresence", out: "presence.ts", prefix: "PRESENCE" },
   {
     file: "GiwaHonors.sol",
     name: "GiwaHonors",
     out: "honors.ts",
     prefix: "HONORS",
-    args: (deployed) => [deployed.GiwaMarketV3, deployed.GiwaGuilds],
+    args: (deployed) => [deployed.GiwaMarketV3, deployed.GiwaGuilds, deployed.GiwaHonors],
   },
   {
     file: "GiwaOffers.sol",
@@ -47,7 +51,7 @@ const TARGETS = [
     name: "GiwaBoss",
     out: "boss.ts",
     prefix: "BOSS",
-    args: (deployed) => [deployed.GiwaGuilds, deployed.GiwaHearth],
+    args: (deployed) => [deployed.GiwaGuilds, deployed.GiwaHearth, deployed.GiwaBoss],
   },
   {
     file: "GiwaProfile.sol",
@@ -65,19 +69,27 @@ const TARGETS = [
   },
 ];
 
-// 이미 배포된 주소 (부분 재배포 시 생성자 인자·유지용).
-// 사용법: node scripts/deploy-village.mjs [컨트랙트명 ...] — 인자 없으면 전부.
-const deployed = {
-  GiwaMarketV3: "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2",
-  GiwaGuilds: "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638",
-  GiwaPresence: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93",
-  GiwaHonors: "0x7e230f68c4dabe64e6de231ea3085e50f0d5a57f",
-  GiwaOffers: "0x534a29c47667b54eab6995517705cfbc423bb909",
-  GiwaBoxes: "0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e",
-  GiwaHearth: "0xf780265d5f49abd8c7e5d18d81d33426f62f3365",
-  GiwaWorkshop: "0x664762337e529f853949a94e6ed50e6d8016c975",
-};
+// 현재 config가 배포 주소의 원본이다. 부분 재배포 시 생성자 인자와 마이그레이션
+// 원본으로 쓰고, 각 배포가 확정될 때 해당 config를 새 주소로 갱신한다.
+const deployed = { ...deployedAddresses };
 const only = process.argv.slice(2);
+const known = new Set(TARGETS.map((target) => target.name));
+const unknown = only.filter((name) => !known.has(name));
+if (unknown.length) {
+  throw new Error(`[deploy] 알 수 없는 컨트랙트: ${unknown.join(", ")}`);
+}
+const guildBundle = ["GiwaGuilds", "GiwaHonors", "GiwaBoss", "GiwaProfile"];
+if (only.includes("GiwaGuilds")) {
+  const missing = guildBundle.filter((name) => !only.includes(name));
+  if (missing.length) {
+    throw new Error(
+      `[deploy] GiwaGuilds 교체는 종속 컨트랙트와 함께 해야 합니다: ${guildBundle.join(" ")}`,
+    );
+  }
+}
+
+const require = createRequire(import.meta.url);
+const solc = require("solc");
 
 const giwaSepolia = defineChain({
   id: 91342,
@@ -99,21 +111,27 @@ const input = {
   sources,
   settings: {
     optimizer: { enabled: false, runs: 200 },
-    outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } },
+    outputSelection: {
+      "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] },
+    },
   },
 };
 const output = JSON.parse(solc.compile(JSON.stringify(input)));
 const errors = (output.errors ?? []).filter((e) => e.severity === "error");
 if (errors.length) {
   for (const e of errors) console.error(e.formattedMessage);
-  process.exit(1);
+  throw new Error("[compile] Solidity 컴파일 실패");
 }
 const artifacts = {};
 for (const t of TARGETS) {
   const a = output.contracts[t.file][t.name];
-  const size = a.evm.bytecode.object.length / 2;
-  console.log(`[compile] ${t.name} — ${size} bytes${size > MAX_CODE ? " ⚠ 24KB 초과!" : ""}`);
-  if (size > MAX_CODE) process.exit(1);
+  const initSize = a.evm.bytecode.object.length / 2;
+  const runtimeSize = a.evm.deployedBytecode.object.length / 2;
+  console.log(
+    `[compile] ${t.name} — runtime ${runtimeSize} bytes · init ${initSize} bytes` +
+      (runtimeSize > MAX_CODE ? " ⚠ runtime 24KB 초과!" : ""),
+  );
+  if (runtimeSize > MAX_CODE) throw new Error(`[compile] ${t.name} 런타임 코드 크기 초과`);
   artifacts[t.name] = { abi: a.abi, bytecode: "0x" + a.evm.bytecode.object };
 }
 
@@ -128,9 +146,12 @@ const wallet = createWalletClient({ account, chain: giwaSepolia, transport: http
 
 const balance = await pub.getBalance({ address: account.address });
 console.log(`[deploy] 배포자 슬롯 A (${account.address}) 잔액 ${formatEther(balance)} ETH`);
+const chainId = await pub.getChainId();
+if (chainId !== giwaSepolia.id) {
+  throw new Error(`[deploy] 체인 ID 불일치: 기대 ${giwaSepolia.id}, 실제 ${chainId}`);
+}
 if (balance === 0n) {
-  console.error("슬롯 A에 GIWA Sepolia ETH가 없습니다.");
-  process.exit(1);
+  throw new Error("슬롯 A에 GIWA Sepolia ETH가 없습니다.");
 }
 
 for (const t of TARGETS) {
@@ -144,6 +165,9 @@ for (const t of TARGETS) {
   });
   const receipt = await pub.waitForTransactionReceipt({ hash });
   const address = receipt.contractAddress;
+  if (receipt.status !== "success" || !address) {
+    throw new Error(`[deploy] ${t.name} 배포 실패: ${hash}`);
+  }
   deployed[t.name] = address;
   console.log(`[deploy] ${t.name}: https://sepolia-explorer.giwa.io/address/${address}`);
 

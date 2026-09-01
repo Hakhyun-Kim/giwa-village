@@ -31,12 +31,12 @@ export const giwaSepolia = defineChain({
 
 export const ADDRESSES = {
   market: "0x1f34506cda6619fc3124d68742a8fd5e7ba436e2",
-  guilds: "0x65e4de091071d2f0d47b24f1ada5c2c7ba2c7638",
+  guilds: "0xea796ffd37c4a1116d5c7d8f71448ac39ffaa31b",
   presence: "0x4d600672cefae3c8462f3d9feb2cb739001e7a93",
   offers: "0x534a29c47667b54eab6995517705cfbc423bb909",
   hearth: "0xf780265d5f49abd8c7e5d18d81d33426f62f3365",
-  boss: "0x8f50d882fc936f481f5f66d76156ebdf816cc6ae",
-  profile: "0xefe0e8d69661fd67f5fe2368f9b1f7ff6d395416",
+  boss: "0x11dbe73cc9185cd4c7c278bedf7065ea6f459d63",
+  profile: "0xf4c2a73ac75fd9fee1856cc2b7c929b1fc66fdf3",
 };
 
 export const EXPLORER = "https://sepolia-explorer.giwa.io";
