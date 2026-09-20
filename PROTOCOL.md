@@ -310,6 +310,73 @@ ws://<host>:2567/<processId>/<roomId>?sessionId=<sessionId>
 
 노점 id는 `s-` + 주소 앞 8자리다. **지갑 하나에 노점 하나** — 다시 열면 덮어쓴다.
 
+### 3.7 실시간 룸 둘 — `village_live` · `expedition`
+
+위의 `village` 룸과 **같은 서버 · 같은 소켓 · 같은 프레임**(§3.1~3.3)이다. 자리 얻기의 주소만 다르다.
+둘 다 **영구 기록을 갖지 않는다** — 위치 · 이모트 · 전투는 세션과 함께 사라지고, 돈 · 소유권 · 보상은 여전히
+체인에만 있다. 서버가 없으면 마을과 들판은 그대로 돌고, 함께 하는 원정만 열리지 않는다.
+
+#### `village_live` — 마을 · 들판 · 산채에서 서로를 그린다
+
+```
+POST http://<host>:2567/matchmake/joinOrCreate/village_live
+{ "name": "나그네", "color": 16755200 }
+```
+
+| 내가 보내는 것 | 페이로드 | 뜻 |
+|---|---|---|
+| `ready` | 없음 | 입장 직후 한 번. `snapshot`과 `challenge`가 온다 |
+| `identify` | `{address, signature}` | `challenge`의 글을 지갑으로 서명(EIP-191 `personal_sign`)해 보내면 이 세션이 그 주소의 아바타가 된다. **안 보내도 된다** — 방문자로 남는다 |
+| `move` | `{x, z, rot, zone}` | 내 위치. `zone`은 `"village"` · `"field"` · `"dungeon"`. **하트비트를 겸한다** — 15초 없으면 끊는다 |
+| `emote` | `"👋"` · `"🙇"` · `"👏"` · `"💃"` · `"🍻"` 중 하나 | 머리 위 표시 |
+
+| 서버가 보내는 것 | 페이로드 | 언제 |
+|---|---|---|
+| `snapshot` | `[{id, name, color, address, x, z, rot, zone, primary}, …]` | **15Hz**, 전원. 나도 들어 있다 |
+| `challenge` | `"GIWA Village session\n<roomId>/<sessionId>\n<uuid>"` | `ready`의 답. 60초 안에 서명해야 한다 |
+| `emote` | `{id, icon}` | 누가 이모트 |
+
+정원 **60명** · 좌표는 ±55로 잘린다 · 이름 16자(`<`·`>` 제거). 한 주소로 여러 세션이 들어오면 **가장 최근에
+서명한 세션 하나만** `snapshot`에 실린다 — 같은 지갑의 아바타가 둘로 보이지 않게. `address`가 빈 글자면 방문자다.
+서명은 "이 세션이 이 주소다"를 보일 뿐 아무 권한도 주지 않는다. 글이 세션마다 다르므로 다른 곳에 다시 쓸 수 없다.
+
+#### `expedition` — 1~4명이 함께 하는 실시간 원정
+
+```
+POST http://<host>:2567/matchmake/create/expedition        { "name": "나그네", "color": 16755200 }
+POST http://<host>:2567/matchmake/joinById/<roomId>        { "name": "나그네", "color": 16755200 }
+```
+
+`create`의 응답에 든 `room.roomId`가 **초대 코드**다. 비공개 룸이라 `joinOrCreate`로는 찾을 수 없고, 코드로만 합류한다.
+정원 **4명**. 승리 · 패배로 끝난 원정은 잠긴다.
+
+| 내가 보내는 것 | 페이로드 | 뜻 |
+|---|---|---|
+| `ready` | 없음 | 입장 직후 한 번. `combat`이 바로 온다 |
+| `input` | `{x, z}` | 가고 싶은 방향(길이 1로 깎인다). **50ms마다** — 하트비트를 겸한다(15초) |
+| `action` | `"attack"` · `"skill"` | 공격 · 기술. 거리와 쿨다운은 서버가 판정한다 |
+
+| 서버가 보내는 것 | 페이로드 | 언제 |
+|---|---|---|
+| `combat` | `{now, phase, players[], enemies[], events[], guide}` | **20Hz**(50ms), 전원. 원정의 상태 전부다 |
+
+```jsonc
+{
+  "now": 12350,                       // 원정이 시작된 뒤의 ms — 아래 시각은 전부 이 시계다
+  "phase": "guards",                  // "guards" → "boss" → "victory" | "defeat"
+  "players": [{ "id": "세션id", "name": "나그네", "color": 16755200, "x": 0, "z": 10, "rot": 3.14,
+                "hp": 100, "maxHp": 100, "attackAt": 0, "skillAt": 0 }],   // attackAt·skillAt = 다시 쓸 수 있는 시각
+  "enemies": [{ "id": "guard-0", "name": "숲 도깨비", "x": -5, "z": -3, "hp": 90, "maxHp": 90, "boss": false,
+                "warning": { "x": 0, "z": 8, "radius": 2.4, "hitAt": 13100 } }],  // warning = 붉은 예고 원. null 이면 없다
+  "events":  [{ "id": 7, "x": -5, "z": -3, "amount": 18, "kind": "hit" }],  // "hit"·"hurt"·"skill" — id 가 늘어난 것만 새 일이다
+  "guide":   { "x": -2, "z": 9 }      // 함께 싸우는 교관의 자리
+}
+```
+
+**규칙은 [`shared/expedition.ts`](shared/expedition.ts) 한 곳이다.** 서버가 이것을 돌리고, 웹 클라이언트는 같은 파일로
+그린다. 다른 언어로 옮겨 **서버 없이 혼자 하는 연습 원정**을 돌려도 된다 — 단, 같은 입력에 같은 끝 상태가 나와야 한다
+(`npm test`가 이 규칙을 걸어 본다). 원정은 세션 기록이다: **체인에 아무것도 쓰지 않고, 보상도 없다.**
+
 ---
 
 ## 4. 만들기 전에 알아 둘 것
@@ -345,7 +412,7 @@ keccak256 · secp256k1 · RLP · ABI 인코딩(EIP-1559).
 - `world.json`의 필드는 **늘기만 한다.** 모르는 키는 무시하면 된다.
 - 형식을 깨는 변경은 `version`을 올리고 이 문서 맨 위 표를 고친다.
 - 룸 메시지가 늘거나 서버 상수가 바뀌면 `npm test`가 이 문서를 검사해 빨간불을
-  낸다 — 문서가 서버보다 늦는 일은 구조적으로 막아 뒀다.
+  낸다 — 문서가 서버보다 늦는 일은 구조적으로 막아 뒀다(`village` · `village_live` · `expedition` 셋 다).
 
 무엇이 막히면 이슈로 남겨 달라. **읽어야 알 수 있는 것이 남아 있다면 이 문서의
 버그다.**

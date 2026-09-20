@@ -12,6 +12,9 @@ import { performSocialEmote } from "./social";
 import { useStore } from "../state/store";
 import { sfxStep } from "../audio/sfx";
 import { syncListener } from "../audio/audio";
+import { combatSnapshot, fieldWalk, useWorld } from "../state/world";
+import { combatAction, combatFeel, combatInput, interactWorld } from "../net/expedition";
+import { clampArena } from "../../../shared/expedition";
 
 const SPEED = 6;
 const SEND_INTERVAL = 1 / 15;
@@ -20,6 +23,7 @@ const STRIDE = 1.9;
 
 export default function Player() {
   const group = useRef<Group>(null);
+  const weapon = useRef<Group>(null);
   const speedRef = useRef(0);
   const keys = useRef<Set<string>>(new Set());
   const sendTimer = useRef(0);
@@ -48,6 +52,12 @@ export default function Player() {
       if (isTyping()) return;
       keys.current.add(e.code);
       if (e.repeat) return;
+      if (e.code === "KeyF" && interactWorld()) return;
+      if (useWorld.getState().zone === "dungeon") {
+        if (e.code === "KeyR") combatAction("attack");
+        if (e.code === "KeyQ") combatAction("skill");
+        return;
+      }
       if (e.code === "KeyE") {
         performSocialEmote("👋");
       }
@@ -113,6 +123,31 @@ export default function Player() {
     dx += touchInput.x;
     dz += touchInput.z;
 
+    const zone = useWorld.getState().zone;
+    if (Math.hypot(dx,dz)>.05) fieldWalk.active=false;
+    if (zone === "field" && fieldWalk.active) {
+      const distance=Math.hypot(fieldWalk.x-localPos.x,fieldWalk.z-localPos.z);
+      if (distance < .35) fieldWalk.active=false;
+      else { dx=(fieldWalk.x-localPos.x)/distance; dz=(fieldWalk.z-localPos.z)/distance; }
+    }
+    const me = combatSnapshot?.players.find(p => p.id === useWorld.getState().fighterId);
+    const el = document.activeElement;
+    if (el?.tagName === "INPUT" || el?.tagName === "TEXTAREA" ||
+        (zone === "dungeon" && (!me || me.hp <= 0 || combatSnapshot?.phase === "victory" || combatSnapshot?.phase === "defeat"))) {
+      dx = 0; dz = 0;
+    }
+    if (zone === "dungeon") {
+      combatInput(dx,dz);
+      if(k.has("KeyR"))combatAction("attack");
+      if(k.has("KeyQ"))combatAction("skill");
+    }
+    if(weapon.current) {
+      weapon.current.visible=zone==="dungeon";
+      const t=(performance.now()-combatFeel.swingAt)/300;
+      weapon.current.rotation.x=t<1&&t>=0?-.8+Math.sin(t*Math.PI)*2.5:0;
+    }
+    const beforeX = localPos.x;
+    const beforeZ = localPos.z;
     const moving = Math.hypot(dx, dz) > 0.05;
     if (moving && useStore.getState().selfSitting) {
       // 움직이면 자동으로 일어난다
@@ -126,9 +161,20 @@ export default function Player() {
     }
     // 겹친 만큼 밀어낸다 — 멈춰 있을 때도 부르는 이유는, 순간이동(?debug)이나
     // 나중에 열린 노점 안에 갇히면 스스로 빠져나와야 하기 때문이다.
-    const beforeX = localPos.x;
-    const beforeZ = localPos.z;
-    collide(localPos);
+    if (zone === "village") collide(localPos);
+    else if (zone === "field") {
+      localPos.x = Math.max(-19,Math.min(19,localPos.x));
+      localPos.z = Math.max(-20,Math.min(17,localPos.z));
+    } else {
+      clampArena(localPos);
+      if (me) {
+        const error = Math.hypot(localPos.x-me.x, localPos.z-me.z);
+        const blend = error > 3 ? 1 : 1-Math.exp(-8*dt);
+        localPos.x += (me.x-localPos.x)*blend;
+        localPos.z += (me.z-localPos.z)*blend;
+        if (!moving) localPos.rot=me.rot;
+      }
+    }
     speedRef.current = moving ? SPEED : 0;
 
     // 발소리는 시간이 아니라 **걸은 거리**로 센다. 벽에 막혀 제자리걸음을 하면
@@ -146,6 +192,7 @@ export default function Player() {
     if (group.current) {
       group.current.position.set(localPos.x, 0, localPos.z);
       group.current.rotation.y = localPos.rot;
+      group.current.scale.y = zone === "dungeon" && me && me.hp<=0 ? .45 : 1;
     }
 
     // follow camera
@@ -169,21 +216,21 @@ export default function Player() {
 
     // portal proximity
     const near =
-      Math.hypot(localPos.x - PORTAL_POS[0], localPos.z - PORTAL_POS[2]) < 4.5;
+      zone === "village" && Math.hypot(localPos.x - PORTAL_POS[0], localPos.z - PORTAL_POS[2]) < 4.5;
     if (near !== useStore.getState().nearPortal) {
       useStore.getState().setNearPortal(near);
     }
 
     // campfire proximity
     const nearFire =
-      Math.hypot(localPos.x - CAMPFIRE_POS[0], localPos.z - CAMPFIRE_POS[2]) < 3.2;
+      zone === "village" && Math.hypot(localPos.x - CAMPFIRE_POS[0], localPos.z - CAMPFIRE_POS[2]) < 3.2;
     if (nearFire !== useStore.getState().nearFire) {
       useStore.getState().setNearFire(nearFire);
     }
 
     // boss proximity
     const nearBoss =
-      Math.hypot(localPos.x - BOSS_POS[0], localPos.z - BOSS_POS[2]) < 4.5;
+      zone === "village" && Math.hypot(localPos.x - BOSS_POS[0], localPos.z - BOSS_POS[2]) < 4.5;
     if (nearBoss !== useStore.getState().nearBoss) {
       useStore.getState().setNearBoss(nearBoss);
     }
@@ -208,6 +255,10 @@ export default function Player() {
 
   return (
     <group ref={group}>
+      <group ref={weapon} position={[.55,1,.3]} visible={false}>
+        <mesh position={[0,.1,.4]} rotation={[Math.PI/2,0,0]}><boxGeometry args={[.12,.95,.12]}/><meshStandardMaterial color="#dedab6" metalness={.5} roughness={.35}/></mesh>
+        <mesh position={[0,.1,0]}><boxGeometry args={[.4,.1,.12]}/><meshStandardMaterial color="#c6a45c"/></mesh>
+      </group>
       <Avatar
         color={selfColor}
         name={selfName || "나"}

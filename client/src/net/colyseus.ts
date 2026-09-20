@@ -1,346 +1,115 @@
 import { Client, Room } from "colyseus.js";
 import { WS_URL, DEMO } from "../config/giwa";
+import { startDemo, demoGift, demoBuy } from "../demo/demo";
 import {
-  startDemo,
-  demoGift,
-  demoBuy,
-  demoOpenStall,
-  demoCloseStall,
-} from "../demo/demo";
-import {
-  openStallOnChain,
-  closeStallOnChain,
-  sendEmoteOnChain,
-  chainCreateGuild,
-  chainJoinGuild,
-  chainLeaveGuild,
-  chainDungeonEnter,
-  chainDungeonPick,
-  chainDungeonBank,
+  openStallOnChain, closeStallOnChain, sendEmoteOnChain,
+  chainCreateGuild, chainJoinGuild, chainLeaveGuild, chainDungeonEnter,
+  chainDungeonPick, chainDungeonBank, applyPeers,
 } from "../chain/village";
+import { activeWalletClient } from "../wallet/wallet";
 import { useStore, remoteTargets } from "../state/store";
-import type {
-  PlayerSnapshot,
-  PlayerInfo,
-  FeedEvent,
-  Stall,
-  Guild,
-  DungeonView,
-} from "../types";
+import { liveAddresses, liveTargets, useWorld } from "../state/world";
 
-interface SaleMessage extends FeedEvent {
-  stallId: string;
-  stallTitle: string;
-  buyer: string;
-  buyerName: string;
-  buyerAddress: string;
-  ownerName: string;
-  priceEth: string;
-}
-
-let client: Client | null = null;
+export const localPos = { x: 0, z: 5, rot: 0, ready: false };
+export const liveClient = new Client(WS_URL);
+export interface Identity { name?: string; address?: string; color: number }
+interface Peer { id: string; name: string; address: string; color: number; x: number; z: number; rot: number; zone: string }
 let room: Room | null = null;
-let joinSeq = 0;
-let heartbeat: ReturnType<typeof setInterval> | null = null;
-let lastIdentity: Identity | null = null;
+let generation = 0;
+let retry: ReturnType<typeof setTimeout> | undefined;
+let heartbeat: ReturnType<typeof setInterval> | undefined;
+let runtime: Promise<void> | null = null;
+let applied = new Set<string>();
+const sessionKeys = new Map<string, string>();
 
-function scheduleReconnect(seq: number) {
-  setTimeout(() => {
-    if (seq !== joinSeq || !lastIdentity) return;
-    void joinVillage(lastIdentity);
-  }, 2000);
+function clearPeers() {
+  const s = useStore.getState(); const players = { ...s.players };
+  for (const id of applied) { delete players[id]; remoteTargets.delete(id); }
+  applied.clear(); sessionKeys.clear(); liveAddresses.clear(); liveTargets.clear();
+  s.setPlayers(players); applyPeers();
 }
-
-function stopHeartbeat() {
-  if (heartbeat) {
-    clearInterval(heartbeat);
-    heartbeat = null;
+function disconnect() {
+  clearTimeout(retry); clearInterval(heartbeat);
+  const old = room; room = null;
+  old?.removeAllListeners(); if (old) void old.leave().catch(() => {});
+  clearPeers();
+}
+function receive(snapshot: Peer[], selfId: string) {
+  const s = useStore.getState(); const players = { ...s.players };
+  for (const id of applied) delete players[id];
+  const next = new Set<string>(); liveAddresses.clear(); liveTargets.clear(); sessionKeys.clear();
+  for (const p of snapshot) {
+    if (p.address) liveAddresses.add(p.address.toLowerCase());
+    if (p.id === selfId || (p.address && p.address.toLowerCase() === s.walletAddress?.toLowerCase())) continue;
+    const id = p.address ? p.address.toLowerCase() : `rt-${p.id}`;
+    sessionKeys.set(p.id,id); liveTargets.set(id,p);
+    if (p.address) delete players[id];
+    if (p.zone !== "village") continue;
+    next.add(id);
+    players[id] = { name:p.name, address:p.address, color:p.color };
+    remoteTargets.set(id,{ x:p.x,z:p.z,rot:p.rot });
   }
+  for (const id of applied) if (!next.has(id)) remoteTargets.delete(id);
+  applied = next;
+  const changed = Object.keys(players).length !== Object.keys(s.players).length ||
+    Object.entries(players).some(([id,p]) => !s.players[id] || s.players[id].name !== p.name || s.players[id].color !== p.color);
+  if (changed) s.setPlayers(players);
+  s.setOnlineCount(Object.keys(players).filter(id => !id.startsWith("npc-")).length + 1);
 }
-
-export const localPos = { x: 0, z: 0, rot: 0, ready: false };
-
-function getClient(): Client {
-  if (!client) client = new Client(WS_URL);
-  return client;
-}
-
-export interface Identity {
-  name?: string;
-  address?: string;
-  color: number;
-}
-
-export async function joinVillage(identity: Identity): Promise<void> {
-  if (DEMO) {
-    await startDemo(localPos);
-    return;
-  }
-  const seq = ++joinSeq;
-  lastIdentity = identity;
-  const store = useStore.getState();
-
-  stopHeartbeat();
-  if (room) {
-    room.removeAllListeners();
-    void room.leave();
-    room = null;
-  }
-  store.setStatus("connecting");
-  store.setSelfId(null);
-  localPos.ready = false;
-
-  let joined: Room;
+async function connect(seq: number) {
+  if (seq !== generation) return;
+  const s = useStore.getState();
   try {
-    joined = await getClient().joinOrCreate("village", identity);
-  } catch (err) {
-    console.error("[net] join failed:", err);
-    if (seq === joinSeq) {
-      store.setStatus("offline");
-      scheduleReconnect(seq);
-    }
-    return;
-  }
-
-  if (seq !== joinSeq) {
-    void joined.leave();
-    return;
-  }
-  room = joined;
-  store.setStatus("connected");
-  store.setSelfId(room.sessionId);
-  // app-level heartbeat so the server can reap zombie sockets
-  heartbeat = setInterval(() => room?.send("ping"), 5000);
-
-  room.onMessage("snapshot", (snapshot: PlayerSnapshot[]) => {
-    const s = useStore.getState();
-    const selfId = s.selfId;
-    s.setOnlineCount(snapshot.length);
-
-    let membershipChanged = false;
-    const nextPlayers: Record<string, PlayerInfo> = {};
-
-    for (const p of snapshot) {
-      if (p.id === selfId) {
-        if (!localPos.ready) {
-          // adopt the server-assigned spawn point once
-          localPos.x = p.x;
-          localPos.z = p.z;
-          localPos.ready = true;
-        }
-        continue;
-      }
-      nextPlayers[p.id] = { name: p.name, address: p.address, color: p.color };
-      const target = remoteTargets.get(p.id);
-      if (target) {
-        target.x = p.x;
-        target.z = p.z;
-        target.rot = p.rot;
-      } else {
-        remoteTargets.set(p.id, { x: p.x, z: p.z, rot: p.rot });
-        membershipChanged = true;
-      }
-      if (!(p.id in s.players)) membershipChanged = true;
-    }
-
-    for (const id of Object.keys(s.players)) {
-      if (!(id in nextPlayers)) {
-        remoteTargets.delete(id);
-        membershipChanged = true;
-      }
-    }
-
-    if (membershipChanged) s.setPlayers(nextPlayers);
-  });
-
-  room.onMessage("emote", (msg: { id: string; emote: string }) => {
-    const s = useStore.getState();
-    s.setEmote(msg.id, msg.emote);
-    const at = useStore.getState().emotes[msg.id]?.at;
-    if (at) setTimeout(() => useStore.getState().clearEmote(msg.id, at), 2200);
-  });
-
-  room.onMessage("leave", (id: string) => {
-    remoteTargets.delete(id);
-    useStore.getState().removePlayer(id);
-  });
-
-  room.onMessage(
-    "gift",
-    (g: FeedEvent & { from: string; to: string }) => {
-      const s = useStore.getState();
-      s.addFeed(g);
-      // pop a 🎁 over the recipient's head briefly
-      s.setEmote(g.to, "🎁");
-      const at = useStore.getState().emotes[g.to]?.at;
-      if (at) setTimeout(() => useStore.getState().clearEmote(g.to, at), 2600);
-    },
-  );
-
-  room.onMessage("stalls", (list: Stall[]) => {
-    useStore.getState().setStalls(list);
-  });
-
-  room.onMessage("stall:sale", (sale: SaleMessage) => {
-    const s = useStore.getState();
-    s.addFeed({
-      kind: "sale",
-      fromName: sale.buyerName,
-      toName: sale.stallTitle,
-      amountEth: sale.priceEth,
-      itemName: sale.itemName,
-      itemEmoji: sale.itemEmoji,
-      tx: sale.tx,
-      at: sale.at,
+    const joined = await liveClient.joinOrCreate("village_live", { name:s.selfName,color:s.selfColor });
+    if (seq !== generation) { void joined.leave(); return; }
+    room = joined; useWorld.setState({ server:"online" });
+    joined.onMessage("snapshot", (peers: Peer[]) => { if (seq === generation) receive(peers,joined.sessionId); });
+    joined.onMessage("challenge", async (message: string) => {
+      const wc = activeWalletClient;
+      // 버너만 자동 인증. 외부 지갑은 추가 팝업 없이 방문자 세션으로 참여한다.
+      if (!wc?.account || wc.account.type !== "local" || typeof message !== "string" || !message.startsWith(`GIWA Village session\n${joined.roomId}/${joined.sessionId}\n`)) return;
+      try {
+        const signature = await wc.signMessage({ account:wc.account, message });
+        if (seq === generation) joined.send("identify",{ address:wc.account.address,signature });
+      } catch { /* 마을 진행과 전투는 서명 없이도 가능 */ }
     });
-    s.setEmote(sale.buyer, "🛍️");
-    const at = useStore.getState().emotes[sale.buyer]?.at;
-    if (at) setTimeout(() => useStore.getState().clearEmote(sale.buyer, at), 2600);
-    // 쿠폰 저장은 구매 당사자(StallDialog)가 에스크로 정보와 함께 직접 한다
-  });
-
-  // ---- 길드 + 던전 ----
-
-  room.onMessage("guilds", (list: Guild[]) => {
-    useStore.getState().setGuilds(list);
-  });
-
-  room.onMessage("guild:error", (msg: string) => {
-    useStore.getState().setGuildError(msg);
-  });
-
-  room.onMessage("dungeon:state", (d: Omit<DungeonView, "busy">) => {
-    useStore.getState().setDungeon({ ...d, busy: false });
-  });
-
-  room.onMessage(
-    "dungeon:result",
-    (r: {
-      outcome: "safe" | "bonus" | "trap";
-      door: number;
-      tentative: number;
-      floor: number;
-      ended: boolean;
-    }) => {
-      useStore.getState().patchDungeon({
-        lastOutcome: r.outcome,
-        lastDoor: r.door,
-        tentative: r.tentative,
-        floor: r.floor,
-        ended: r.ended,
-        busy: false,
-      });
-    },
-  );
-
-  room.onMessage("dungeon:banked", (b: { floors: number; floor: number }) => {
-    useStore.getState().patchDungeon({
-      banked: b.floors,
-      floor: b.floor,
-      tentative: 0,
-      ended: true,
-      busy: false,
+    joined.onMessage("emote", (e: { id:string;icon:string }) => {
+      const id = sessionKeys.get(e.id); if (!id) return;
+      useStore.getState().setEmote(id,e.icon);
+      const at = useStore.getState().emotes[id]?.at;
+      if (at) setTimeout(() => useStore.getState().clearEmote(id,at),2200);
     });
-  });
-
-  // handlers are registered — now it is race-free to ask for the lists
-  room.send("stalls:get");
-  room.send("guilds:get");
-
-  room.onLeave(() => {
-    stopHeartbeat();
-    if (seq === joinSeq) {
-      useStore.getState().setStatus("offline");
-      scheduleReconnect(seq);
-    }
-  });
-}
-
-export function leaveVillage(): void {
-  if (DEMO) return;
-  ++joinSeq;
-  stopHeartbeat();
-  if (room) {
-    room.removeAllListeners();
-    void room.leave();
-    room = null;
+    joined.onLeave(() => {
+      if (seq !== generation) return;
+      room = null; clearInterval(heartbeat); clearPeers(); useWorld.setState({ server:"offline" });
+      retry = setTimeout(() => void connect(seq),4000);
+    });
+    joined.send("ready"); sendMove(localPos.x,localPos.z,localPos.rot);
+    heartbeat = setInterval(() => sendMove(localPos.x,localPos.z,localPos.rot),1000);
+  } catch {
+    if (seq !== generation) return;
+    useWorld.setState({ server:"offline" }); retry = setTimeout(() => void connect(seq),4000);
   }
 }
-
-export function sendMove(x: number, z: number, rot: number): void {
-  room?.send("move", { x, z, rot });
+export async function joinVillage(_identity: Identity): Promise<void> {
+  const seq = ++generation; disconnect();
+  // 재접속 때 NPC·지갑·위치를 재초기화하지 않는다. 브라우저 수명의 공통 런타임.
+  runtime ??= startDemo(localPos).catch(err => { runtime = null; throw err; });
+  await runtime;
+  if (seq !== generation) return;
+  if (DEMO) { useWorld.setState({server:"offline"}); return; }
+  useWorld.setState({server:"connecting"}); void connect(seq);
 }
-
-export function sendEmote(icon: string): void {
-  if (DEMO) return sendEmoteOnChain(icon);
-  room?.send("emote", icon);
-}
-
-export function sendGift(to: string, amountEth: string, tx: string): void {
-  if (DEMO) return demoGift(to, amountEth, tx);
-  room?.send("gift", { to, amountEth, tx });
-}
-
-export function openStall(
-  title: string,
-  items: { name: string; emoji: string; priceEth: string }[],
-): void {
-  if (DEMO) {
-    // 낙관적 로컬 반영 + 온체인 기록 (단일 tx — 리스팅 포함)
-    demoOpenStall(title, items);
-    void openStallOnChain(title, items).catch((err) =>
-      console.warn("[chain] 노점 온체인 기록 실패(가스 부족 등):", err),
-    );
-    return;
-  }
-  room?.send("stall:open", { title, items });
-}
-
-export function closeStall(): void {
-  if (DEMO) {
-    demoCloseStall();
-    void closeStallOnChain().catch(() => {});
-    return;
-  }
-  room?.send("stall:close");
-}
-
-export function buyStallItem(stallId: string, itemId: string, tx: string): void {
-  if (DEMO) return demoBuy(stallId, itemId, tx);
-  room?.send("stall:buy", { stallId, itemId, tx });
-}
-
-// ---- 길드 + 비동기 코업 던전 (서버 모드: 룸 메시지 / 데모 모드: 온체인) ----
-
-export function createGuild(name: string, emblem: string): void {
-  if (DEMO) return chainCreateGuild(name, emblem);
-  room?.send("guild:create", { name, emblem });
-}
-
-export function joinGuild(guildId: string): void {
-  if (DEMO) return chainJoinGuild(guildId);
-  room?.send("guild:join", { guildId });
-}
-
-export function leaveGuild(): void {
-  if (DEMO) return chainLeaveGuild();
-  room?.send("guild:leave");
-}
-
-export function dungeonEnter(): void {
-  if (DEMO) return void chainDungeonEnter();
-  useStore.getState().setDungeon(null);
-  room?.send("dungeon:enter");
-}
-
-export function dungeonPick(door: number): void {
-  if (DEMO) return chainDungeonPick(door);
-  useStore.getState().patchDungeon({ busy: true, lastOutcome: undefined });
-  room?.send("dungeon:pick", { door });
-}
-
-export function dungeonBank(): void {
-  if (DEMO) return void chainDungeonBank();
-  useStore.getState().patchDungeon({ busy: true });
-  room?.send("dungeon:bank");
-}
+export function leaveVillage() { ++generation; disconnect(); useWorld.setState({server:"offline"}); }
+export function sendMove(x:number,z:number,rot:number) { room?.send("move",{x,z,rot,zone:useWorld.getState().zone}); }
+export function sendEmote(icon:string) { if (room) room.send("emote",icon); else sendEmoteOnChain(icon); }
+export function sendGift(to:string,amountEth:string,tx:string) { demoGift(to,amountEth,tx); }
+export function buyStallItem(stallId:string,itemId:string,tx:string) { demoBuy(stallId,itemId,tx); }
+export function openStall(title:string,items:{name:string;emoji:string;priceEth:string}[]) { return openStallOnChain(title,items); }
+export function closeStall() { void closeStallOnChain().catch(e => useStore.getState().setWalletError(String(e))); }
+export const createGuild = chainCreateGuild;
+export const joinGuild = chainJoinGuild;
+export const leaveGuild = chainLeaveGuild;
+export const dungeonEnter = chainDungeonEnter;
+export const dungeonPick = chainDungeonPick;
+export const dungeonBank = chainDungeonBank;

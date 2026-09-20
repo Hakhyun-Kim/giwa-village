@@ -917,6 +917,36 @@ it("PROTOCOL.md가 서버의 메시지를 하나도 빠뜨리지 않는다", () 
   console.log(`     메시지 ${names.size}종 전부 문서에 있음`);
 });
 
+it("PROTOCOL.md가 실시간 룸 둘(village_live · expedition)의 메시지와 상수도 빠뜨리지 않는다", () => {
+  // 다른 클라이언트(언리얼 등)가 같은 마을 · 같은 원정에 붙으려면 이 문서만 보고 짤 수 있어야 한다
+  const doc = fs.readFileSync(path.join(ROOT, "PROTOCOL.md"), "utf8");
+  const section = doc.slice(doc.indexOf("### 3.7"));
+  ok(section.length > 200, "PROTOCOL.md에 §3.7(실시간 룸)이 없습니다");
+  for (const [file, room] of [["LiveRoom.ts", "village_live"], ["ExpeditionRoom.ts", "expedition"]]) {
+    const src = fs.readFileSync(path.join(ROOT, "server", "src", file), "utf8");
+    const names = new Set();
+    for (const re of [/\.onMessage\(\s*"([^"]+)"/g, /\.send\(\s*"([^"]+)"/g, /\.broadcast\(\s*"([^"]+)"/g])
+      for (const m of src.matchAll(re)) names.add(m[1]);
+    ok(names.size >= 4, `${file}에서 메시지를 ${names.size}개밖에 못 찾았습니다 — 추출 규칙을 보세요`);
+    const missing = [...names].filter((n) => !section.includes(`\`${n}\``));
+    eq(missing.join(", "), "", `PROTOCOL.md §3.7에 없는 ${room} 메시지: `);
+    ok(section.includes(`\`${room}\``), `§3.7에 ${room} 룸이 없습니다`);
+  }
+  const index = fs.readFileSync(path.join(ROOT, "server", "src", "index.ts"), "utf8");
+  ok(index.includes('define("village_live"') && index.includes('define("expedition"'), "서버가 두 룸을 같은 이름으로 열지 않습니다");
+  const live = fs.readFileSync(path.join(ROOT, "server", "src", "LiveRoom.ts"), "utf8");
+  const raid = fs.readFileSync(path.join(ROOT, "server", "src", "ExpeditionRoom.ts"), "utf8");
+  const rules = fs.readFileSync(path.join(ROOT, "shared", "expedition.ts"), "utf8");
+  const seats = live.match(/maxClients\s*=\s*(\d+)/)?.[1], party = rules.match(/MAX_PARTY\s*=\s*(\d+)/)?.[1];
+  const hz = live.match(/1000\s*\/\s*(\d+)/)?.[1], tick = raid.match(/\},\s*(\d+)\);/)?.[1];
+  ok(seats && party && hz && tick, "실시간 룸의 상수를 못 찾았습니다");
+  ok(section.includes(`**${seats}명**`) && section.includes(`**${party}명**`), `정원(${seats}명 · ${party}명)이 §3.7과 다릅니다`);
+  ok(section.includes(`**${hz}Hz**`) && section.includes(`**${1000 / Number(tick)}Hz**`), `주기(${hz}Hz · ${1000 / Number(tick)}Hz)가 §3.7과 다릅니다`);
+  for (const ms of new Set([...live.matchAll(/>\s*(\d+)\)\s*void c\.leave/g), ...raid.matchAll(/>\s*(\d+)\)\s*void c\.leave/g)].map((m) => m[1])))
+    ok(section.includes(`${Number(ms) / 1000}초`), `유휴 정리 ${Number(ms) / 1000}초가 §3.7에 없습니다`);
+  console.log(`     village_live ${seats}명 · ${hz}Hz / expedition ${party}명 · ${1000 / Number(tick)}Hz 문서와 일치`);
+});
+
 it("문서가 가리키는 상수가 실제 서버 값과 같다", () => {
   const roomSrc = fs.readFileSync(
     path.join(ROOT, "server", "src", "VillageRoom.ts"),

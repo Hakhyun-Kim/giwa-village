@@ -89,8 +89,9 @@ export async function openStallOnChain(
       ],
     }),
   );
-  await publicClient.waitForTransactionReceipt({ hash: tx });
-  void syncStalls();
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
+  if (receipt.status !== "success") throw new Error("노점 개설이 확정되지 않았습니다.");
+  void syncStalls().catch(() => {});
 }
 
 export async function closeStallOnChain(): Promise<void> {
@@ -106,8 +107,9 @@ export async function closeStallOnChain(): Promise<void> {
       args: [],
     }),
   );
-  await publicClient.waitForTransactionReceipt({ hash: tx });
-  void syncStalls();
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
+  if (receipt.status !== "success") throw new Error("노점 닫기가 확정되지 않았습니다.");
+  void syncStalls().catch(() => {});
 }
 
 /** 온체인 노점 상품 구매 — 컨트랙트가 가격을 강제한다 */

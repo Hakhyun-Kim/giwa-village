@@ -128,13 +128,14 @@ try {
       status: s.status,
       stalls: s.stalls.length,
       online: s.onlineCount,
+      npcs: Object.keys(s.players).filter(id => id.startsWith("npc-")).length,
       wallet: !!s.walletAddress,
       pos: window.__giwa.pos(),
     };
   });
   must(snap.status === "connected", `마을 입장 (status=${snap.status})`);
   must(snap.stalls >= 1, `노점이 선다 (${snap.stalls}개)`);
-  must(snap.online >= 2, `주민이 산다 (${snap.online}명)`);
+  must(snap.npcs >= 2, `NPC 주민이 산다 (${snap.npcs}명 · 접속자와 구분)`);
   must(snap.wallet, "데모 버너 지갑 생성");
   must(!!snap.pos, `내 아바타 위치 (${snap.pos?.x}, ${snap.pos?.z})`);
 

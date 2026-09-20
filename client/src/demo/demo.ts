@@ -3,7 +3,6 @@
 // - 지갑·구매·선물은 GIWA Sepolia에 실제로 전송 (진짜 온체인)
 import { generatePrivateKey } from "viem/accounts";
 import { useStore, remoteTargets } from "../state/store";
-import { FAUCET_URL } from "../config/giwa";
 import { adoptLocalBurner, colorFromString } from "../wallet/wallet";
 import { DEMO_STALLS } from "./demoData";
 import { PERSONAS as DEMO_NPCS, randomLine } from "./personas";
@@ -45,46 +44,18 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
   selfPos = localPos;
   const s = useStore.getState();
 
-  // 버너 지갑. 로컬 개발에서는 dev 서버가 파일(.demo-burner.json)로 보관하는
-  // 키 하나를 모든 브라우저가 공유한다 — 브라우저마다 새 지갑을 만들면
-  // 포셋(주소·IP당 24h 제한)을 지갑 수만큼 받아야 하기 때문. 공개 데모
-  // (프로덕션 빌드)는 기존대로 방문자 전용 키를 localStorage에 만든다.
-  let pk: `0x${string}` | null = null;
-  let freshBurner = false;
-  if (import.meta.env.DEV) {
-    try {
-      const res = await fetch("/__demo-burner");
-      const j = res.ok ? await res.json() : null;
-      if (j && /^0x[0-9a-fA-F]{64}$/.test(j.privateKey)) {
-        pk = j.privateKey as `0x${string}`;
-        freshBurner = !!j.created;
-      }
-    } catch {
-      // dev 서버 엔드포인트가 없으면 브라우저 로컬 키로 폴백
-    }
-  }
-  if (!pk) {
-    pk = localStorage.getItem(STORAGE_KEY) as `0x${string}` | null;
-    if (pk && !/^0x[0-9a-fA-F]{64}$/.test(pk)) pk = null;
-    freshBurner = !pk;
-    if (!pk) {
+  // 이미 연결한 지갑/슬롯을 보존한다. 일반 방문자는 브라우저별 버너를 쓴다.
+  if (!s.walletAddress) {
+    let pk: `0x${string}` | null = null;
+    try { pk = localStorage.getItem(STORAGE_KEY) as `0x${string}` | null; } catch { /* 세션 전용 */ }
+    if (!pk || !/^0x[0-9a-fA-F]{64}$/.test(pk)) {
       pk = generatePrivateKey();
-      localStorage.setItem(STORAGE_KEY, pk);
+      try { localStorage.setItem(STORAGE_KEY, pk); } catch { /* 세션 전용 */ }
     }
+    const address = adoptLocalBurner(pk);
+    s.setWallet(address, "burner", "LOCAL");
+    s.setSelfIdentity(`나그네-${address.slice(2, 6)}`, colorFromString(address.toLowerCase()));
   }
-  const address = adoptLocalBurner(pk);
-  s.setWallet(address, "burner", "DEMO");
-  // 갓 만든 버너는 잔액 0이므로 로컬 개발에서는 포셋 페이지를 자동으로
-  // 열어 준다. window.open은 페이지 로드 중 팝업 차단에 걸리므로 dev 서버가
-  // 대신 연다(vite.config.ts의 __open-faucet — 클립보드 복사 포함). 포셋은
-  // reCAPTCHA+PoW 방식이라 요청 자체는 사람이 마쳐야 한다. 공개 데모는
-  // HUD의 포셋 링크만 유지.
-  if (freshBurner && import.meta.env.DEV) {
-    void fetch(`/__open-faucet?address=${address}`).catch(() => {});
-    void navigator.clipboard?.writeText(address).catch(() => {});
-    console.info(`[faucet] 새 버너 ${address} — 테스트 ETH: ${FAUCET_URL}`);
-  }
-  s.setSelfIdentity(`나그네-${address.slice(2, 6)}`, colorFromString(address.toLowerCase()));
   s.setSelfId("demo-self");
   s.setStatus("connected");
   localPos.x = 0;
@@ -108,7 +79,7 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
     return { id, w };
   });
   s.setPlayers(players);
-  s.setOnlineCount(DEMO_NPCS.length + 1);
+  s.setOnlineCount(1);
 
   // 주기는 걸음 규칙 쪽에 있다(wander.ts) — 검사하는 쪽이 같은 자를 쓰게
   setInterval(() => {

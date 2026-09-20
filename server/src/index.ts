@@ -5,6 +5,8 @@ import { fileURLToPath } from "url";
 import { Server } from "@colyseus/core";
 import { WebSocketTransport } from "@colyseus/ws-transport";
 import { VillageRoom, liveRoster } from "./VillageRoom";
+import { LiveRoom } from "./LiveRoom";
+import { ExpeditionRoom } from "./ExpeditionRoom";
 
 const PORT = Number(process.env.PORT ?? 2567);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -52,7 +54,9 @@ const gameServer = new Server({
 });
 
 gameServer.define("village", VillageRoom);
+gameServer.define("village_live", LiveRoom);
+gameServer.define("expedition", ExpeditionRoom);
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, process.env.HOST ?? "127.0.0.1", () => {
   console.log(`[giwa-village] listening on ws://localhost:${PORT}`);
 });

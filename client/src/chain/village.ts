@@ -7,6 +7,7 @@
 //   honors.ts   소울바운드 칭호·코스메틱 정의
 //   presence.ts 비컨·데드레커닝·피어 꾸미기·피드 폴링
 import { useStore } from "../state/store";
+import { useWorld } from "../state/world";
 import type { LocalPos } from "./core";
 import { selfPos } from "./core";
 import { syncStalls } from "./stalls";
@@ -73,6 +74,7 @@ export function startOnchainVillage(localPos: LocalPos): void {
 
 /** 모닥불 자동 의식: 앉아 있으면 화로에 모이고(gather), 닫힌 화로의 온기를 받는다 */
 async function hearthTick(): Promise<void> {
+  if (useWorld.getState().zone !== "village") return;
   const s = useStore.getState();
   const my = s.walletAddress;
   if (!my || !s.selfSitting) return;

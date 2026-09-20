@@ -26,9 +26,14 @@ import { joinVillage, leaveVillage } from "./net/colyseus";
 import { useStore } from "./state/store";
 import { colorFromString, loadBurner } from "./wallet/wallet";
 import { DEMO } from "./config/giwa";
+import { useWorld } from "./state/world";
+import { Outside, VillageExit } from "./game/Outside";
+import WorldHud from "./ui/WorldHud";
+import { returnVillage } from "./net/expedition";
 import { maybeStartShowcase } from "./demo/showcase";
 
 export default function App() {
+  const zone = useWorld(s => s.zone);
   useEffect(() => {
     const slot = new URLSearchParams(location.search)
       .get("slot")
@@ -76,6 +81,7 @@ export default function App() {
     return () => {
       cancelled = true;
       leaveVillage();
+      returnVillage();
     };
   }, []);
 
@@ -91,12 +97,10 @@ export default function App() {
         performance={{ min: 0.5 }}
       >
         <AdaptiveDpr pixelated />
-        <Village />
-        <Portal />
-        <Stalls />
-        <Player />
-        <RemotePlayers />
+        {zone === "village" ? <><Village /><Portal /><Stalls /><RemotePlayers /><VillageExit /></> : <Outside />}
+        <Player key={zone} />
       </Canvas>
+      {zone === "village" && <>
       <Hud />
       <GiftFeed />
       <GiftDialog />
@@ -112,6 +116,8 @@ export default function App() {
       <QuestLog />
       <DailyRequest />
       <Welcome />
+      </>}
+      <WorldHud />
       <TouchControls />
     </div>
   );

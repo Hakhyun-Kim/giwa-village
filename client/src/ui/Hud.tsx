@@ -7,7 +7,7 @@ import {
   colorFromString,
 } from "../wallet/wallet";
 import { joinVillage } from "../net/colyseus";
-import { giwaSepolia, DEMO, FAUCET_URL } from "../config/giwa";
+import { giwaSepolia, FAUCET_URL } from "../config/giwa";
 import { loadCoupons } from "../state/coupons";
 import { isDojangVerified, fundBurnerFromInjected } from "../wallet/wallet";
 import { refreshBeaconBudget, marketDayLabel } from "../chain/village";
@@ -279,9 +279,9 @@ export default function Hud() {
         {pendingTx > 0 && (
           <div className="hud-txchip">⛓ 체인 처리 중 {pendingTx > 1 ? pendingTx : ""}</div>
         )}
-        {DEMO && (
+        {walletKind === "burner" && (
           <div className="hud-demo">
-            기본 샘플 데모 · 온체인은 실동작
+            마을 기록 · GIWA Sepolia
             <a href={FAUCET_URL} target="_blank" rel="noreferrer">
               테스트 ETH 받기 ↗
             </a>
@@ -330,7 +330,7 @@ export default function Hud() {
         )}
         {walletError && <div className="hud-error">{walletError}</div>}
         {walletAddress && <StallButtons walletAddress={walletAddress} />}
-        {DEMO && walletAddress && walletKind === "burner" && <FundButton />}
+        {walletAddress && walletKind === "burner" && <FundButton />}
       </div>
 
       <div className="hud-bottom">

@@ -16,6 +16,7 @@ import { HONOR_DEFS, equippedHonorOf } from "./honors";
 import { equippedTrinketOf } from "./boxes";
 import { wornPatternOf } from "./workshop";
 import { PURCHASED_EVENT } from "./ledger";
+import { liveAddresses, useWorld } from "../state/world";
 
 const BEACON_INTERVAL_MS = 2000;
 const HEARTBEAT_MS = 15000;
@@ -59,6 +60,7 @@ export function initPresence(): void {
 }
 
 export async function sendBeacon(emote = 0, force = false): Promise<void> {
+  if (useWorld.getState().zone !== "village") return;
   const wc = activeWalletClient;
   const pos = selfPos.ref;
   if (!wc?.account || !pos || beaconPending || !canBeacon) return;
@@ -159,6 +161,8 @@ export function applyPeers(): void {
   let membershipChanged = false;
 
   for (const [addr, p] of peers) {
+    if (liveAddresses.has(addr)) continue;
+    if (addr === my) { peers.delete(addr); remoteTargets.delete(addr); s.removePlayer(addr); continue; }
     if (now - p.at > PEER_STALE_MS) {
       peers.delete(addr);
       remoteTargets.delete(addr);
@@ -187,9 +191,10 @@ export function applyPeers(): void {
   if (membershipChanged) {
     const players: Record<string, PlayerInfo> = { ...s.players };
     for (const id of Object.keys(players)) {
-      if (id.startsWith("0x") && !peers.has(id)) delete players[id];
+      if (id.startsWith("0x") && !peers.has(id) && !liveAddresses.has(id)) delete players[id];
     }
     for (const [addr, peer] of peers) {
+      if (liveAddresses.has(addr) || addr === my) continue;
       if (!(addr in players)) {
         players[addr] = {
           name: `나그네-${addr.slice(2, 6)}`,
@@ -205,8 +210,7 @@ export function applyPeers(): void {
     s.setPlayers(players);
   }
   if (my !== undefined) {
-    const npcCount = Object.keys(s.players).filter((id) => id.startsWith("npc-")).length;
-    s.setOnlineCount(npcCount + peers.size + 1);
+    s.setOnlineCount(Object.keys(useStore.getState().players).filter(id => !id.startsWith("npc-")).length + 1);
   }
 }
 
@@ -246,6 +250,7 @@ export async function pollChain(): Promise<void> {
       if (!who || who === my) continue;
       if (a.emote === 255) {
         peers.delete(who);
+        if (liveAddresses.has(who)) continue;
         remoteTargets.delete(who);
         useStore.getState().removePlayer(who);
         continue;
