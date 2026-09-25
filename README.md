@@ -127,6 +127,7 @@ scripts/    배포·검증·봇·스모크
 | 반입 에셋 원장 (출처·라이선스) | [ASSETS.md](ASSETS.md) |
 | 서버 호스팅 (선택) | [guide/DEPLOY.md](guide/DEPLOY.md) |
 | 계측 스키마 (모든 클라이언트 공용 · 기본 꺼짐) | [guide/ANALYTICS.md](guide/ANALYTICS.md) |
+| 개인정보 처리방침 · 이용약관 (v0 초안 · 법률 자문 아님) | [guide/PRIVACY.md](guide/PRIVACY.md) · [guide/TERMS.md](guide/TERMS.md) |
 | 작업 규칙 (사람·AI 공용) | [CLAUDE.md](CLAUDE.md) |
 
 전체 색인은 [guide/README.md](guide/README.md).

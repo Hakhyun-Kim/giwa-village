@@ -292,6 +292,14 @@ export default function Hud() {
             >
               실제 테스트 방법 ↗
             </a>
+            <a
+              href="https://github.com/Hakhyun-Kim/giwa-village/blob/main/guide/PRIVACY.md"
+              target="_blank"
+              rel="noreferrer"
+              title="테스트넷 전용 · 금전 가치 없음 · 체인 기록은 지울 수 없음 (v0 초안)"
+            >
+              처리방침 · 약관 ↗
+            </a>
           </div>
         )}
       </div>
