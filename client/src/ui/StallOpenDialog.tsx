@@ -9,7 +9,7 @@ const PRESET_GOODS = [
   { name: "등불", emoji: "🏮" },
   { name: "꼬치", emoji: "🍡" },
   { name: "목검", emoji: "🗡️" },
-  { name: "랜덤박스", emoji: "🎁" },
+  { name: "노리개", emoji: "🎀" },
 ];
 
 interface Draft {

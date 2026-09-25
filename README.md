@@ -46,7 +46,7 @@ git 기록으로 되짚은 작업 기록. 🔍 **[AI Self-Audit](https://hakhyun
 | 🏯 **길드 + 백층 던전** | 비동기 코업. 주차 시드가 블록 해시로 고정돼 **오른 층수를 누구나 재현·검증**할 수 있다 |
 | 🧿 **도깨비 토벌** | 광장의 주간 보스를 함께 때려잡는다. 기여가 온체인에 쌓이고 전리품은 소울바운드 |
 | 🔥 **모닥불 + 장날** | 함께 앉아야 온기가 쌓인다. 토 21시(KST) 장날엔 2배 — 모두가 모일 시간 |
-| 🎨 **꾸미기 + 창작** | 칭호·랜덤박스 장신구·**문양 공방**(8×8 픽셀 UGC, 대금 창작자 직송) |
+| 🎨 **꾸미기 + 창작** | 칭호·복주머니 장신구·**문양 공방**(8×8 픽셀 UGC, 대금 창작자 직송) |
 | 👥 **주민과 놀기 + 오늘의 부탁** | 이모트 5종·근거리 합동 장단, KST마다 무료 부탁 하나를 골라 개인 도장 |
 
 ## 온체인 구성 (GIWA Sepolia)
@@ -62,7 +62,7 @@ git 기록으로 되짚은 작업 기록. 🔍 **[AI Self-Audit](https://hakhyun
 | [**GiwaPresence**](https://sepolia-explorer.giwa.io/address/0x4d600672cefae3c8462f3d9feb2cb739001e7a93) | 저장 없는 위치+속도 비컨 → 클라 데드레커닝 |
 | [**GiwaHonors**](https://sepolia-explorer.giwa.io/address/0xeaa8674f1ba265cc6134d7cbc02e36310cc6a8e2) | 소울바운드 칭호 5종 (v1 획득 상태 보존·온체인 자격 검증) |
 | [**GiwaOffers**](https://sepolia-explorer.giwa.io/address/0x534a29c47667b54eab6995517705cfbc423bb909) | 흥정 에스크로 (MarketV3 조합 즉시 체결) |
-| [**GiwaBoxes**](https://sepolia-explorer.giwa.io/address/0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e) | 랜덤박스(무료·블록해시)·소울바운드 장신구 8종 |
+| [**GiwaBoxes**](https://sepolia-explorer.giwa.io/address/0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e) | 복주머니(무료·블록해시)·소울바운드 장신구 8종 |
 | [**GiwaHearth**](https://sepolia-explorer.giwa.io/address/0xf780265d5f49abd8c7e5d18d81d33426f62f3365) | 모닥불 온기 (함께·장날 2배) |
 | [**GiwaWorkshop**](https://sepolia-explorer.giwa.io/address/0x664762337e529f853949a94e6ed50e6d8016c975) | 문양 공방 UGC (등록·판매·착용, 대금 창작자 직송) |
 | [**GiwaBoss**](https://sepolia-explorer.giwa.io/address/0x11dbe73cc9185cd4c7c278bedf7065ea6f459d63) | 주간 도깨비 토벌 (개인·길드 기여, v1 전리품 보존) |

@@ -21,7 +21,7 @@ node scripts/verify-contracts.mjs                  # Blockscout standard-input �
 | **GiwaPresence** | `0x4d600672cefae3c8462f3d9feb2cb739001e7a93` | `presence` | 저장 없는 위치+속도 비컨 이벤트(x,z,vx,vz,emote) — 클라 데드레커닝 |
 | **GiwaHonors** | `0xeaa8674f1ba265cc6134d7cbc02e36310cc6a8e2` | `honors` | 소울바운드 칭호 5종 — v1 보유/장착 폴백·온체인 자격 검증·클레임·장착 |
 | **GiwaOffers** | `0x534a29c47667b54eab6995517705cfbc423bb909` | `offers` | 흥정(오퍼) 에스크로 — 수락 시 MarketV3를 조합해 buy→confirm→쿠폰 전달을 한 tx로 |
-| **GiwaBoxes** | `0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e` | `boxes` | 랜덤박스(무료·60초 쿨다운, open→다음 블록 reveal 블록해시 확정)·소울바운드 장신구 8종 |
+| **GiwaBoxes** | `0xeb0349f00fc781c807b6d15c74d7f5fb15996b2e` | `boxes` | 복주머니(무료·60초 쿨다운, open→다음 블록 reveal 블록해시 확정)·소울바운드 장신구 8종 |
 | **GiwaHearth** | `0xf780265d5f49abd8c7e5d18d81d33426f62f3365` | `hearth` | 모닥불 온기 — 10분 창에 2명 이상 gather하면 claim, 장날(토 21시 KST) 2배 |
 | **GiwaWorkshop** | `0x664762337e529f853949a94e6ed50e6d8016c975` | `workshop` | 문양 공방(UGC) — 8x8 픽셀 문양 온체인 등록·판매(대금 창작자 직송)·착용 |
 | **GiwaBoss** | `0x11dbe73cc9185cd4c7c278bedf7065ea6f459d63` | `boss` | 주간 도깨비 토벌 — v1 전리품 폴백, 개인·길드 기여, 장날 2배 |
@@ -39,10 +39,10 @@ node scripts/verify-contracts.mjs                  # Blockscout standard-input �
 - **가치는 온체인, 존재감은 비컨** — 거래·소유·기록은 컨트랙트가, 실시간 위치는
   저장 없는 이벤트로. 위치는 분쟁 가치가 없으므로 체인 상태로 두지 않는다.
 - **규제 안전선** — 게임 플레이 보상은 양도 불가(소울바운드: 칭호·장신구·온기).
-  거래 가능한 것은 재화(쿠폰)와 유저 창작물(문양)뿐. 랜덤박스는 참가비 0원.
+  거래 가능한 것은 재화(쿠폰)와 유저 창작물(문양)뿐. 복주머니는 참가비 0원.
 - **조합(composition)** — Offers는 MarketV3를 재배포 없이 호출해 흥정 체결을
   구현한다. Honors는 Market·Guilds의 상태를 읽어 자격을 판정한다.
-- **결정론 랜덤** — 던전·랜덤박스는 블록 해시로 결과를 확정한다(검증 가능).
+- **결정론 랜덤** — 던전·복주머니는 블록 해시로 결과를 확정한다(검증 가능).
   판정 공식은 [`core/`](../core/)에 순수 함수로 한 벌만 두고 클라이언트·검증기가
   공유한다 — `npm run verify`로 누구나 과거 원정을 재현·대조할 수 있다.
   한계와 메인넷 대안은 아래, 그리고 [AI Self-Audit](../client/public/audit.html) 참고.

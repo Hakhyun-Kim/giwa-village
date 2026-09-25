@@ -18,7 +18,7 @@ interface AvatarProps {
   variant?: AvatarVariant;
   /** 장착한 소울바운드 칭호 id — 어깨 위 발광 부적으로 렌더 */
   honor?: number;
-  /** 장착한 랜덤박스 장신구 id — 반대쪽 어깨의 작은 모트로 렌더 */
+  /** 장착한 복주머니 장신구 id — 반대쪽 어깨의 작은 모트로 렌더 */
   trinket?: number;
   /** 모닥불에 앉아 있음 — 앉은 자세로 렌더 */
   sitting?: boolean;

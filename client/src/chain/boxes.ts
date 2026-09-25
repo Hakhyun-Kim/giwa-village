@@ -1,18 +1,21 @@
-// 랜덤박스: 무료·쿨다운·블록해시 개봉, 보상은 소울바운드 장신구 (GiwaBoxes)
+// 복주머니: 무료·쿨다운·블록해시 개봉, 보상은 소울바운드 장신구 (GiwaBoxes)
 import { decodeEventLog } from "viem";
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { BOXES_ADDRESS, BOXES_ABI } from "../config/boxes";
 import { sfxJackpot, sfxSuccess } from "../audio/sfx";
 
+// 등급 이름(커먼·레어·에픽)은 두지 않는다 — GiwaBoxes.reveal 의 굴림은 여덟 가지가
+// 모두 1/8(32/256)로 나오므로, 등급을 붙이면 실제와 다른 희소성을 말하게 된다.
+// 별조각(8)은 소리만 다르다(sfxJackpot) — 더 드문 것이 아니라 더 반짝이는 것이다.
 export const TRINKET_DEFS = [
-  { id: 1, emoji: "🪶", name: "깃털", rarity: "커먼", color: "#d9c9a3" },
-  { id: 2, emoji: "🐚", name: "조개", rarity: "커먼", color: "#9ecbff" },
-  { id: 3, emoji: "🌰", name: "도토리", rarity: "커먼", color: "#b07a4a" },
-  { id: 4, emoji: "🍀", name: "네잎클로버", rarity: "커먼", color: "#7de08a" },
-  { id: 5, emoji: "🦋", name: "나비", rarity: "레어", color: "#7db7ff" },
-  { id: 6, emoji: "🎐", name: "풍경", rarity: "레어", color: "#8fe8e0" },
-  { id: 7, emoji: "🌸", name: "꽃잎", rarity: "레어", color: "#ff9ec1" },
-  { id: 8, emoji: "🌟", name: "별조각", rarity: "에픽", color: "#ffd66b" },
+  { id: 1, emoji: "🪶", name: "깃털", color: "#d9c9a3" },
+  { id: 2, emoji: "🐚", name: "조개", color: "#9ecbff" },
+  { id: 3, emoji: "🌰", name: "도토리", color: "#b07a4a" },
+  { id: 4, emoji: "🍀", name: "네잎클로버", color: "#7de08a" },
+  { id: 5, emoji: "🦋", name: "나비", color: "#7db7ff" },
+  { id: 6, emoji: "🎐", name: "풍경", color: "#8fe8e0" },
+  { id: 7, emoji: "🌸", name: "꽃잎", color: "#ff9ec1" },
+  { id: 8, emoji: "🌟", name: "별조각", color: "#ffd66b" },
 ] as const;
 
 /** 장착 장신구의 모트 색 — 아바타 코스메틱 렌더용 */
@@ -89,8 +92,8 @@ export async function revealBoxOnChain(): Promise<number> {
       const ev = decodeEventLog({ abi: BOXES_ABI, data: log.data, topics: log.topics });
       if (ev.eventName === "BoxRevealed") {
         const kind = Number((ev.args as unknown as { kind: number }).kind);
-        // 잭팟은 소리로 먼저 안다 — 흔한 것과 같은 소리가 나면 희귀한 게 나온 줄도 모른다
-        if (TRINKET_DEFS.find((d) => d.id === kind)?.rarity === "에픽") sfxJackpot();
+        // 별조각은 소리로 먼저 안다 — 확률은 여덟 가지 모두 같고, 소리만 한 옥타브 위다
+        if (kind === 8) sfxJackpot();
         else sfxSuccess();
         return kind;
       }

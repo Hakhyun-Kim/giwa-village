@@ -48,7 +48,7 @@ interface VillageStore {
   ledgerOpen: boolean;
   /** 내가 장착한 칭호 id (아바타 코스메틱) */
   selfHonor: number | null;
-  /** 내가 장착한 장신구 id (랜덤박스) */
+  /** 내가 장착한 장신구 id (복주머니) */
   selfTrinket: number | null;
   /** 내가 착용한 공방 문양 ("pixelsHex:palette") */
   selfWear: string | null;

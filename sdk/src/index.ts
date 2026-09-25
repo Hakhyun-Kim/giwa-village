@@ -68,7 +68,7 @@ export interface VillageProfile {
   /** 보유 칭호 이름 목록 (소울바운드) */
   honors: string[];
   equippedHonor: string | null;
-  /** 보유 장신구 이름 목록 (랜덤박스, 소울바운드) */
+  /** 보유 장신구 이름 목록 (복주머니, 소울바운드) */
   trinkets: string[];
   equippedTrinket: string | null;
   /** 착용 문양 (8x8 픽셀, 온체인 원본) */

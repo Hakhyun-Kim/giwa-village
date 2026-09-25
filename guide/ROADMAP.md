@@ -31,7 +31,7 @@
 - [x] 에스크로 분쟁 처리 — 구매자 dispute(7일 연장) / 판매자 refund
 - [x] 소울바운드 칭호 + 이름표 배지 코스메틱 (GiwaHonors, 온체인 조건 검증)
 - [x] 온체인 흥정(GiwaOffers) · 쿠폰 선물·사용(소각) · 판매자 장부
-- [x] 랜덤박스 장신구(GiwaBoxes) · 문양 공방 UGC(GiwaWorkshop) — 아바타 3중 코스메틱
+- [x] 복주머니 장신구(GiwaBoxes) · 문양 공방 UGC(GiwaWorkshop) — 아바타 3중 코스메틱
 - [x] 모닥불 온기(GiwaHearth) + 장날(토 21시 KST) + 광장 길드 깃발
 - [x] 도깨비 토벌(GiwaBoss) — 주간 보스 동시성 코업, 소울바운드 전리품
 - [x] 소셜 프로필 애그리게이터(GiwaProfile) + 외부 소비용 SDK([sdk/](../sdk/README.md))

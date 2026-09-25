@@ -182,13 +182,13 @@ export default function HonorsDialog() {
 
         {walletAddress && box && (
           <div className="guild-board">
-            <div className="guild-board-title">🎁 랜덤박스 — 장신구 뽑기 (무료 · 60초 쿨다운)</div>
+            <div className="guild-board-title">🎁 복주머니 — 장신구 (무료 · 60초 쿨다운 · 여덟 가지 모두 1/8)</div>
             <div className="gift-actions" style={{ marginTop: 8 }}>
               <button
                 className="gift-btn primary"
                 disabled={boxBusy || !canOpenBox}
                 onClick={onBox}
-                title="결과는 개봉 트랜잭션이 담긴 블록의 해시로 확정됩니다"
+                title="결과는 상자를 연 트랜잭션이 담긴 블록의 해시로 정해집니다 — 여덟 가지 모두 1/8"
               >
                 {boxBusy
                   ? "개봉 중…"
@@ -201,7 +201,7 @@ export default function HonorsDialog() {
             </div>
             {lastDef && (
               <div className="dungeon-result">
-                {lastDef.emoji} <b>{lastDef.name}</b> ({lastDef.rarity}) 획득!
+                {lastDef.emoji} <b>{lastDef.name}</b> 획득!
               </div>
             )}
             {TRINKET_DEFS.map((d) => {
@@ -212,7 +212,7 @@ export default function HonorsDialog() {
                   <span className="guild-rank">{owned ? d.emoji : "❔"}</span>
                   <span className="guild-name">
                     {owned ? d.name : "???"}
-                    <em className="honor-desc"> {d.rarity}</em>
+                    <em className="honor-desc"> 1/8</em>
                   </span>
                   {equipped ? (
                     <button
@@ -248,7 +248,8 @@ export default function HonorsDialog() {
         </div>
         <div className="gift-note">
           칭호·장신구는 양도 불가(소울바운드) — 전송 함수가 아예 없는 온체인
-          기록입니다. 랜덤박스는 참가비가 없고, 결과는 블록 해시로 확정됩니다
+          기록입니다. 복주머니는 참가비가 없고, 결과는 블록 해시로 정해집니다 ·
+          열고 256블록(약 4분) 안에 개봉하지 않으면 미리 계산할 수 있는 값으로 정해집니다
         </div>
       </div>
     </div>

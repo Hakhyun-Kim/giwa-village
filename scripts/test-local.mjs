@@ -281,9 +281,9 @@ try {
     }),
   );
 
-  // ── 랜덤박스 (GiwaBoxes) — open→reveal 두 단계 ──────────────────────────
+  // ── 복주머니 (GiwaBoxes) — open→reveal 두 단계 ──────────────────────────
   // 결과는 openBox가 담긴 블록의 해시로 봉인된다 — 열기 전에는 아무도 결과를 모른다.
-  section("랜덤박스 (GiwaBoxes)");
+  section("복주머니 (GiwaBoxes)");
   await shouldRevert(
     "열지 않고 개봉 불가",
     () => send(wB, {
