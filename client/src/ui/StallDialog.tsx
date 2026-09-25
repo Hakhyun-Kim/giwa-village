@@ -250,6 +250,12 @@ export default function StallDialog() {
         {!walletAddress && (
           <div className="gift-warn">지갑을 연결해야 구매할 수 있습니다.</div>
         )}
+        {stall.brand && (
+          <div className="gift-note">
+            가상의 가게입니다 — 품목은 테스트넷 예시이고, 실제 가게 · 실물 · 금전 가치와
+            이어져 있지 않습니다.
+          </div>
+        )}
         {isMine && <div className="gift-note">내 노점입니다.</div>}
         {error && <div className="gift-warn">{error}</div>}
 

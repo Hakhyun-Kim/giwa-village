@@ -51,32 +51,32 @@ const BRAND_SEEDS = [
   {
     theme: "pizza",
     title: "화덕피자공방",
-    tag: "만원 할인",
+    tag: "테스트넷 예시",
     x: 16,
     z: -5,
     items: [
-      { name: "만원 할인쿠폰", emoji: "🍕", priceEth: "0.002" },
-      { name: "조각피자 교환권", emoji: "🍕", priceEth: "0.001" },
+      { name: "피자 예시쿠폰", emoji: "🍕", priceEth: "0.002" },
+      { name: "조각피자 예시교환권", emoji: "🍕", priceEth: "0.001" },
     ],
   },
   {
     theme: "cvs",
     title: "달빛편의점",
-    tag: "24시간 영업",
+    tag: "테스트넷 예시",
     x: 21,
     z: 5,
     items: [
-      { name: "삼각김밥 교환권", emoji: "🍙", priceEth: "0.0005" },
-      { name: "아이스크림 교환권", emoji: "🍦", priceEth: "0.0005" },
+      { name: "삼각김밥 예시교환권", emoji: "🍙", priceEth: "0.0005" },
+      { name: "아이스크림 예시교환권", emoji: "🍦", priceEth: "0.0005" },
     ],
   },
   {
     theme: "burger",
     title: "번개버거",
-    tag: "30분 배달",
+    tag: "테스트넷 예시",
     x: 27,
     z: -5,
-    items: [{ name: "버거세트 배달쿠폰", emoji: "🍔", priceEth: "0.001" }],
+    items: [{ name: "버거세트 예시쿠폰", emoji: "🍔", priceEth: "0.001" }],
   },
 ];
 
@@ -150,25 +150,25 @@ export class VillageRoom extends Room {
       const list: Stall[] = JSON.parse(fs.readFileSync(STALLS_FILE, "utf8"));
       for (const s of list) this.stalls.set(s.id, s);
     } catch {}
-    // seed fictional brand shops once
+    // seed fictional brand shops — refreshed from BRAND_SEEDS on every start so
+    // renamed items (e.g. testnet-example labels) don't linger in stalls.json
     const sysAddr = systemAddress();
     for (const seed of BRAND_SEEDS) {
       const id = `brand-${seed.theme}`;
-      if (!this.stalls.has(id)) {
-        this.stalls.set(id, {
-          id,
-          ownerAddress: sysAddr,
-          ownerName: seed.title,
-          title: seed.title,
-          tag: seed.tag,
-          x: seed.x,
-          z: seed.z,
-          items: seed.items.map((it, i) => ({ ...it, id: `${id}-${i}` })),
-          brand: true,
-          theme: seed.theme,
-          createdAt: Date.now(),
-        });
-      }
+      const prev = this.stalls.get(id);
+      this.stalls.set(id, {
+        id,
+        ownerAddress: sysAddr,
+        ownerName: seed.title,
+        title: seed.title,
+        tag: seed.tag,
+        x: seed.x,
+        z: seed.z,
+        items: seed.items.map((it, i) => ({ ...it, id: `${id}-${i}` })),
+        brand: true,
+        theme: seed.theme,
+        createdAt: prev?.createdAt ?? Date.now(),
+      });
     }
     this.saveStalls();
   }
