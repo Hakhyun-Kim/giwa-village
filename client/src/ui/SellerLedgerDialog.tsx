@@ -3,6 +3,7 @@ import { useStore } from "../state/store";
 import {
   fetchMySales,
   refundSale,
+  releaseSale,
   fetchOffersFor,
   acceptOfferOnChain,
   type SellerSale,
@@ -46,6 +47,21 @@ export default function SellerLedgerDialog() {
     setError(null);
     try {
       await refundSale(purchaseId);
+      setSales(await fetchMySales(walletAddress));
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onRelease(purchaseId: number) {
+    if (busy !== null || !walletAddress) return;
+    setBusy(purchaseId);
+    setError(null);
+    try {
+      await releaseSale(purchaseId);
       setSales(await fetchMySales(walletAddress));
     } catch (err) {
       const m = err instanceof Error ? err.message : String(err);
@@ -131,6 +147,16 @@ export default function SellerLedgerDialog() {
                 ) : (
                   <span className="coupon-actions">
                     {s.disputed && <em className="coupon-disputed">분쟁 중</em>}
+                    {s.releaseAt * 1000 <= Date.now() && (
+                      <button
+                        className="gift-btn primary small"
+                        disabled={busy !== null}
+                        onClick={() => onRelease(s.purchaseId)}
+                        title="정산 가능 시각이 지났습니다 — 에스크로 대금을 내 지갑으로 받습니다"
+                      >
+                        {busy === s.purchaseId ? "처리 중…" : "정산 받기"}
+                      </button>
+                    )}
                     <button
                       className="gift-btn small"
                       disabled={busy !== null}
@@ -178,7 +204,7 @@ export default function SellerLedgerDialog() {
           </button>
         </div>
         <div className="gift-note">
-          미정산 대금은 구매자 확정 또는 24시간 후 자동 정산 · 분쟁 시 7일 연장
+          미정산 대금은 구매자가 확정하거나, 24시간 뒤(분쟁 시 7일 뒤) 여기서 ‘정산 받기’로 받습니다 — 저절로 넘어오지 않습니다
         </div>
       </div>
     </div>

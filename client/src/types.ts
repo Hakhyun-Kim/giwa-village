@@ -116,7 +116,7 @@ export interface Coupon {
   tokenId?: string;
   /** 에스크로 정산 완료 여부 */
   settled?: boolean;
-  /** 분쟁 신고됨 (자동 정산 7일 연장, 판매자 환불 가능) */
+  /** 분쟁 신고됨 (판매자가 release 할 수 있는 때가 7일 뒤로 늦춰진다 · 판매자 환불 가능) */
   disputed?: boolean;
   /** 쿠폰 사용(소각) 완료 — redeem tx 해시 */
   usedTx?: string;

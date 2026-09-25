@@ -260,7 +260,7 @@ export default function StallDialog() {
         </div>
         <div className="gift-note">
           결제는 에스크로 보관 · 쿠폰은 ERC-1155 토큰으로 지갑에 발행 ·
-          쿠폰함에서 정산 확정 (24시간 후 자동){" "}
+          쿠폰함에서 정산 확정 (확정이 없으면 24시간 뒤 판매자가 받아 감){" "}
           <a
             className="gift-txlink"
             href={`${giwaSepolia.blockExplorers.default.url}/address/${MARKET_ADDRESS}`}

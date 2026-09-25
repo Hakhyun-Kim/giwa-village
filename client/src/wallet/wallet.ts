@@ -288,7 +288,7 @@ export async function confirmPurchase(purchaseId: number): Promise<`0x${string}`
   return tx;
 }
 
-/** 분쟁 신고 — 자동 정산이 7일로 연장되고, 판매자는 refund로 환불할 수 있다 */
+/** 분쟁 신고 — release 가능 시점이 7일 뒤로 늦춰지고, 판매자는 refund로 환불할 수 있다(저절로 정산되지는 않는다) */
 export async function disputePurchase(purchaseId: number): Promise<`0x${string}`> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 연결되어 있지 않습니다.");

@@ -38,7 +38,7 @@ export default function CouponBox() {
 
   async function onDispute(tx: string, purchaseId: number) {
     if (busyTx || !walletAddress) return;
-    if (!confirm("분쟁을 신고할까요? 자동 정산이 7일로 늦춰지고, 판매자가 환불할 수 있게 됩니다.")) return;
+    if (!confirm("분쟁을 신고할까요? 판매자가 대금을 받아 갈 수 있는 때가 7일 뒤로 늦춰져 협의할 시간이 생깁니다. 그동안 판매자는 환불할 수 있습니다.")) return;
     setBusyTx(tx);
     setError(null);
     try {
@@ -151,7 +151,7 @@ export default function CouponBox() {
                     className="gift-btn primary small"
                     disabled={busyTx !== null}
                     onClick={() => onConfirm(c.tx, c.purchaseId!)}
-                    title="에스크로 대금을 판매자에게 정산합니다 (미확정 시 24시간 후 자동)"
+                    title="에스크로 대금을 판매자에게 정산합니다 (확정하지 않으면 24시간 뒤부터 판매자가 장부에서 직접 받아 갈 수 있습니다)"
                   >
                     {busyTx === c.tx ? "처리 중…" : "정산 확정"}
                   </button>
@@ -162,7 +162,7 @@ export default function CouponBox() {
                       className="gift-btn small"
                       disabled={busyTx !== null}
                       onClick={() => onDispute(c.tx, c.purchaseId!)}
-                      title="자동 정산을 7일로 늦추고 판매자 환불을 가능하게 합니다"
+                      title="판매자가 대금을 받아 갈 수 있는 때를 7일 뒤로 늦춰 협의할 시간을 둡니다"
                     >
                       신고
                     </button>

@@ -23,7 +23,7 @@
 - [x] 봇 주민 (헤드리스, 노점상 포함)
 - [x] GiwaMarket 컨트랙트 — 온체인 리스팅·가격 강제·구매 영수증 이벤트
 - [x] Dojang Verified Address 인증 뱃지 (DojangScroll 온체인 조회)
-- [x] GiwaMarket v2 — 에스크로(확정/24h 자동 정산) + ERC-1155 쿠폰 토큰
+- [x] GiwaMarket v2 — 에스크로(확정 / 24h 뒤 판매자가 release) + ERC-1155 쿠폰 토큰
 - [x] UP.ID 이름표 (UPNameRegistry 역방향 조회)
 - [x] 길드 + 비동기 코업 던전 (매주 GIWA 블록 해시 시드, 길드 리더보드)
 - [x] **풀온체인 서버리스** — 노점 레지스트리·길드·던전 정산·프레즌스 비컨을

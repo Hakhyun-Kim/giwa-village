@@ -619,7 +619,7 @@ async function run(gasless: boolean, patient: boolean) {
     // 5) 쿠폰함 정산
     caption(
       "🎫 <b>쿠폰함</b> — 받은 쿠폰을 확인하고 정산을 확정합니다",
-      "확정하면 에스크로 대금이 판매자에게 전달됩니다 (미확정 시 24시간 후 자동)",
+      "확정하면 에스크로 대금이 판매자에게 전달됩니다 (확정이 없으면 24시간 뒤 판매자가 받아 갑니다)",
     );
     useStore.getState().setCouponsOpen(true);
     await pace(2200);
