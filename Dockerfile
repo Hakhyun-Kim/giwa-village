@@ -9,7 +9,13 @@ COPY client/package.json client/
 RUN npm ci -w server --no-audit --no-fund
 
 COPY server/src server/src
+# 원정 규칙(ExpeditionRoom 이 ../../shared/expedition 을 읽는다)
+COPY shared shared
 
+# production: 레거시 village 룸 · /dev/* 를 닫는다(GIWA_DEV=1 로만 연다)
+# HOST=0.0.0.0: 컨테이너 밖(Fly 프록시)에서 들어올 수 있게 — 기본값 127.0.0.1 은 로컬 전용
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
 ENV PORT=2567
 EXPOSE 2567
 # 노점 레지스트리 영속 (재시작에도 노점 유지)

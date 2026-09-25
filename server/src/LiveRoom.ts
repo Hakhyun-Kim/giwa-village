@@ -2,13 +2,17 @@ import { Room, Client } from "@colyseus/core";
 import { randomUUID } from "node:crypto";
 import { verifyMessage } from "viem";
 
+const EMOTE_GAP_MS = 1000;
+
 interface Peer { id: string; name: string; color: number; address: string; x: number; z: number; rot: number; zone: string; primary: boolean }
 /** 영구 기록을 소유하지 않는 위치·이모트 중계. 기존 village 룸은 레거시 도구용. */
 export class LiveRoom extends Room {
-  maxClients = 60;
+  maxClients = 30;
   private peers = new Map<string, Peer>();
   private seen = new Map<string, number>();
   private challenges = new Map<string, { message: string; at: number }>();
+  /** 이모트 속도 제한 — 세션마다 EMOTE_GAP_MS 에 하나. 넘치는 것은 조용히 버린다 */
+  private lastEmote = new Map<string, number>();
   onCreate() {
     this.onMessage("ready", c => {
       c.send("snapshot", [...this.peers.values()].filter(p=>p.primary));
@@ -41,6 +45,9 @@ export class LiveRoom extends Room {
     });
     this.onMessage("emote", (c, icon) => {
       if (!["👋","🙇","👏","💃","🍻"].includes(icon)) return;
+      const now = Date.now();
+      if (now - (this.lastEmote.get(c.sessionId) ?? 0) < EMOTE_GAP_MS) return;
+      this.lastEmote.set(c.sessionId, now);
       this.broadcast("emote", { id: c.sessionId, icon });
     });
     this.setSimulationInterval(() => {
@@ -57,7 +64,7 @@ export class LiveRoom extends Room {
   }
   onLeave(c: Client) {
     const old=this.peers.get(c.sessionId);
-    this.peers.delete(c.sessionId); this.seen.delete(c.sessionId); this.challenges.delete(c.sessionId);
+    this.peers.delete(c.sessionId); this.seen.delete(c.sessionId); this.challenges.delete(c.sessionId); this.lastEmote.delete(c.sessionId);
     if(old?.address && old.primary) {
       const next=[...this.peers.values()].reverse().find(p=>p.address===old.address);
       if(next)next.primary=true;

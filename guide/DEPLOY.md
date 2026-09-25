@@ -16,10 +16,13 @@ flyctl secrets set SYSTEM_WALLET_ADDRESS=0x...          # 브랜드 상점 정�
 flyctl deploy
 ```
 
-- `SYSTEM_WALLET_ADDRESS`: 브랜드 상점(화덕피자공방 등)의 판매 대금을 받을 주소.
-  미지정 시 dead 주소로 세팅되므로 반드시 지정할 것.
-- 상태 확인: `https://<앱이름>.fly.dev/` → `{"ok":true,...}` ·
-  `.../dev/status` → 접속자 명단. (`/dev/wallets`는 localhost 전용이라 호스팅에선 403/404 — 정상)
+- 컨테이너는 `NODE_ENV=production` · `HOST=0.0.0.0` 으로 뜬다(Dockerfile). production 에서는
+  레거시 도구 룸 `village` 와 `/dev/*`(접속자 명단 · 테스트 지갑)가 **닫힌다** — 웹 클라이언트는
+  `village_live` · `expedition` 만 쓴다. 봇을 호스팅 서버에 붙여야 할 때만
+  `flyctl secrets set GIWA_DEV=1` 로 연다(끝나면 `flyctl secrets unset GIWA_DEV`).
+- `SYSTEM_WALLET_ADDRESS`: 레거시 `village` 룸(개발 모드)의 시연 가게 주소.
+  미지정 시 dead 주소로 세팅된다.
+- 상태 확인: `https://<앱이름>.fly.dev/` → `{"ok":true,...}`. `village_live` 정원은 방 하나에 30명이다.
 
 다른 Docker 호스트(Railway·Render 유료 플랜·자가 VPS)도 동일하다:
 `Dockerfile` 하나로 빌드되고, `PORT`(기본 2567)와 `/app/server/data` 볼륨,

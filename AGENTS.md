@@ -72,7 +72,7 @@ client/  Vite + React Three Fiber + zustand + viem + Colyseus.js
             audio.ts가 믹서·리버브·귀, samples.ts가 반입 조각과 폴백
   dev/      자동화 훅 (?rafshim, window.__giwa)
 server/  Colyseus 룸 — 선택 사항이다. 서버 0으로도 마을이 돈다.
-         village(도구용) · village_live(마을·들판·산채에서 서로를 그린다) · expedition(1~4명 실시간 원정)
+         village(도구용 · 개발 모드에서만) · village_live(마을·들판·산채에서 서로를 그린다 · 30명) · expedition(1~4명 실시간 원정)
 shared/  서버 판정과 클라이언트 표시가 함께 읽는 실시간 원정 규칙(expedition.ts) — 세션 기록일 뿐 체인에 아무것도 쓰지 않는다.
          순수 모듈이라 npm test가 그대로 걸어 보고, 다른 클라이언트도 같은 규칙으로 혼자 하는 연습 원정을 돌릴 수 있다
 contracts/ Solidity 10종 (전부 GIWA Sepolia 배포·검증 완료)

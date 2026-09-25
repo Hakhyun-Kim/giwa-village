@@ -182,6 +182,11 @@ function beacon(int32 x100, int32 z100, int16 vx100, int16 vz100, uint8 emote);
 [Colyseus](https://colyseus.io) 0.16 룸이다. **공식 C++/언리얼 SDK는 없지만, 이
 서버는 붙이기 쉽다** — 이유는 아래 3.3에 있다.
 
+> **§3.1~3.6 의 `village` 룸은 레거시 도구 룸이다 — 개발 모드에서만 열린다.** 웹 클라이언트는
+> §3.7 의 `village_live` 만 쓴다. 서버를 `NODE_ENV=production`(컨테이너의 기본값)으로 띄우면
+> `village` 룸과 `/dev/*` 경로가 닫히고, `GIWA_DEV=1` 을 줄 때만 다시 열린다. 프레임(§3.2~3.3)은
+> 세 룸이 같으므로 새 클라이언트도 이 절에서 소켓 붙이는 법을 읽는다.
+
 ### 3.1 자리 얻기 (HTTP)
 
 ```
@@ -328,7 +333,7 @@ POST http://<host>:2567/matchmake/joinOrCreate/village_live
 | `ready` | 없음 | 입장 직후 한 번. `snapshot`과 `challenge`가 온다 |
 | `identify` | `{address, signature}` | `challenge`의 글을 지갑으로 서명(EIP-191 `personal_sign`)해 보내면 이 세션이 그 주소의 아바타가 된다. **안 보내도 된다** — 방문자로 남는다 |
 | `move` | `{x, z, rot, zone}` | 내 위치. `zone`은 `"village"` · `"field"` · `"dungeon"`. **하트비트를 겸한다** — 15초 없으면 끊는다 |
-| `emote` | `"👋"` · `"🙇"` · `"👏"` · `"💃"` · `"🍻"` 중 하나 | 머리 위 표시 |
+| `emote` | `"👋"` · `"🙇"` · `"👏"` · `"💃"` · `"🍻"` 중 하나 | 머리 위 표시. **세션마다 1초에 하나** — 넘치는 것은 조용히 버린다 |
 
 | 서버가 보내는 것 | 페이로드 | 언제 |
 |---|---|---|
@@ -336,7 +341,7 @@ POST http://<host>:2567/matchmake/joinOrCreate/village_live
 | `challenge` | `"GIWA Village session\n<roomId>/<sessionId>\n<uuid>"` | `ready`의 답. 60초 안에 서명해야 한다 |
 | `emote` | `{id, icon}` | 누가 이모트 |
 
-정원 **60명** · 좌표는 ±55로 잘린다 · 이름 16자(`<`·`>` 제거). 한 주소로 여러 세션이 들어오면 **가장 최근에
+정원 **30명**(방 하나 — 초대 테스트 창의 크기) · 좌표는 ±55로 잘린다 · 이름 16자(`<`·`>` 제거). 한 주소로 여러 세션이 들어오면 **가장 최근에
 서명한 세션 하나만** `snapshot`에 실린다 — 같은 지갑의 아바타가 둘로 보이지 않게. `address`가 빈 글자면 방문자다.
 서명은 "이 세션이 이 주소다"를 보일 뿐 아무 권한도 주지 않는다. 글이 세션마다 다르므로 다른 곳에 다시 쓸 수 없다.
 
