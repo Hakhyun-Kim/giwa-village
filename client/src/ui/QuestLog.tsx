@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useStore } from "../state/store";
 import { loadCoupons } from "../state/coupons";
 import { localPos } from "../net/colyseus";
+import { track } from "../net/analytics";
 
 const STORAGE_KEY = "giwa-quest-step";
 const PATH_KEY = "giwa-quest-path";
@@ -217,6 +218,16 @@ export default function QuestLog() {
   const finished = !dismissed && !!path && step >= quests.length;
   const quest = quests[step];
 
+  // 계측 — 부탁이 보이기 시작한 때 · 세 갈래 길이 보인 때(guide/ANALYTICS.md)
+  const questId = quest?.id;
+  const visible = !showcasing && !dismissed;
+  useEffect(() => {
+    if (visible && !choosing && !finished && questId) track("tutorial_step_start", { step, quest: questId, path: path ?? "free" });
+  }, [visible, choosing, finished, questId, step, path]);
+  useEffect(() => {
+    if (visible && choosing) track("paths_shown");
+  }, [visible, choosing]);
+
   useEffect(() => {
     const paint = () => ctx.current.painted++;
     window.addEventListener("giwa-workshop-paint", paint);
@@ -245,6 +256,7 @@ export default function QuestLog() {
 
       setJustDone(true);
       clearInterval(id);
+      track("tutorial_step_done", { step, quest: quest.id, path: path ?? "free" });
       setTimeout(() => {
         const next = step + 1;
         setJustDone(false);
@@ -256,11 +268,12 @@ export default function QuestLog() {
       }, 1700);
     }, 800);
     return () => clearInterval(id);
-  }, [step, dismissed, choosing, finished, quest, quests.length]);
+  }, [step, dismissed, choosing, finished, quest, quests.length, path]);
 
   if (showcasing || dismissed) return null;
 
   function skip() {
+    track("tutorial_skip", { step });
     setStep(900);
     saveValue(STORAGE_KEY, "900");
     saveValue(COMPLETE_KEY, "1");
@@ -268,6 +281,7 @@ export default function QuestLog() {
   }
 
   function choosePath(next: QuestPath) {
+    track("paths_chosen", { path: next });
     setPath(next);
     saveValue(PATH_KEY, next);
     saveValue(VERSION_KEY, "2");

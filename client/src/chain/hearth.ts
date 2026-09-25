@@ -1,6 +1,7 @@
 // 모닥불(화로) + 장날: 함께 쬔 온기의 온체인 증명 (GiwaHearth)
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { sfxWarm } from "../audio/sfx";
+import { track } from "../net/analytics";
 import { HEARTH_ADDRESS, HEARTH_ABI } from "../config/hearth";
 
 export interface HearthStatus {
@@ -30,6 +31,7 @@ export async function fetchHearth(who: string): Promise<HearthStatus> {
 export async function gatherHearth(): Promise<void> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 없습니다.");
+  track("sit");
   const tx = await queueTx(() =>
     wc.writeContract({
       account: wc.account!,

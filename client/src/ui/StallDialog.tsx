@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
+import { track } from "../net/analytics";
 import { buyOnMarket, shortAddress, isDojangVerified } from "../wallet/wallet";
 import {
   buyStallOnChain,
@@ -84,6 +85,7 @@ export default function StallDialog() {
     if (busyItem || !stall) return;
     const item = stall.items.find((i) => i.id === itemId);
     if (!item) return;
+    track("buy_click", { brand: !!stall.brand, onchain_stall: stall.id.startsWith("oc-"), price_eth: item.priceEth });
     setBusyItem(itemId);
     setError(null);
     try {

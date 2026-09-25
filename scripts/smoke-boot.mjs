@@ -108,6 +108,9 @@ try {
   });
   const page = await ctx.newPage();
   const errors = collectErrors(page);
+  // 계측은 smoke 에서 꺼져 있어야 한다(guide/ANALYTICS.md) — 키를 넣고 빌드해도 자동화에서는 보내지 않는다
+  const beacons = [];
+  page.on("request", (r) => { if (/\/batch\/?$/.test(new URL(r.url()).pathname)) beacons.push(r.url()); });
 
   // ?rafshim: 헤드리스에서 배경 탭 스로틀로 프레임이 멈추는 것을 막는다
   await page.goto(`http://localhost:${PORT}/?rafshim&debug`, {
@@ -424,6 +427,7 @@ try {
 
   // 몇 초 더 돌려 NPC 이동·주야 사이클·비컨 경로에서 터지는 것이 없는지 본다
   await wait(6000);
+  must(beacons.length === 0, `계측이 꺼져 있다 (분석 전송 ${beacons.length}건)`);
   must(errors.length === 0, `콘솔 에러 0 (${errors.length}건)`);
   errors.forEach((e) => console.log("   " + e));
 

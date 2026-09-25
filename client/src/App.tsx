@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
+import { trackOnce, sinceBoot } from "./net/analytics";
 import Village from "./game/Village";
 import Player from "./game/Player";
 import RemotePlayers from "./game/RemotePlayers";
@@ -95,6 +96,7 @@ export default function App() {
         camera={{ position: [0, 9.5, 11.5], fov: 50 }}
         dpr={[1, 2]}
         performance={{ min: 0.5 }}
+        onCreated={() => requestAnimationFrame(() => trackOnce("first_frame", { ms: sinceBoot() }))}
       >
         <AdaptiveDpr pixelated />
         {zone === "village" ? <><Village /><Portal /><Stalls /><RemotePlayers /><VillageExit /></> : <Outside />}

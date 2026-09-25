@@ -126,6 +126,7 @@ scripts/    배포·검증·봇·스모크
 | 로드맵 · 규제 안전선 | [guide/ROADMAP.md](guide/ROADMAP.md) |
 | 반입 에셋 원장 (출처·라이선스) | [ASSETS.md](ASSETS.md) |
 | 서버 호스팅 (선택) | [guide/DEPLOY.md](guide/DEPLOY.md) |
+| 계측 스키마 (모든 클라이언트 공용 · 기본 꺼짐) | [guide/ANALYTICS.md](guide/ANALYTICS.md) |
 | 작업 규칙 (사람·AI 공용) | [CLAUDE.md](CLAUDE.md) |
 
 전체 색인은 [guide/README.md](guide/README.md).

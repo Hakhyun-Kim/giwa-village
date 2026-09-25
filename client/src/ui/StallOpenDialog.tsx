@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../state/store";
 import { openStall } from "../net/colyseus";
 import { sfxStallOpen } from "../audio/sfx";
+import { track } from "../net/analytics";
 
 const PRESET_GOODS = [
   { name: "할인쿠폰", emoji: "🎫" },
@@ -70,6 +71,7 @@ export default function StallOpenDialog() {
     try {
       await openStall(title.trim(), items);
       sfxStallOpen();
+      track("stall_open", { items: items.length });
       useStore.getState().setStallOpenDialog(false);
       setTitle(""); setItems([]); setError(null);
     } catch (err) {

@@ -1,5 +1,6 @@
 import { Client, Room } from "colyseus.js";
 import { WS_URL, DEMO } from "../config/giwa";
+import { track } from "./analytics";
 import { startDemo, demoGift, demoBuy } from "../demo/demo";
 import {
   openStallOnChain, closeStallOnChain, sendEmoteOnChain,
@@ -102,7 +103,7 @@ export async function joinVillage(_identity: Identity): Promise<void> {
 }
 export function leaveVillage() { ++generation; disconnect(); useWorld.setState({server:"offline"}); }
 export function sendMove(x:number,z:number,rot:number) { room?.send("move",{x,z,rot,zone:useWorld.getState().zone}); }
-export function sendEmote(icon:string) { if (room) room.send("emote",icon); else sendEmoteOnChain(icon); }
+export function sendEmote(icon:string) { track("emote", { icon, via: room ? "server" : "chain" }); if (room) room.send("emote",icon); else sendEmoteOnChain(icon); }
 export function sendGift(to:string,amountEth:string,tx:string) { demoGift(to,amountEth,tx); }
 export function buyStallItem(stallId:string,itemId:string,tx:string) { demoBuy(stallId,itemId,tx); }
 export function openStall(title:string,items:{name:string;emoji:string;priceEth:string}[]) { return openStallOnChain(title,items); }

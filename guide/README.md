@@ -37,5 +37,6 @@
 |---|---|
 | [ROADMAP.md](ROADMAP.md) | 지나온 것·다음 후보·규제 안전선(설계 원칙) |
 | [DEPLOY.md](DEPLOY.md) | (선택) Colyseus 서버 호스팅 — 없어도 마을은 돈다 |
+| [ANALYTICS.md](ANALYTICS.md) | 계측 이벤트 스키마 — 웹 · Unity 가 같은 이름으로 센다 · 기본 꺼짐 · 주소 · tx 해시 없음 |
 | [../ASSETS.md](../ASSETS.md) | 반입한 에셋의 출처·저작자·라이선스 원장 (생성물) |
 | [../CLAUDE.md](../CLAUDE.md) | 사람과 AI 에이전트가 함께 읽는 작업 규칙 — 새 기능은 여기와 먼저 대조한다 |

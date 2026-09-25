@@ -12,6 +12,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { giwaSepolia, WS_URL } from "../config/giwa";
 import { useStore } from "../state/store";
 import { sfxFail, sfxSent } from "../audio/sfx";
+import { track, txReason } from "../net/analytics";
 import { MARKET_ADDRESS, MARKET_ABI } from "../config/market";
 import {
   DOJANG_SCROLL_ADDRESS,
@@ -41,11 +42,19 @@ let txChain: Promise<unknown> = Promise.resolve();
  */
 export function queueTx<T>(fn: () => Promise<T>, silent = false): Promise<T> {
   useStore.getState().bumpPendingTx(1);
+  // 계측은 사람이 누른 전송만 — 비컨(silent)은 몇 초마다 나가 세면 잡음이 된다. 해시 · 주소는 싣지 않는다
+  const startedAt = Date.now();
+  if (!silent) track("tx_attempt");
   const run = txChain
     .then(fn, fn)
     .finally(() => useStore.getState().bumpPendingTx(-1));
   txChain = run.catch(() => {});
   if (!silent) run.then(sfxSent, sfxFail);
+  if (!silent)
+    run.then(
+      () => track("tx_result", { ok: true, reason: "ok", ms: Date.now() - startedAt }),
+      (err) => track("tx_result", { ok: false, reason: txReason(err), ms: Date.now() - startedAt }),
+    );
   return run;
 }
 
