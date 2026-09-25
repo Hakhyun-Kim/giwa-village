@@ -1,6 +1,7 @@
 // 판매자 장부: 내 노점의 온체인 판매·분쟁 목록 + 환불 (GiwaMarketV3)
 import { formatEther, parseAbiItem } from "viem";
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
+import { scanLogs } from "./logs";
 import { MARKET_ADDRESS, MARKET_ABI, MARKET_DEPLOY_BLOCK } from "../config/market";
 
 export const PURCHASED_EVENT = parseAbiItem(
@@ -20,7 +21,7 @@ export interface SellerSale {
 }
 
 export async function fetchMySales(me: string): Promise<SellerSale[]> {
-  const logs = await publicClient.getLogs({
+  const logs = await scanLogs({
     address: MARKET_ADDRESS,
     event: PURCHASED_EVENT,
     args: { seller: me as `0x${string}` },

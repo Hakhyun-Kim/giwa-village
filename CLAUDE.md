@@ -226,6 +226,8 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
   익스플로러 검증도 optimizer off 기준(standard-input, v0.8.36).
 - **공개 RPC는 리플리카 지연이 있다** — 전송 직후 상태 조회가 한 박자 늦는다.
   잔액 비교 대신 **영수증 status + 이벤트**로 검증하고, 조회는 재시도 루프로.
+- **공개 RPC 의 `eth_getLogs` 는 1만 블록까지만 받는다** — 배포 블록부터 훑는 조회는
+  `chain/logs.ts`의 `scanLogs`(Blockscout API → 안 되면 1만 블록씩 잘라 RPC)를 지난다.
 - **`.hud`는 `pointer-events: none`** — HUD 버튼마다 `auto`를 되살려야 클릭이
   캔버스로 새지 않는다. `npm test`가 이걸 검사한다.
 

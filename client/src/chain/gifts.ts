@@ -6,6 +6,7 @@ import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { MARKET_ADDRESS, MARKET_ABI, MARKET_DEPLOY_BLOCK } from "../config/market";
 import { useStore } from "../state/store";
 import { PURCHASED_EVENT } from "./ledger";
+import { scanLogs } from "./logs";
 
 const TRANSFER_SINGLE_EVENT = parseAbiItem(
   "event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value)",
@@ -41,7 +42,7 @@ export async function giftCoupon(to: string, tokenId: string): Promise<`0x${stri
 
 /** 남에게서 받은 쿠폰 — 아직 보유 중(잔고>0)인 것만 */
 export async function fetchReceivedCoupons(me: string): Promise<ReceivedCoupon[]> {
-  const incoming = await publicClient.getLogs({
+  const incoming = await scanLogs({
     address: MARKET_ADDRESS,
     event: TRANSFER_SINGLE_EVENT,
     args: { to: me as `0x${string}` },
@@ -53,7 +54,7 @@ export async function fetchReceivedCoupons(me: string): Promise<ReceivedCoupon[]
   if (gifts.length === 0) return [];
 
   // tokenId → 상품명·판매자 복원 (민팅 시점의 Purchased 이벤트)
-  const purchases = await publicClient.getLogs({
+  const purchases = await scanLogs({
     address: MARKET_ADDRESS,
     event: PURCHASED_EVENT,
     fromBlock: MARKET_DEPLOY_BLOCK,
