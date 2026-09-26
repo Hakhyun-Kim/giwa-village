@@ -15,6 +15,7 @@ import { bossHit } from "../game/feel";
 import { PLAYER_R, VILLAGE_COLLIDERS, insideAny } from "../game/collide";
 import { setMood } from "../audio/ambience";
 import { trackShape, type Mood } from "../audio/track";
+import { combatSnapshot, useWorld } from "../state/world";
 
 const FRAME_MS = 1000 / 30;
 
@@ -96,6 +97,9 @@ export function installDevHooks(): void {
      * walls()는 고정 배치만, blocked()는 그때그때 열린 노점·도깨비까지 본다.
      */
     walls: () => VILLAGE_COLLIDERS,
+    /** 산채 원정의 지금 판 — 서버가 없을 때 혼자 연습이 실제로 도는지(now 가 흐르는지) 본다 */
+    combat: () => ({ zone: useWorld.getState().zone, now: combatSnapshot?.now ?? null,
+      phase: combatSnapshot?.phase ?? null, players: combatSnapshot?.players.length ?? 0 }),
     blocked: (x: number, z: number) => insideAny(x, z, PLAYER_R),
   };
 }

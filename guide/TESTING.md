@@ -151,5 +151,5 @@ npm run market-day -- --live   # 실측 — 2인 모임 → 창 닫힘 → 수�
 |---|---|
 | `?rafshim` | 숨은 탭에서 rAF가 스로틀돼 헤드리스 검증이 멈추는 것을 막는다 (30Hz 타이머) |
 | `?debug` | 프로덕션 빌드에서도 `window.__giwa` 노출 (개발 서버는 항상 노출) |
-| `window.__giwa` | `state()` `pos()` `teleport(x,z)` `ready()` · `bossHit(n)` 타격 연출만 흉내(가스 0) · `walls()` `blocked(x,z)` 충돌 검사 · `mood(트랙, 남은체력)` 배경음 트랙만 갈아 끼우기 · `remotes()` 주민·타 플레이어 좌표 |
+| `window.__giwa` | `state()` `pos()` `teleport(x,z)` `ready()` · `bossHit(n)` 타격 연출만 흉내(가스 0) · `walls()` `blocked(x,z)` 충돌 검사 · `mood(트랙, 남은체력)` 배경음 트랙만 갈아 끼우기 · `remotes()` 주민·타 플레이어 좌표 · `combat()` 산채 원정의 구역·시각·단계 |
 | `?showcase=1` | 무조작 자동 시연 (시각을 정오로 고정 — 영상 보호) |

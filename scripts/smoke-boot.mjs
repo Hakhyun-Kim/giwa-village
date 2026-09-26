@@ -425,6 +425,29 @@ try {
   const chosenDaily = await page.locator(".daily-card.compact").count();
   must(chosenDaily === 1, "오늘의 부탁은 하나를 고르면 고정된다");
 
+  // 서버 없는 공개 데모에서도 산채는 혼자 연습 원정으로 열린다 — shared/expedition.ts 를 브라우저가 직접 돌린다.
+  await page.locator(".world-village-entry button").click();
+  await page.waitForSelector(".world-entry-card", { timeout: 10000 });
+  const walkTo = page.getByRole("button", { name: "다솔 따라 산채 입구로" });
+  if (await walkTo.count()) await walkTo.click();
+  const practiceReady = await page
+    .waitForFunction(() => [...document.querySelectorAll(".world-entry-actions button")]
+      .some((b) => b.textContent === "혼자 연습 시작" && !b.disabled), undefined, { timeout: 30000 })
+    .then(() => true).catch(() => false);
+  must(practiceReady, "서버 없이도 산채 입구에서 ‘혼자 연습 시작’이 켜진다");
+  if (practiceReady) {
+    await page.getByRole("button", { name: "혼자 연습 시작" }).click();
+    const first = await page.evaluate(() => window.__giwa.combat());
+    await wait(2000);
+    const later = await page.evaluate(() => window.__giwa.combat());
+    must(first.zone === "dungeon" && later.zone === "dungeon" && later.players === 1 && later.now - first.now >= 1000,
+      `혼자 연습 원정이 이 브라우저에서 돈다 (${first.now} → ${later.now}ms · ${later.phase})`);
+    await page.getByRole("button", { name: "들판으로 귀환" }).click();
+    const left = await page.evaluate(() => window.__giwa.combat());
+    must(left.zone === "field" && left.now === null, "귀환하면 연습 원정이 멈춘다");
+    await page.getByRole("button", { name: "마을로 돌아가기" }).click();
+  }
+
   // 몇 초 더 돌려 NPC 이동·주야 사이클·비컨 경로에서 터지는 것이 없는지 본다
   await wait(6000);
   must(beacons.length === 0, `계측이 꺼져 있다 (분석 전송 ${beacons.length}건)`);

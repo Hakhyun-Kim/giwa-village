@@ -15,6 +15,7 @@ export default function WorldHud() {
   const snap=combatSnapshot;const me=snap?.players.find(p=>p.id===world.fighterId);
   const near=Math.hypot(localPos.x-CAVE_GATE.x,localPos.z-CAVE_GATE.z)<5;
   const range=!!me&&!!snap?.enemies.some(e=>e.hp>0&&Math.hypot(e.x-me.x,e.z-me.z)<=ATTACK_RANGE);
+  const offline=world.server!=="online";
   const finished=snap?.phase==="victory"||snap?.phase==="defeat";
   const skillLeft=me&&snap?Math.max(0,Math.ceil((me.skillAt-snap.now)/1000)):0;
   if(showcasing)return null;
@@ -33,17 +34,20 @@ export default function WorldHud() {
       <ol><li className="done">들판으로 나오기</li><li className={world.zone==="dungeon"?"done":""}>산채에 입장하기</li><li className={snap?.phase==="boss"||snap?.phase==="victory"?"done":""}>숲 도깨비 2명 물리치기</li><li className={snap?.phase==="victory"?"done":""}>대장을 물리치고 귀환</li></ol>
     </section>
     {world.notice&&<p className="world-notice" role="status">{world.notice}</p>}
-    {world.zone==="field"?<section className="world-entry-card"><small>솔바람 산채 · 1–4인 + 교관 다솔</small><h2>함께 들어갈까요?</h2><p>혼자 시작해도 다솔이 도와줍니다. 새 원정을 만들고 입장 코드를 동료에게 알려주세요.</p>
+    {world.zone==="field"?<section className="world-entry-card">{offline
+        ?<><small>솔바람 산채 · 혼자 연습 + 교관 다솔</small><h2>다솔과 연습해 볼까요?</h2><p>실시간 서버 없이도 이 기기에서 산채 원정을 끝까지 연습할 수 있어요. 규칙은 함께하는 원정과 같습니다.</p></>
+        :<><small>솔바람 산채 · 1–4인 + 교관 다솔</small><h2>함께 들어갈까요?</h2><p>혼자 시작해도 다솔이 도와줍니다. 새 원정을 만들고 입장 코드를 동료에게 알려주세요.</p></>}
       {!near&&<button onClick={()=>{fieldWalk.active=true;}}>다솔 따라 산채 입구로</button>}
-      <div className="world-entry-actions"><button disabled={!near||world.server!=="online"||world.entering} onClick={()=>void enterExpedition()}>{world.entering?"입장 준비 중…":"새 원정 시작"}</button>
-      <input aria-label="원정 입장 코드" placeholder="동료의 입장 코드" maxLength={24} value={code} onChange={e=>setCode(e.target.value)}/>
-      <button disabled={!near||!code.trim()||world.server!=="online"||world.entering} onClick={()=>void enterExpedition(code)}>동료에게 합류</button></div>
-      <p className="world-fine">{world.server!=="online"?"서버가 연결되면 입장할 수 있습니다. 들판과 마을은 계속 이용할 수 있어요.":!near?"길을 따라 북쪽 산채 입구까지 이동하세요.":"입구 도착 · F 키로도 새 원정을 시작할 수 있어요."}</p>
+      <div className="world-entry-actions"><button disabled={!near||world.entering} onClick={()=>void enterExpedition()}>{world.entering?"입장 준비 중…":offline?"혼자 연습 시작":"새 원정 시작"}</button>
+      <input aria-label="원정 입장 코드" placeholder="동료의 입장 코드" maxLength={24} value={code} disabled={offline} onChange={e=>setCode(e.target.value)}/>
+      <button disabled={!near||!code.trim()||offline||world.entering} onClick={()=>void enterExpedition(code)}>동료에게 합류</button></div>
+      <p className="world-fine">{!near?"길을 따라 북쪽 산채 입구까지 이동하세요.":offline?"입구 도착 · F 키로도 혼자 연습을 시작할 수 있어요.":"입구 도착 · F 키로도 새 원정을 시작할 수 있어요."}{offline&&" 동료와 합류하려면 실시간 서버가 연결되어야 해요."}</p>
       <small>전투 체험은 가스 0 · 전투 점수와 체력은 이번 원정에서만 유지됩니다.</small>
     </section>:<>
       <aside className="world-party"><small>원정대 {snap?.players.length??1}/4</small>
         {snap?.players.map(p=><div className="party-member" key={p.id}><b>{p.name}{p.id===world.fighterId?" (나)":""}</b><progress value={p.hp} max={p.maxHp}/><span>{p.hp}/{p.maxHp}{p.hp<=0?" · 쓰러짐":""}</span></div>)}
-        <div className="instance-code">입장 코드 <b>{world.instanceId}</b><button onClick={async()=>{try{await navigator.clipboard.writeText(world.instanceId);setCopied(true);}catch{setCopied(false);}}}>{copied?"복사됨":"복사"}</button></div>
+        {world.instanceId?<div className="instance-code">입장 코드 <b>{world.instanceId}</b><button onClick={async()=>{try{await navigator.clipboard.writeText(world.instanceId);setCopied(true);}catch{setCopied(false);}}}>{copied?"복사됨":"복사"}</button></div>
+          :<div className="instance-code">혼자 연습 · 이 기기에서 진행</div>}
         <small>교관 다솔 동행 · 온체인 보상 없음</small>
       </aside>
       {!finished&&<div className="combat-hotbar"><div className="player-health"><b>내 체력 {me?.hp??100} / 100</b><progress value={me?.hp??100} max={100}/><span>{me?.hp===0?"동료의 전투를 지켜보거나 귀환하세요":range?"공격 사거리 안":"적에게 가까이 다가가세요"}</span></div>
