@@ -53,7 +53,7 @@ export function startShowcase(
 // ---- 오버레이 ----
 
 const STYLE = `
-.sc-bar { position: fixed; left: 50%; bottom: 64px; transform: translateX(-50%);
+.sc-bar { position: fixed; left: 50%; bottom: 64px; transform: translateX(-50%); width: max-content;
   z-index: 60; max-width: min(720px, 92vw); background: rgba(12, 15, 24, 0.88);
   border: 1px solid rgba(255, 214, 107, 0.35); border-radius: 14px;
   padding: 14px 20px; color: #eef2f8; text-align: center;
@@ -68,7 +68,13 @@ const STYLE = `
   background: rgba(12,15,24,0.7); color: #9aa7bd; border: 1px solid #2a3040;
   border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
 .sc-skip:hover { color: #ffd66b; }
+/* 휴대폰: 왼쪽 아래 조이스틱(26 + 120px) 위로 올린다 — left: 50% 만으로는 폭이 화면 절반에 갇혀서 width: max-content 를 함께 준다 */
+@media (pointer: coarse) { .sc-bar { bottom: 160px; font-size: 15px; padding: 10px 16px; } }
 `;
+
+const TOUCH =
+  typeof window !== "undefined" &&
+  window.matchMedia("(pointer: coarse)").matches;
 
 let bar: HTMLDivElement | null = null;
 let skipBtn: HTMLButtonElement | null = null;
@@ -84,7 +90,8 @@ function mountOverlay() {
   document.body.appendChild(bar);
   skipBtn = document.createElement("button");
   skipBtn.className = "sc-skip";
-  skipBtn.textContent = "시연 건너뛰기 (ESC)";
+  // 터치 기기에는 ESC 가 없다(Welcome.tsx 와 같은 판정)
+  skipBtn.textContent = TOUCH ? "시연 건너뛰기" : "시연 건너뛰기 (ESC)";
   skipBtn.onclick = () => abort();
   document.body.appendChild(skipBtn);
   window.addEventListener("keydown", onEsc);
