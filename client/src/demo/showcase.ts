@@ -128,8 +128,28 @@ function teardown(finalText?: string) {
   bar = null;
 }
 
+// 터치 기기에는 키보드가 없다 — 자막의 " · " 조각 가운데 키 안내(WASD · E · R · F · ESC · 클릭)만 뺀다.
+// 문장은 그대로 두고 보일 때만 거른다(다른 클라이언트가 같은 자막을 굽는다).
+const KEY_HINT = /WASD|\bE 인사|\bR\b|ESC|포털 F|클릭/;
+function forTouch(text: string): string {
+  if (!TOUCH) return text;
+  return text
+    .split(" · ")
+    .map((seg) => {
+      if (!KEY_HINT.test(seg)) return seg;
+      const dash = seg.indexOf(" — ");
+      return dash >= 0 && !KEY_HINT.test(seg.slice(0, dash)) ? seg.slice(0, dash) + " —" : "";
+    })
+    .filter(Boolean)
+    .join(" · ")
+    .replace(/ — · /g, " — ")
+    .replace(/ —$/, "");
+}
+
 function caption(html: string, sub?: string) {
   if (!bar) return;
+  html = forTouch(html);
+  sub = sub && forTouch(sub);
   bar.innerHTML =
     `<span class="sc-badge">자동 시연</span><div>${html}</div>` +
     (sub ? `<div class="sc-sub">${sub}</div>` : "");

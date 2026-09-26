@@ -185,12 +185,21 @@ try {
       spy.buf++;
       return buf.apply(this, a);
     };
+    // 표본의 길이는 벽시계가 아니라 **오디오 시계**로 잰다 — 스케줄러가 오디오 시계 위에서
+    // 예약하므로, 느린 CI 러너에서 오디오 시계가 벽시계보다 늦게 가면 2.5초(벽시계)
+    // 안에 예약이 둘뿐이라 배포가 조용히 막혔다(2026-09-26). 오디오 2.5초를 채우되
+    // 벽시계 10초에서 끊고, 시계가 아예 돌지 않으면 그것을 따로 말한다.
+    const ctx = window.__audio?.ctx;
+    const clock = () => (ctx ? ctx.currentTime : performance.now() / 1000);
     const sample = async (mood, hp) => {
       window.__giwa.mood(mood, hp);
       await new Promise((r) => setTimeout(r, 400));
       const from = { ...spy };
-      await new Promise((r) => setTimeout(r, 2500));
-      return { osc: spy.osc - from.osc, buf: spy.buf - from.buf };
+      const t0 = clock(), w0 = performance.now();
+      while (clock() - t0 < 2.5 && performance.now() - w0 < 10000) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      return { osc: spy.osc - from.osc, buf: spy.buf - from.buf, secs: clock() - t0 };
     };
     const village = await sample("village", 1);
     const hunt = await sample("hunt", 0.1); // 빈사 — 가장 빠른 트랙
@@ -203,7 +212,8 @@ try {
   // (무엇이 북이고 무엇이 가야금인지는 세지 않는다 — 가야금도 버퍼로 울린 뒤로
   //  노드 종류로는 구분되지 않고, 구분하려 들면 테스트가 구현을 따라다니게 된다)
   const nodes = (s) => s.osc + s.buf;
-  must(nodes(track.hunt) >= 4, `풍류가 실제로 소리를 예약한다 (토벌 ${nodes(track.hunt)}개 / 2.5초)`);
+  must(track.hunt.secs >= 1, `오디오 시계가 돈다 (벽시계 10초 동안 오디오 ${track.hunt.secs.toFixed(2)}초)`);
+  must(nodes(track.hunt) >= 4, `풍류가 실제로 소리를 예약한다 (토벌 ${nodes(track.hunt)}개 / 오디오 ${track.hunt.secs.toFixed(1)}초)`);
   must(
     nodes(track.hunt) > nodes(track.village) + 2,
     `토벌이 마을보다 촘촘하다 (마을 ${nodes(track.village)} → 토벌 ${nodes(track.hunt)})`,
