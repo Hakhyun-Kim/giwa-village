@@ -30,6 +30,7 @@ import { DEMO } from "./config/giwa";
 import { useWorld } from "./state/world";
 import { Outside, VillageExit } from "./game/Outside";
 import WorldHud from "./ui/WorldHud";
+import RaidInvite from "./ui/RaidInvite";
 import { returnVillage } from "./net/expedition";
 import { maybeStartShowcase } from "./demo/showcase";
 
@@ -120,6 +121,7 @@ export default function App() {
       <Welcome />
       </>}
       <WorldHud />
+      <RaidInvite />
       <TouchControls />
     </div>
   );

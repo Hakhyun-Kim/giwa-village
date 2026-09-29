@@ -75,6 +75,7 @@ server/  Colyseus 룸 — 선택 사항이다. 서버 0으로도 마을이 돈�
          village(도구용 · 개발 모드에서만) · village_live(마을·들판·산채에서 서로를 그린다 · 30명) · expedition(1~4명 실시간 원정)
 shared/  서버 판정과 클라이언트 표시가 함께 읽는 실시간 원정 규칙(expedition.ts) — 세션 기록일 뿐 체인에 아무것도 쓰지 않는다.
          순수 모듈이라 npm test가 그대로 걸어 보고, 다른 클라이언트도 같은 규칙으로 혼자 하는 연습 원정을 돌릴 수 있다
+         + 크로스플레이 링크(crosslink.ts) — 웹의 원정을 Unity 앱 · PC 게임이 giwa://expedition 으로 이어받는다(PROTOCOL.md §3.8 · 지갑은 넘기지 않는다)
 contracts/ Solidity 10종 (전부 GIWA Sepolia 배포·검증 완료)
 scripts/ 테스트·배포·봇·스모크
 sdk/     외부에서 프로필을 읽는 패키지
@@ -184,7 +185,7 @@ DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 �
 ## 5. 검증 — 가스를 아끼는 순서
 
 ```bash
-npm test                     # 로직 63건 + 원정 규칙 7건 · 체인 없음 · 1초 미만 (저장할 때마다)
+npm test                     # 로직 63건 + 원정 규칙 7건 + 크로스플레이 링크 5건 · 체인 없음 · 1초 미만 (저장할 때마다)
 npm run export-world         # 배치표를 client/public/world.json 으로 굽는다
 npm run test:local           # 컨트랙트 10종 E2E 54건 · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)

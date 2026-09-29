@@ -10,6 +10,7 @@ export function setCombatSnapshot(s: ExpeditionState | null) { combatSnapshot = 
 export const useWorld = create<{
   zone: Zone; server: "connecting" | "online" | "offline";
   entering: boolean; instanceId: string; fighterId: string; notice: string;
-}>(() => ({ zone: "village", server: "connecting", entering: false, instanceId: "", fighterId: "", notice: "" }));
+  inviteCode: string; // 초대 링크(?raid=)로 받은 동료의 입장 코드 — 들판의 입력 칸을 채운다
+}>(() => ({ zone: "village", server: "connecting", entering: false, instanceId: "", fighterId: "", notice: "", inviteCode: "" }));
 export const liveAddresses = new Set<string>();
 export const liveTargets = new Map<string, { x: number; z: number; rot: number; name: string; color: number; zone: string }>();

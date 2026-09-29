@@ -38,8 +38,9 @@ function remember(answer: "tour" | "self") {
 
 export default function Welcome() {
   const params = new URLSearchParams(location.search);
-  // ?showcase=1은 이미 자동 시연이고, ?slot=은 개발용 듀얼 테스트 창이다
-  const suppressed = params.get("showcase") === "1" || !!params.get("slot");
+  // ?showcase=1은 이미 자동 시연이고, ?slot=은 개발용 듀얼 테스트 창이다.
+  // ?raid=는 원정 초대(RaidInvite)가 먼저 묻는다 — 안내를 겹치지 않는다. 답을 남기지 않으니 다음 방문에 다시 묻는다.
+  const suppressed = params.get("showcase") === "1" || !!params.get("slot") || !!params.get("raid");
   const [asking, setAsking] = useState(() => !suppressed && !seenBefore());
   const status = useStore((s) => s.status);
   const [ready, setReady] = useState(false);
