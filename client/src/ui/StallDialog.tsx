@@ -231,7 +231,7 @@ export default function StallDialog() {
         )}
         {canOffer && offerFor && (
           <div className="gift-note">
-            상인은 사람 대신 AI 나 정해진 규칙으로 흥정에 답할 수 있습니다. 하한선 아래로는 받지 않습니다.
+            상인은 사람 대신 AI 나 정해진 규칙으로 흥정에 답할 수 있습니다. 그런 상인은 대개 정가의 일정 비율을 하한으로 둡니다 — 사람 상인은 직접 고릅니다.
           </div>
         )}
 

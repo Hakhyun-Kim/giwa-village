@@ -9,8 +9,11 @@ import {
   parseAbi,
   parseAbiItem,
   parseEther,
+  stringToHex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+// 흥정 하한은 봇 · 테스트와 같은 한 곳(scripts/lib/haggle.mjs)에서 잰다 — 이 서버는 클론 안에서 돈다(README)
+import { BAND, classify } from "../../scripts/lib/haggle.mjs";
 
 export const CHAIN_ID = 91342;
 /** 좌표는 int32에 100배로 담긴다 (client/src/chain/core.ts POS_SCALE) */
@@ -59,6 +62,11 @@ const OFFERS_ABI = parseAbi([
   "function makeOffer(address seller, string itemName) payable returns (uint256)",
   "function acceptOffer(uint256 id)",
   "function cancelOffer(uint256 id)",
+]);
+// 같은 흥정을 품목 이름 바이트 그대로 읽는다 — 문자열로 풀면 맨 앞 BOM 이 지워져 "목도리"와 BOM+"목도리"가 같아 보인다
+const OFFER_RAW_ABI = parseAbi([
+  "struct OfferRaw { address buyer; address seller; uint128 amount; bool active; bytes itemName; }",
+  "function offerAt(uint256 id) view returns (OfferRaw)",
 ]);
 
 const PROFILE_ABI = parseAbi([
@@ -112,8 +120,20 @@ export const walletClient = account
 export const MAX_SPEND_ETH = Number(process.env.GIWA_MAX_SPEND_ETH || "0.005");
 /** 이 프로세스가 사는 동안 쓸 수 있는 총액. */
 export const SESSION_BUDGET_ETH = Number(process.env.GIWA_SESSION_BUDGET_ETH || "0.05");
-/** 흥정 수락 하한 — 정가 × 이 비율보다 낮은 제안은 받지 않는다(0 이면 끈다). 모델이 1 wei 흥정에 속지 않게. */
-export const FLOOR_RATIO = Math.min(1, Math.max(0, Number(process.env.GIWA_FLOOR_RATIO ?? "0.5") || 0));
+/**
+ * 흥정 수락 하한 — 정가 × 이 비율보다 낮은 제안은 받지 않는다. 모델이 1 wei 흥정에 속지 않게.
+ * 비우면 0.5, "0" 을 적었을 때만 끈다. 그 밖의 잘못된 값("0,5" · "50%" · 음수 · 1 초과)은 기동을 멈춘다 — 안전장치는 조용히 꺼지지 않는다.
+ */
+export function floorRatioFrom(raw) {
+  const text = String(raw ?? "").trim();
+  if (text === "") return 0.5;
+  const ratio = Number(text);
+  if (!Number.isFinite(ratio) || ratio < 0 || ratio > 1 || (ratio > 0 && Math.round(ratio * 1000) === 0)) {
+    throw new Error(`GIWA_FLOOR_RATIO 는 0~1 사이의 숫자여야 합니다(0 이면 하한을 끈다, 0.001 단위): "${text}"`);
+  }
+  return ratio;
+}
+export const FLOOR_RATIO = floorRatioFrom(process.env.GIWA_FLOOR_RATIO);
 
 // GiwaMarketV3.openStall 의 한도 — 체인이 거부할 것을 미리 거른다(바이트 단위: 한글은 3바이트)
 export const STALL_LIMITS = { titleBytes: 60, nameBytes: 48, items: 3 };
@@ -126,10 +146,11 @@ const byteLength = (s) => new TextEncoder().encode(s).length;
  */
 export function offerRejection(offer, myStall, ratio = FLOOR_RATIO) {
   if (!myStall) return "내 노점이 열려 있지 않아 흥정을 받을 수 없습니다.";
-  const item = myStall.items.find((it) => it.name === offer.itemName);
+  // 바이트로 맞춘다(offer.itemName 은 OFFER_RAW_ABI 로 읽은 hex) — 보이는 글자가 같아도 바이트가 다르면 다른 쿠폰이 발행된다
+  const item = myStall.items.find((it) => stringToHex(it.name) === offer.itemName.toLowerCase());
   if (!item) return "내 노점에 없는 품목에 걸린 흥정입니다. 받으면 그 이름으로 쿠폰이 발행되므로 거절합니다.";
-  const floor = (parseEther(item.priceEth) * BigInt(Math.round(ratio * 1000))) / 1000n;
-  if (offer.amount < floor) {
+  const { band, floor } = classify(offer.amount, parseEther(item.priceEth), ratio);
+  if (band === BAND.BELOW_FLOOR) {
     return `제안가 ${formatEther(offer.amount)} ETH 가 하한 ${formatEther(floor)} ETH(정가 ${item.priceEth} × ${ratio})보다 낮습니다. ` +
       "하한은 GIWA_FLOOR_RATIO 환경변수로 바꿉니다.";
   }
@@ -192,9 +213,16 @@ async function assertChain() {
   }
 }
 
-async function send(fn) {
-  await assertChain();
-  const hash = await queueTx(fn);
+/** reserved: budgetCheck 가 미리 잡아 둔 wei — 보내기 전에 막히면(체인 확인 · 가스 추정 실패) 예산을 돌려놓는다 */
+async function send(fn, reserved = 0n) {
+  let hash;
+  try {
+    await assertChain();
+    hash = await queueTx(fn);
+  } catch (err) {
+    spentWei -= reserved;
+    throw err;
+  }
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
   return { hash, status: receipt.status, url: `${EXPLORER}/tx/${hash}` };
 }
@@ -430,11 +458,13 @@ export async function buyStall(seller, index) {
       args: [seller, index],
       value,
     }),
-  );
+  value);
 }
 
 export async function makeOffer(seller, itemName, amountEth) {
   const { walletClient: wc, account: acct } = requireWallet();
+  // 체인이 거부할 이름이면 예산을 잡기 전에 거른다(GiwaOffers: 1~48바이트)
+  if (byteLength(itemName) > STALL_LIMITS.nameBytes) throw new Error(`품목 이름은 ${STALL_LIMITS.nameBytes}바이트(한글 16자)까지입니다.`);
   const value = budgetCheck(amountEth);
   return send(() =>
     wc.writeContract({
@@ -446,14 +476,14 @@ export async function makeOffer(seller, itemName, amountEth) {
       args: [seller, itemName],
       value,
     }),
-  );
+  value);
 }
 
 export async function acceptOffer(id) {
   const { walletClient: wc, account: acct } = requireWallet();
   const offer = await publicClient.readContract({
     address: ADDRESSES.offers,
-    abi: OFFERS_ABI,
+    abi: OFFER_RAW_ABI,
     functionName: "offerAt",
     args: [BigInt(id)],
   });

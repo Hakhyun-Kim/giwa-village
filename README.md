@@ -92,7 +92,7 @@ git 기록으로 되짚은 작업 기록. 🔍 **[AI Self-Audit](https://hakhyun
 npm install
 npm run showcase   # 자동 시연 — 설명 없이 보기만 해도 전체 플로우가 지나간다
 npm run playtest   # 듀얼 테스트 창 (클라이언트 2개 + 봇 주민)
-npm test           # 로직 64건 · 체인 없음 · 1초 미만
+npm test           # 로직 66건 · 체인 없음 · 1초 미만
 ```
 
 ## 구조

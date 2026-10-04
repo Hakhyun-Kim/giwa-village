@@ -124,6 +124,33 @@ it("모든 상인의 하한선에서 결정론 판단이 하한선을 넘지 않
   }
 });
 
+describe("MCP 흥정 수락 — 모델이 쥔 판매자 지갑도 같은 하한선 · 같은 품목만");
+
+const mcp = await import(pathToFileURL(path.join(ROOT, "mcp", "src", "village.mjs")).href);
+const { stringToHex } = await import("viem");
+
+it("내 노점에 바이트까지 같은 품목 · 하한 이상만 받는다", () => {
+  const stall = { items: [{ name: "목도리", priceEth: "0.001" }] };
+  const offer = (name, wei) => ({ itemName: typeof name === "string" ? stringToHex(name) : name, amount: wei });
+  const P = parseEther("0.001");
+  ok(mcp.offerRejection(offer("목도리", P), undefined, 0.5), "노점이 없으면 거절");
+  ok(mcp.offerRejection(offer("교환권", P), stall, 0.5), "노점에 없는 품목은 거절");
+  ok(mcp.offerRejection(offer(("0xefbbbf" + stringToHex("목도리").slice(2)), P), stall, 0.5), "BOM 을 붙인 이름은 다른 품목");
+  ok(mcp.offerRejection(offer("목도리", 1n), stall, 0.5), "1 wei 는 거절");
+  ok(mcp.offerRejection(offer("목도리", P / 2n - 1n), stall, 0.5), "하한 1 wei 아래는 거절");
+  eq(mcp.offerRejection(offer("목도리", P / 2n), stall, 0.5), null, "하한 정확히는 받는다: ");
+  eq(mcp.offerRejection(offer("목도리", P), stall, 0.5), null, "정가는 받는다: ");
+  eq(mcp.offerRejection(offer("목도리", 1n), stall, 0), null, "비율 0 이면 하한이 꺼진다: ");
+});
+
+it("GIWA_FLOOR_RATIO 를 잘못 적으면 조용히 꺼지지 않고 멈춘다", () => {
+  eq(mcp.floorRatioFrom(undefined), 0.5); eq(mcp.floorRatioFrom(""), 0.5); eq(mcp.floorRatioFrom(" 0.7 "), 0.7); eq(mcp.floorRatioFrom("0"), 0);
+  for (const bad of ["0,5", "50%", "abc", "-1", "1.5", "0.0004"]) {
+    let threw = false; try { mcp.floorRatioFrom(bad); } catch { threw = true; }
+    ok(threw, `"${bad}" 에서 멈춰야 합니다`);
+  }
+});
+
 // ── 주민 데이터 정합성 ────────────────────────────────────────────────────
 
 describe("주민 데이터 — data/npcs.json");

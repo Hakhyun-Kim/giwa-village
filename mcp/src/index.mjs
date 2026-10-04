@@ -250,7 +250,7 @@ tool(
       "판매자가 수락하면 즉시 체결된다. 수락 전에는 cancel_offer로 회수할 수 있다.",
     inputSchema: {
       seller: addressSchema.describe("노점 주인 주소"),
-      itemName: z.string().min(1).describe("품목 이름 (노점에 있는 그대로)"),
+      itemName: z.string().min(1).max(48).describe("품목 이름 (노점에 있는 그대로 · 48바이트까지)"),
       amountEth: z.string().describe('부를 값 (ETH 문자열, 예: "0.0007")'),
     },
   },
@@ -295,7 +295,7 @@ tool(
 // stdout은 MCP 프로토콜 전용이다. 사람이 볼 로그는 전부 stderr로.
 
 const mode = village.account
-  ? `쓰기 가능 (${village.account.address}, 1회 상한 ${village.MAX_SPEND_ETH} ETH · 세션 예산 ${village.SESSION_BUDGET_ETH} ETH)`
+  ? `쓰기 가능 (${village.account.address}, 1회 상한 ${village.MAX_SPEND_ETH} ETH · 세션 예산 ${village.SESSION_BUDGET_ETH} ETH · 흥정 하한 정가×${village.FLOOR_RATIO}${village.FLOOR_RATIO === 0 ? " — 꺼짐" : ""})`
   : "읽기 전용 (GIWA_PRIVATE_KEY 없음)";
 console.error(`[giwa-village-mcp] GIWA Sepolia · ${mode}`);
 

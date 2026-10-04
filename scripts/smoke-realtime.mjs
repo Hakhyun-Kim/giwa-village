@@ -26,12 +26,14 @@ try {
   await assert.rejects(()=>client.joinById(a.r.roomId,{name:"다섯째"}));
   console.log("PASS 실제 소켓: 인스턴스 분리·합류·4인 제한·이동 속도·피해 위조 거절");
   const solo=await expedition(), token=solo.r.reconnectionToken, sid=solo.r.sessionId;
-  solo.r.removeAllListeners();await solo.r.leave(false);await wait(150);
+  await wait(300);const before={now:solo.state.now,hp:solo.state.players.find(p=>p.id===sid).hp};
+  solo.r.removeAllListeners();await solo.r.leave(false);await wait(4000); // 혼자 서 있으면 4초면 맞는다 — 기다리는 동안은 빠져 있어야 한다
   const back=await client.reconnect(token);rooms.push(back);let again;back.onMessage("combat",s=>again=s);back.send("ready");await until(()=>again);
-  assert.equal(back.sessionId,sid);assert.ok(again.players.some(p=>p.id===sid),"끊겼다 돌아온 대원이 원정에 남아 있어야 한다");
+  assert.equal(back.sessionId,sid);const me=again.players.find(p=>p.id===sid);assert.ok(me,"끊겼다 돌아온 대원이 원정에 남아 있어야 한다");
+  assert.equal(me.hp,before.hp,"기다리는 동안 맞지 않는다");assert.ok(again.now-before.now<1500,`혼자 하던 원정은 기다리는 동안 시간이 선다(${again.now-before.now}ms)`);
   const guest=await expedition(back.roomId);await until(()=>again.players.length===2);
   guest.r.removeAllListeners();await guest.r.leave();await until(()=>again.players.length===1);
-  console.log("PASS 재접속: 동의 없이 끊긴 대원은 같은 자리로 이어지고 · 스스로 나간 대원은 바로 빠진다");
+  console.log("PASS 재접속: 동의 없이 끊긴 대원은 같은 자리 · 같은 체력으로(기다리는 동안 맞지 않고 혼자면 시간이 선다) · 스스로 나간 대원은 바로 빠진다");
   const relay=await client.joinOrCreate("village_live",{name:"상인"});rooms.push(relay);
   let challenge,peers=[];relay.onMessage("challenge",m=>challenge=m);relay.onMessage("snapshot",s=>peers=s);relay.send("ready");await until(()=>challenge);
   assert.equal(peers[0].address,"");
