@@ -113,7 +113,6 @@
 
 <div id="dash">
   <span class="chip"><span class="dot" id="srv-dot"></span>서버 :2567</span>
-  <span class="chip" id="roster">접속자 —</span>
   <span id="wallet-chips"></span>
   <span class="chip"><a href="https://faucet.giwa.io/" target="_blank">🚰 GIWA 포셋</a></span>
   <span class="chip"><a href="https://faucet.lambda256.io/giwa-sepolia" target="_blank">🚰 Nodit 포셋</a></span>
@@ -185,14 +184,6 @@
     srvDot.className = "dot " + (serverOk ? "ok" : "bad");
 
     if (!serverOk) return;
-
-    try {
-      const r = await fetch(SERVER + "/dev/status");
-      const s = await r.json();
-      const names = s.players.map((p) => p.name).join(", ");
-      document.getElementById("roster").textContent =
-        "접속자 " + s.online + (names ? " : " + names : "");
-    } catch {}
 
     let wallets = [];
     try {

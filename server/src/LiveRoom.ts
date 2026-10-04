@@ -5,7 +5,7 @@ import { verifyMessage } from "viem";
 const EMOTE_GAP_MS = 1000;
 
 interface Peer { id: string; name: string; color: number; address: string; x: number; z: number; rot: number; zone: string; primary: boolean }
-/** 영구 기록을 소유하지 않는 위치·이모트 중계. 기존 village 룸은 레거시 도구용. */
+/** 영구 기록을 소유하지 않는 위치·이모트 중계. */
 export class LiveRoom extends Room {
   maxClients = 30;
   private peers = new Map<string, Peer>();

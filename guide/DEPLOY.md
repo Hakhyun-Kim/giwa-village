@@ -9,24 +9,18 @@
 ```bash
 # 최초 1회
 flyctl launch --no-deploy        # 기존 fly.toml 사용 여부를 물으면 Yes
-flyctl volumes create giwa_data --region nrt --size 1   # 노점 영속용
-flyctl secrets set SYSTEM_WALLET_ADDRESS=0x...          # 브랜드 상점 정산 수신 주소
 
 # 배포 (이후 갱신도 동일)
 flyctl deploy
 ```
 
 - 컨테이너는 `NODE_ENV=production` · `HOST=0.0.0.0` 으로 뜬다(Dockerfile). production 에서는
-  레거시 도구 룸 `village` 와 `/dev/*`(접속자 명단 · 테스트 지갑)가 **닫힌다** — 웹 클라이언트는
-  `village_live` · `expedition` 만 쓴다. 봇을 호스팅 서버에 붙여야 할 때만
-  `flyctl secrets set GIWA_DEV=1` 로 연다(끝나면 `flyctl secrets unset GIWA_DEV`).
-- `SYSTEM_WALLET_ADDRESS`: 레거시 `village` 룸(개발 모드)의 시연 가게 주소.
-  미지정 시 dead 주소로 세팅된다.
+  `/dev/*`(테스트 지갑)가 **닫힌다**. 서버가 여는 룸은 `village_live` · `expedition` 둘뿐이고
+  둘 다 영구 기록을 갖지 않는다 — 볼륨도 비밀값도 필요 없다.
 - 상태 확인: `https://<앱이름>.fly.dev/` → `{"ok":true,...}`. `village_live` 정원은 방 하나에 30명이다.
 
 다른 Docker 호스트(Railway·Render 유료 플랜·자가 VPS)도 동일하다:
-`Dockerfile` 하나로 빌드되고, `PORT`(기본 2567)와 `/app/server/data` 볼륨,
-`SYSTEM_WALLET_ADDRESS`만 챙기면 된다. WebSocket을 지원하는 플랜이어야 한다
+`Dockerfile` 하나로 빌드되고, `PORT`(기본 2567)만 챙기면 된다. WebSocket을 지원하는 플랜이어야 한다
 (무료 슬립형 인스턴스는 마을이 사라지므로 부적합).
 
 ## 2) 클라이언트를 호스팅 서버로 빌드
@@ -47,7 +41,3 @@ npm run build -w client
 - 테스트 지갑 슬롯(A~D)은 **로컬 개발 전용**이다 (`/dev/wallets`가 localhost에서만 응답).
 - 퍼블릭 방문자는 **지갑 연결(MetaMask 등)** 버튼으로 GIWA Sepolia에 연결하거나,
   게스트(지갑 없음)로 입장해 구경할 수 있다.
-- 봇 주민을 호스팅 서버에 붙이려면 아무 머신에서 (봇 지갑 파일 필요):
-  ```powershell
-  $env:WS_URL = "wss://<앱이름>.fly.dev"; npm run bots
-  ```

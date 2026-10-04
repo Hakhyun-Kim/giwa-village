@@ -5,7 +5,7 @@
 //
 // 여기서는 colyseus.js를 **일부러 쓰지 않는다.** 남이 다른 언어로 만들 때 가진
 // 것은 문서뿐이므로, 이 파일도 문서에 적힌 것만으로 짠다 — WebSocket · HTTP ·
-// msgpack. 그래서 이 스모크가 통과하면 "읽어야 알 수 있는 것"이 없다는 뜻이고,
+// msgpack(+ identify 서명만 viem). 그래서 이 스모크가 통과하면 "읽어야 알 수 있는 것"이 없다는 뜻이고,
 // 실패하면 문서의 버그다.
 //
 // 검사하는 문서의 주장:
@@ -13,11 +13,12 @@
 //   · 3.2 소켓 주소는 /<processId>/<roomId>?sessionId=
 //   · 3.3 opcode 10이 오고 직렬화기가 "none"이다 (= 스키마 프레임이 없다)
 //   · 3.3 opcode 13 뒤에는 msgpack 값 둘이 연달아 온다
-//   · 3.4/3.5 보낸 대로 움직이고, 목록이 오고, 15Hz로 스냅샷이 온다
+//   · 3.7 village_live — ready 에 snapshot·challenge, identify 서명, move(zone), emote, 15Hz, 나가면 빠진다
 
 import { spawn, spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const argv = process.argv.slice(2);
@@ -188,107 +189,109 @@ if (!(await waitForServer())) {
   console.error(`서버가 안 뜹니다 (http://${HOST}) — npm run dev:server 로 확인하세요`);
   process.exit(1);
 }
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// ── 3.1 자리 얻기 ─────────────────────────────────────────────────────────
+/** 3.1 자리 얻기 → 3.2 소켓 → 3.3 입장 확인. 받은 메시지는 이름별 마지막 페이로드로 모은다 */
+async function enter(identity) {
+  const seat = await (
+    await fetch(`http://${HOST}/matchmake/joinOrCreate/village_live`, {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(identity),
+    })
+  ).json();
+  const url = `ws://${HOST}/${seat.room.processId}/${seat.room.roomId}?sessionId=${seat.sessionId}`;
+  const ws = new WebSocket(url);
+  ws.binaryType = "arraybuffer";
+  const c = { seat, ws, seen: new Map(), stamps: [], opcodes: new Set(), joined: null, emotes: [] };
+  ws.onmessage = (ev) => {
+    const buf = Buffer.from(ev.data);
+    c.opcodes.add(buf[0]);
+    if (buf[0] === JOIN_ROOM) {
+      // [10][길이][재접속토큰][길이][직렬화기]
+      let o = 1;
+      const tLen = buf[o++];
+      o += tLen;
+      const sLen = buf[o++];
+      c.joined = buf.toString("utf8", o, o + sLen);
+      ws.send(Buffer.from([JOIN_ROOM])); // 문서 3.3: 이 한 바이트를 돌려보내기 전까지 서버는 아무것도 보내지 않는다
+      return;
+    }
+    if (buf[0] !== ROOM_DATA) return;
+    const it = { o: 1 };
+    const type = decode(buf, it);
+    const payload = it.o < buf.length ? decode(buf, it) : undefined;
+    c.seen.set(type, payload);
+    if (type === "snapshot") c.stamps.push(Date.now());
+    if (type === "emote") c.emotes.push(payload);
+  };
+  await new Promise((res, rej) => {
+    ws.onopen = res;
+    ws.onerror = () => rej(new Error(`소켓 열기 실패: ${url}`));
+    setTimeout(() => rej(new Error("소켓 열기 시간 초과")), 10000);
+  });
+  return c;
+}
 
-const IDENTITY = { name: "낯선손님", address: `0x${"a1".repeat(20)}`, color: 0xff8800 };
-const seat = await (
-  await fetch(`http://${HOST}/matchmake/joinOrCreate/village`, {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(IDENTITY),
-  })
-).json();
+const IDENTITY = { name: "낯선손님", color: 0xff8800 };
+const me = await enter(IDENTITY);
+const other = await enter({ name: "구경꾼", color: 0x3366ff });
 
 console.log("3.1 자리 얻기 (HTTP)");
-ok(!!seat?.room?.roomId, "응답에 room.roomId 가 있다");
-ok(!!seat?.room?.processId, "응답에 room.processId 가 있다");
-ok(typeof seat?.sessionId === "string", "응답에 sessionId 가 있다");
+ok(!!me.seat?.room?.roomId, "응답에 room.roomId 가 있다");
+ok(!!me.seat?.room?.processId, "응답에 room.processId 가 있다");
+ok(typeof me.seat?.sessionId === "string", "응답에 sessionId 가 있다");
 
-// ── 3.2~3.3 소켓·프레임 ───────────────────────────────────────────────────
-
-const url = `ws://${HOST}/${seat.room.processId}/${seat.room.roomId}?sessionId=${seat.sessionId}`;
-const ws = new WebSocket(url);
-ws.binaryType = "arraybuffer";
-
-const seen = new Map(); // 메시지 이름 → 마지막 페이로드
-const stamps = []; // snapshot 도착 시각 (15Hz 확인용)
-let joined = null;
-let opcodes = new Set();
-
-ws.onmessage = (ev) => {
-  const buf = Buffer.from(ev.data);
-  opcodes.add(buf[0]);
-  if (buf[0] === JOIN_ROOM) {
-    // [10][길이][재접속토큰][길이][직렬화기]
-    let o = 1;
-    const tLen = buf[o++];
-    o += tLen;
-    const sLen = buf[o++];
-    joined = buf.toString("utf8", o, o + sLen);
-    // 문서 3.3: 이 한 바이트를 돌려보내기 전까지 서버는 아무것도 보내지 않는다
-    ws.send(Buffer.from([JOIN_ROOM]));
-    return;
-  }
-  if (buf[0] !== ROOM_DATA) return;
-  const it = { o: 1 };
-  const type = decode(buf, it);
-  const payload = it.o < buf.length ? decode(buf, it) : undefined;
-  seen.set(type, payload);
-  if (type === "snapshot") stamps.push(Date.now());
-};
-
-await new Promise((res, rej) => {
-  ws.onopen = res;
-  ws.onerror = () => rej(new Error(`소켓 열기 실패: ${url}`));
-  setTimeout(() => rej(new Error("소켓 열기 시간 초과")), 10000);
-});
-
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-await wait(600);
-
+await wait(300);
 console.log("\n3.2~3.3 소켓과 프레임");
-ok(joined === "none", `JOIN_ROOM(10)의 직렬화기가 "none" 이다 (받은 값: ${joined})`);
-ok(!opcodes.has(14) && !opcodes.has(15), "스키마 상태 프레임(14·15)이 오지 않는다");
-ok(seen.has("snapshot"), "입장 확인 [10]을 돌려보내면 그때부터 메시지가 온다");
+ok(me.joined === "none", `JOIN_ROOM(10)의 직렬화기가 "none" 이다 (받은 값: ${me.joined})`);
+ok(!me.opcodes.has(14) && !me.opcodes.has(15), "스키마 상태 프레임(14·15)이 오지 않는다");
 
-// ── 3.4~3.5 주고받기 ──────────────────────────────────────────────────────
+console.log("\n3.7 village_live");
+for (const c of [me, other]) c.ws.send(frame("ready")); // 페이로드 없는 메시지
+await wait(400);
+const challenge = me.seen.get("challenge");
+ok(me.seen.has("snapshot"), "ready 를 보내면 snapshot 이 온다");
+ok(typeof challenge === "string" && challenge.startsWith(`GIWA Village session\n${me.seat.room.roomId}/${me.seat.sessionId}\n`), "ready 의 답으로 이 세션의 challenge 글이 온다");
 
-ws.send(frame("ping")); // 페이로드 없는 메시지
-ws.send(frame("stalls:get"));
-ws.send(frame("guilds:get"));
-const MOVE = { x: -12.5, z: 7.25, rot: 1.5 };
-ws.send(frame("move", MOVE));
+const account = privateKeyToAccount(generatePrivateKey());
+me.ws.send(frame("identify", { address: account.address, signature: await account.signMessage({ message: challenge }) }));
+const MOVE = { x: -12.5, z: 7.25, rot: 1.5, zone: "field" };
+me.ws.send(frame("move", MOVE));
+me.ws.send(frame("emote", "👋"));
+me.ws.send(frame("emote", "👋")); // 1초 안의 두 번째는 버려진다
 await wait(700);
 
-console.log("\n3.4~3.5 주고받기");
-const snap = seen.get("snapshot");
-const me = Array.isArray(snap) ? snap.find((p) => p.id === seat.sessionId) : null;
-ok(!!me, "스냅샷에 내가 들어 있다 (문서: 첫 스냅샷의 내 항목이 출발점)");
-ok(me?.name === IDENTITY.name, `이름이 그대로다 (${me?.name})`);
+const seenByOther = (other.seen.get("snapshot") ?? []).find((p) => p.id === me.seat.sessionId);
+ok(!!seenByOther, "남의 스냅샷에 내가 들어 있다");
+ok(seenByOther?.name === IDENTITY.name, `이름이 그대로다 (${seenByOther?.name})`);
+ok(seenByOther?.address === account.address.toLowerCase(), "identify 서명 뒤 내 주소가 실린다");
 ok(
-  me && Math.abs(me.x - MOVE.x) < 1e-6 && Math.abs(me.z - MOVE.z) < 1e-6,
-  `보낸 좌표가 그대로 온다 (${me?.x}, ${me?.z})`,
+  seenByOther && Math.abs(seenByOther.x - MOVE.x) < 1e-6 && Math.abs(seenByOther.z - MOVE.z) < 1e-6 && seenByOther.zone === MOVE.zone,
+  `보낸 좌표·구역이 그대로 온다 (${seenByOther?.x}, ${seenByOther?.z}, ${seenByOther?.zone})`,
 );
-ok(Array.isArray(seen.get("stalls")) && seen.get("stalls").length > 0, "노점 목록이 온다");
-ok(Array.isArray(seen.get("guilds")), "길드 목록이 온다");
+const waves = other.emotes.filter((e) => e?.id === me.seat.sessionId);
+ok(waves.length === 1 && waves[0].icon === "👋", `이모트가 {id, icon} 으로 한 번만 온다 (${waves.length}번)`);
 
-const span = (stamps.at(-1) - stamps[0]) / 1000;
-const hz = span > 0 ? (stamps.length - 1) / span : 0;
+const span = (other.stamps.at(-1) - other.stamps[0]) / 1000;
+const hz = span > 0 ? (other.stamps.length - 1) / span : 0;
 ok(hz > 11 && hz < 19, `스냅샷이 15Hz 근처로 온다 (실측 ${hz.toFixed(1)}Hz)`);
+
+me.ws.send(frame("move", { x: 9999, z: -9999, rot: 0, zone: "village" }));
+await wait(300);
+const clamped = (other.seen.get("snapshot") ?? []).find((p) => p.id === me.seat.sessionId);
+ok(clamped?.x === 55 && clamped?.z === -55, `좌표가 ±55로 잘린다 (${clamped?.x}, ${clamped?.z})`);
 
 // ── 나가기 ────────────────────────────────────────────────────────────────
 
-ws.send(Buffer.from([LEAVE_ROOM]));
-await wait(200);
-ws.close();
-await wait(200);
-
-const status = await (await fetch(`http://${HOST}/dev/status`)).json();
+me.ws.send(Buffer.from([LEAVE_ROOM]));
+await wait(400);
+me.ws.close();
 ok(
-  !status.players.some((p) => p.id === seat.sessionId),
-  "LEAVE_ROOM(12)을 보내면 자리에서 빠진다",
+  !(other.seen.get("snapshot") ?? []).some((p) => p.id === me.seat.sessionId),
+  "LEAVE_ROOM(12)을 보내면 남의 스냅샷에서 빠진다",
 );
+other.ws.close();
 
 // 서버를 완전히 내리고, 정말 내려갔는지(포트가 비었는지) 확인한다
 killTree();

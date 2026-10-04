@@ -273,17 +273,15 @@ it("쇼케이스는 한낮으로 고정된다 (데모 영상 보호)", () => {
 });
 
 // ── 던전 문 확률 ──────────────────────────────────────────────────────────
-// 같은 밸런스 수치가 컨트랙트·서버·코어 세 곳에 적혀 있다. 컨트랙트는 Solidity라
-// 한 파일로 합칠 수 없으니, 대신 "세 곳이 어긋나면 테스트가 깨진다"로 묶어 둔다.
-// 어긋나면 봇·서버는 통과하는데 체인에서만 함정을 밟는 일이 생긴다.
-// (클라이언트는 @giwa-village/core 의 doorRoll 을 임포트해 단일화됐다 — 이제
-//  keccak256 판정의 단일 소스는 core/src/dungeon.ts 하나다. 해시 함수는 일부러
-//  다르다: 서버 모드는 sha256, 온체인/코어 모드는 keccak256. 같아야 하는 것은
-//  굴림값이 아니라 확률표다.)
+// 같은 밸런스 수치가 컨트랙트·코어 두 곳에 적혀 있다. 컨트랙트는 Solidity라
+// 한 파일로 합칠 수 없으니, 대신 "두 곳이 어긋나면 테스트가 깨진다"로 묶어 둔다.
+// 어긋나면 화면은 통과하는데 체인에서만 함정을 밟는 일이 생긴다.
+// (클라이언트는 @giwa-village/core 의 doorRoll 을 임포트한다 — keccak256 판정의
+//  단일 소스는 core/src/dungeon.ts 하나다.)
 
-describe("던전 문 확률 — 컨트랙트·서버·코어가 같은 표를 본다");
+describe("던전 문 확률 — 컨트랙트·코어가 같은 표를 본다");
 
-/** 세 언어에 적힌 DOOR_TABLE 표식을 읽는다: safeLt/bonusLt 쌍 3개 */
+/** 두 언어에 적힌 DOOR_TABLE 표식을 읽는다: safeLt/bonusLt 쌍 3개 */
 function doorThresholds(relPath) {
   const src = fs.readFileSync(path.join(ROOT, ...relPath.split("/")), "utf8");
   const match = src.match(/DOOR_TABLE:\s*([^\r\n]+)/);
@@ -298,11 +296,10 @@ function doorThresholds(relPath) {
 
 const doorTable = {
   컨트랙트: doorThresholds("contracts/GiwaGuilds.sol"),
-  서버: doorThresholds("server/src/guilds.ts"),
   코어: doorThresholds("core/src/dungeon.ts"),
 };
 
-it("세 구현의 경계값이 같다", () => {
+it("두 구현의 경계값이 같다", () => {
   for (const [who, t] of Object.entries(doorTable)) {
     eq(JSON.stringify(t), JSON.stringify(doorTable.컨트랙트), `${who} 문 표: `);
   }
@@ -941,27 +938,6 @@ it("world.json만 읽고 걸어도 같은 벽에 막힌다", () => {
   console.log(`     막힌 지점 ${touched}개 · 최대 오차 ${(worst * 1000).toFixed(3)}mm`);
 });
 
-it("PROTOCOL.md가 서버의 메시지를 하나도 빠뜨리지 않는다", () => {
-  const roomSrc = fs.readFileSync(
-    path.join(ROOT, "server", "src", "VillageRoom.ts"),
-    "utf8",
-  );
-  const doc = fs.readFileSync(path.join(ROOT, "PROTOCOL.md"), "utf8");
-  const names = new Set();
-  for (const re of [
-    /this\.onMessage\(\s*"([^"]+)"/g,
-    /this\.broadcast\(\s*"([^"]+)"/g,
-    /client\.send\(\s*"([^"]+)"/g,
-    /\bbroadcast\(\s*"([^"]+)"/g,
-  ]) {
-    for (const m of roomSrc.matchAll(re)) names.add(m[1]);
-  }
-  ok(names.size >= 20, `메시지를 ${names.size}개밖에 못 찾았습니다 — 추출 규칙을 보세요`);
-  const missing = [...names].filter((n) => !doc.includes(`\`${n}\``));
-  eq(missing.join(", "), "", "PROTOCOL.md에 없는 메시지: ");
-  console.log(`     메시지 ${names.size}종 전부 문서에 있음`);
-});
-
 it("PROTOCOL.md가 실시간 룸 둘(village_live · expedition)의 메시지와 상수도 빠뜨리지 않는다", () => {
   // 다른 클라이언트(언리얼 등)가 같은 마을 · 같은 원정에 붙으려면 이 문서만 보고 짤 수 있어야 한다
   const doc = fs.readFileSync(path.join(ROOT, "PROTOCOL.md"), "utf8");
@@ -994,19 +970,8 @@ it("PROTOCOL.md가 실시간 룸 둘(village_live · expedition)의 메시지와
   console.log(`     village_live ${seats}명 · ${hz}Hz / expedition ${party}명 · ${1000 / Number(tick)}Hz 문서와 일치`);
 });
 
-it("문서가 가리키는 상수가 실제 서버 값과 같다", () => {
-  const roomSrc = fs.readFileSync(
-    path.join(ROOT, "server", "src", "VillageRoom.ts"),
-    "utf8",
-  );
+it("문서가 가리키는 월드 상수가 world.json 과 같다", () => {
   const doc = fs.readFileSync(path.join(ROOT, "PROTOCOL.md"), "utf8");
-  const hz = roomSrc.match(/SNAPSHOT_HZ\s*=\s*(\d+)/)?.[1];
-  const idle = roomSrc.match(/HEARTBEAT_TIMEOUT_MS\s*=\s*([\d_]+)/)?.[1];
-  const max = roomSrc.match(/maxClients\s*=\s*(\d+)/)?.[1];
-  ok(hz && idle && max, "서버 상수를 못 찾았습니다");
-  ok(doc.includes(`${hz}Hz`), `스냅샷 주기 ${hz}Hz가 문서에 없습니다`);
-  ok(doc.includes(`${Number(idle.replace(/_/g, "")) / 1000}초`), "유휴 정리 시간이 문서와 다릅니다");
-  ok(doc.includes(`${max}명`), `정원 ${max}명이 문서와 다릅니다`);
   ok(
     doc.includes(world.world.radius.toString()) && doc.includes(`x${world.chain.posScale}`),
     "월드 반경·좌표 배율이 문서에 없습니다",

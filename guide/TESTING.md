@@ -7,7 +7,7 @@
 
 | 명령 | 무엇을 | 가스 | 걸리는 시간 |
 |---|---|---|---|
-| `npm test` | 로직·데이터·조명 하한·밸런스 표 대조·마을 충돌·공개 프로토콜 · 첫 짐 · MCP 흥정 수락 (66건) + 실시간 원정 규칙 (7건) | **0** (체인 없음) | 1초 미만 |
+| `npm test` | 로직·데이터·조명 하한·밸런스 표 대조·마을 충돌·공개 프로토콜 · 첫 짐 · MCP 흥정 수락 (65건) + 실시간 원정 규칙 (7건) | **0** (체인 없음) | 1초 미만 |
 | `npm run test:local` | **컨트랙트 10종 전체** + 장날·쿨다운·v2 이전 (54건) | **0** (로컬 anvil) | ~7초 |
 | `npm run smoke:boot` | 실브라우저로 **첫 방문자 동선** 부팅 검사 | **0** (읽기만) | ~40초 |
 | `npm run smoke:protocol` | [PROTOCOL.md](../PROTOCOL.md)**만 보고 짠** 클라이언트로 룸 입장 (colyseus.js 안 씀) | **0** (로컬 서버) | ~10초 |
@@ -26,10 +26,10 @@ npm run test:chain -- --yes   # 배포 전 최종 확인
 
 체인도 지갑도 네트워크도 쓰지 않는다. 흥정 하한선 강제(모델이 헐값 수락을 반환해도
 차단되는지), 주민 데이터 정합성, 야간 조명이 읽을 수 있는 밝기인지, 던전 문 확률이
-컨트랙트·서버·코어 세 곳에서 같은지, 한옥을 뚫고 지나가지 않으면서도 모닥불·도깨비·
+컨트랙트·코어 두 곳에서 같은지, 한옥을 뚫고 지나가지 않으면서도 모닥불·도깨비·
 포털까지 걸어갈 수 있는지, 주민 걸음이 한 틱에 한 걸음을 넘지 않는지, 소리와 화면의
 임계가 같은지, 반입 에셋 원장이 최신인지, HUD 버튼의 `pointer-events` 누락까지
-66건과 원정 규칙 7건을 검사한다. CI에서도 돈다.
+65건과 원정 규칙 7건을 검사한다. CI에서도 돈다.
 
 <img src="../client/public/test-logic.svg" alt="npm test 실행 결과 — 로직 검증 통과, 가스 0" width="480">
 
@@ -123,15 +123,12 @@ node scripts/verify-run.mjs 0x<tx>    # 특정 귀환 tx 하나만
 ## 실거래가 정말 필요할 때
 
 ```bash
-npm run smoke         # 동기화: 접속/이동/이모트/좌표클램프/퇴장
-npm run gift          # 선물 온체인 E2E: A→B 실제 전송 + gift 브로드캐스트
-npm run stall-smoke   # 노점 E2E: 개설→실결제 구매→판매 전파→영속성→폐점 + 거부 케이스
 npm run market-smoke  # 컨트랙트 E2E: 리스팅→가격 강제→영수증 이벤트→미등록 폴백
 node scripts/dojang-smoke.mjs  # Dojang isVerified 조회 경로 확인
 node scripts/upid-smoke.mjs    # UP.ID 역방향 조회 확인
 ```
 
-`gift`/`stall-smoke`/`market-smoke`는 슬롯 A/B 지갑에 GIWA Sepolia ETH가 있어야
+`market-smoke`는 슬롯 A/B 지갑에 GIWA Sepolia ETH가 있어야
 실행된다 ([WALLET.md](WALLET.md)). GIWA 고유 연동(Dojang·UP.ID)은 로컬에서 흉내 낼 수
 없으므로 `test:chain`이 그 부분만 읽기로 확인한다.
 

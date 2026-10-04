@@ -118,7 +118,7 @@ if (SHOW_BOTS) {
   const botsFile = path.resolve(ROOT, ".botwallets.json");
   const npcsFile = path.resolve(ROOT, "data", "npcs.json");
   if (!fs.existsSync(botsFile)) {
-    console.log("\n`.botwallets.json`이 없습니다 — `npm run playtest` 최초 실행 시 생성됩니다.");
+    console.log("\n`.botwallets.json`이 없습니다 — 새로 만들지 말고 `data/npcs.json` 의 주소와 맞는 키 파일을 루트에 두세요.");
   } else {
     const botWallets = JSON.parse(fs.readFileSync(botsFile, "utf8"));
     const npcs = fs.existsSync(npcsFile)

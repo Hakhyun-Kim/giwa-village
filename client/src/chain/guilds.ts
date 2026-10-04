@@ -191,7 +191,6 @@ export async function chainDungeonEnter(): Promise<void> {
       epoch: Number(epoch),
       seedBlock: Number(seedBlock),
       seedHash: seed,
-      offchain: false,
       floor: guild.dungeon.floor,
       tentative: 0,
       attempt,

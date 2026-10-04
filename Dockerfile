@@ -12,13 +12,11 @@ COPY server/src server/src
 # 원정 규칙(ExpeditionRoom 이 ../../shared/expedition 을 읽는다)
 COPY shared shared
 
-# production: 레거시 village 룸 · /dev/* 를 닫는다(GIWA_DEV=1 로만 연다)
-# HOST=0.0.0.0: 컨테이너 밖(Fly 프록시)에서 들어올 수 있게 — 기본값 127.0.0.1 은 로컬 전용
+# production: /dev/* 를 닫는다 · 서버는 영구 기록을 갖지 않는다(볼륨 없음 — 돈 · 소유권은 체인에만)
+# HOST=0.0.0.0: 컨테이너 밖(호스팅 프록시)에서 들어올 수 있게 — 기본값 127.0.0.1 은 로컬 전용
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=2567
 EXPOSE 2567
-# 노점 레지스트리 영속 (재시작에도 노점 유지)
-VOLUME /app/server/data
 
 CMD ["npm", "run", "start", "-w", "server"]

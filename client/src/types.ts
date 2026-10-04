@@ -79,7 +79,6 @@ export interface DungeonView {
   epoch: number;
   seedBlock: number;
   seedHash: string;
-  offchain: boolean;
   floor: number;
   tentative: number;
   attempt: number;

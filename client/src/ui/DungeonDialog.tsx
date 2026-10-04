@@ -193,18 +193,14 @@ export default function DungeonDialog() {
 
             <div className="gift-note">
               시드:{" "}
-              {dungeon.offchain ? (
-                "오프체인 폴백"
-              ) : (
-                <a
-                  className="gift-txlink"
-                  href={`${explorer}/block/${dungeon.seedBlock}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  GIWA 블록 #{dungeon.seedBlock} ↗
-                </a>
-              )}{" "}
+              <a
+                className="gift-txlink"
+                href={`${explorer}/block/${dungeon.seedBlock}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                GIWA 블록 #{dungeon.seedBlock} ↗
+              </a>{" "}
               · 함정을 밟으면 잠정 층수를 잃고, 귀환하면 길드 기록에 쌓입니다 ·{" "}
               <a
                 className="gift-txlink"

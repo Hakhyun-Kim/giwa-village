@@ -1,7 +1,7 @@
 // 테스트 환경 원클릭 실행:
 // 서버(:2567)와 클라이언트(:5173)가 안 떠 있으면 띄우고, 준비되면
 // 듀얼 클라이언트 테스트 페이지(/test.html)를 기본 브라우저로 연다.
-// Usage: node scripts/launch-test.mjs [--no-open]
+// Usage: node scripts/launch-test.mjs [--no-open] [--showcase]
 import { spawn } from "node:child_process";
 import http from "node:http";
 import path from "node:path";
@@ -11,7 +11,6 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SERVER_PROBE = "http://localhost:2567/";
 const CLIENT_PROBE = "http://localhost:5173/";
 const NO_OPEN = process.argv.includes("--no-open");
-const NO_BOTS = process.argv.includes("--no-bots");
 // --showcase: 듀얼 테스트 페이지 대신 자동 시연 클라이언트를 연다
 const SHOWCASE = process.argv.includes("--showcase");
 const TEST_URL = SHOWCASE
@@ -31,27 +30,6 @@ function probe(url) {
     req.setTimeout(1500, () => {
       req.destroy();
       resolve(false);
-    });
-  });
-}
-
-function getJson(url) {
-  return new Promise((resolve) => {
-    const req = http.get(url, (res) => {
-      let body = "";
-      res.on("data", (c) => (body += c));
-      res.on("end", () => {
-        try {
-          resolve(JSON.parse(body));
-        } catch {
-          resolve(null);
-        }
-      });
-    });
-    req.on("error", () => resolve(null));
-    req.setTimeout(1500, () => {
-      req.destroy();
-      resolve(null);
     });
   });
 }
@@ -143,19 +121,11 @@ if (!(await waitFor(SERVER_PROBE, 30000))) {
   console.error("[launch] 클라이언트가 60초 내에 응답하지 않습니다. 로그를 확인하세요.");
   shutdown(1);
 } else {
-  // 봇 주민: 이미 마을에 있으면 재사용, 없으면 입장
-  if (!NO_BOTS) {
-    const status = await getJson("http://localhost:2567/dev/status");
-    const hasBots = status?.players?.some((p) => p.name?.startsWith("보부상"));
-    if (hasBots) console.log("[launch] 봇 주민이 이미 마을에 있음 — 재사용");
-    else run("bots", "bots");
-  }
-
   console.log(`[launch] 준비 완료 → ${TEST_URL}`);
   if (!NO_OPEN) openBrowser(TEST_URL);
   if (procs.length === 0) {
     console.log("[launch] 모든 프로세스를 재사용했으므로 런처는 종료합니다.");
     process.exit(0);
   }
-  console.log("[launch] Ctrl+C 를 누르면 서버/클라이언트/봇 모두 종료됩니다.");
+  console.log("[launch] Ctrl+C 를 누르면 서버/클라이언트 모두 종료됩니다.");
 }

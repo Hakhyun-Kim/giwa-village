@@ -175,5 +175,5 @@ console.log(
     ? "전부 통과 (이 스크립트는 읽기만 하므로 가스를 쓰지 않았습니다)"
     : `실패 ${fails}건`,
 );
-console.log("실거래가 필요한 검증은 개별 스모크로: npm run market-smoke / gift / stall-smoke");
+console.log("실거래가 필요한 검증은 개별 스모크로: npm run market-smoke");
 process.exit(fails === 0 ? 0 : 1);

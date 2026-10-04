@@ -33,7 +33,7 @@
 **① 체인이 정본이다.** 노점·거래·길드·던전 정산·칭호·프레즌스가 전부 온체인이다.
 서버 없이도 마을이 돈다. 클라이언트가 이 갈래만 구현해도 완전한 시민이다.
 
-**② 룸은 가속기다.** 15Hz 스냅샷으로 걸음이 부드러워지고, 서버 권위 던전이 열린다.
+**② 룸은 가속기다.** 15Hz 스냅샷으로 걸음이 부드러워지고, 1~4명이 함께하는 서버 권위 원정이 열린다.
 없으면 없는 대로 돈다 — 룸이 죽어도 마을은 안 죽는다. **거꾸로도 참이다: 룸이
 말하는 것은 무엇도 돈이 아니다.** 잔액·소유권은 언제나 체인에서 다시 확인한다.
 
@@ -42,8 +42,7 @@
 > `npm run dev:server`로 `ws://localhost:2567`을 띄운다.
 >
 > **예외 — 초대 테스트 창.** 정해진 시간(예: 장날 플레이테스트)에 초대한 사람들과 시험할 때는 룸 서버를
-> 잠깐 띄울 수 있다(`guide/DEPLOY.md` — production 모드라 `village_live` · `expedition` 만 열리고 정원은
-> 방 하나에 30명). 그 창에 쓰는 클라이언트는 `VITE_WS_URL` 로 그 서버를 가리켜 따로 빌드하고, 공개 데모는
+> 잠깐 띄울 수 있다(`guide/DEPLOY.md` — `village_live` 정원은 방 하나에 30명). 그 창에 쓰는 클라이언트는 `VITE_WS_URL` 로 그 서버를 가리켜 따로 빌드하고, 공개 데모는
 > 그대로 ① 만이다. 창이 끝나면 서버를 내린다 — 서버가 없어도 마을이 도는 것은 바뀌지 않는다.
 
 ---
@@ -187,33 +186,31 @@ function beacon(int32 x100, int32 z100, int16 vx100, int16 vz100, uint8 emote);
 [Colyseus](https://colyseus.io) 0.16 룸이다. **공식 C++/언리얼 SDK는 없지만, 이
 서버는 붙이기 쉽다** — 이유는 아래 3.3에 있다.
 
-> **§3.1~3.6 의 `village` 룸은 레거시 도구 룸이다 — 개발 모드에서만 열린다.** 웹 클라이언트는
-> §3.7 의 `village_live` 만 쓴다. 서버를 `NODE_ENV=production`(컨테이너의 기본값)으로 띄우면
-> `village` 룸과 `/dev/*` 경로가 닫히고, `GIWA_DEV=1` 을 줄 때만 다시 열린다. 프레임(§3.2~3.3)은
-> 세 룸이 같으므로 새 클라이언트도 이 절에서 소켓 붙이는 법을 읽는다.
+룸은 둘이다 — §3.7 의 `village_live`(마을 · 들판 · 산채에서 서로를 그린다)와 `expedition`(1~4명 실시간 원정).
+둘 다 아래 §3.1~3.3 의 길로 붙는다. (§3.4~3.6 은 예전 도구용 `village` 룸 자리였다 — 2026-10 에 내렸다.
+다른 저장소가 §3.7 · §3.8 을 번호로 가리키므로 번호는 그대로 둔다.)
 
 ### 3.1 자리 얻기 (HTTP)
 
 ```
-POST http://<host>:2567/matchmake/joinOrCreate/village
+POST http://<host>:2567/matchmake/joinOrCreate/village_live
 Content-Type: application/json
 
-{ "name": "나그네", "address": "0x…", "color": 16755200 }
+{ "name": "나그네", "color": 16755200 }
 ```
 
 응답:
 
 ```jsonc
 {
-  "room": { "roomId": "AbC123", "processId": "xyz", "name": "village" },
+  "room": { "roomId": "AbC123", "processId": "xyz", "name": "village_live" },
   "sessionId": "SmT9k",          // 이번 접속에서의 내 id
   "reconnectionToken": "…",      // 있으면 보관 (없어도 된다)
   "protocol": "ws"
 }
 ```
 
-옵션 셋 다 없어도 된다. 이름을 안 주면 `guest-XXXX`가 붙고, 같은 이름이 이미 있으면
-서버가 뒤에 숫자를 붙인다.
+옵션 둘 다 없어도 된다. 이름을 안 주면 `방문자`(원정은 `원정대원`)로 선다.
 
 ### 3.2 소켓 열기
 
@@ -237,7 +234,7 @@ ws://<host>:2567/<processId>/<roomId>?sessionId=<sessionId>
 | `12` | LEAVE_ROOM (페이로드 없음) | 양쪽 |
 | `13` | **ROOM_DATA** — 실제 메시지 전부 | 양쪽 |
 
-**핵심: 이 룸은 Colyseus의 스키마 상태 동기화를 쓰지 않는다.** 서버가
+**핵심: 두 룸 모두 Colyseus의 스키마 상태 동기화를 쓰지 않는다.** 서버가
 `setState()`를 한 번도 부르지 않아서 직렬화기가 `none`이고, `ROOM_STATE(14)` ·
 `ROOM_STATE_PATCH(15)` 프레임이 **아예 오지 않는다.** 남의 언어로 Colyseus를
 붙일 때 제일 어렵고 제일 잘 깨지는 부분(`@colyseus/schema`의 델타 디코더)이
@@ -248,7 +245,7 @@ ws://<host>:2567/<processId>/<roomId>?sessionId=<sessionId>
 - 서버는 msgpack **record 확장을 쓰지 않는다**(`useRecords: false`). 평범한
   map/array/scalar만 온다.
 - 보낼 때도 평범한 msgpack map이면 된다.
-- 페이로드 없는 메시지(`ping`)는 opcode + 이름까지만 보낸다.
+- 페이로드 없는 메시지(`ready`)는 opcode + 이름까지만 보낸다.
 
 **입장 확인을 반드시 돌려보낼 것 — 여기서 제일 많이 막힌다.**
 
@@ -262,67 +259,9 @@ ws://<host>:2567/<processId>/<roomId>?sessionId=<sessionId>
 당신을 "입장 중"으로 보고 보낼 것을 **큐에 쌓아 둔다** — 소켓은 멀쩡히 열려 있고
 `snapshot`이 하나도 안 오는 상태가 된다. 조용해서 원인을 찾기 어렵다.
 
-### 3.4 내가 보내는 것
-
-| 이름 | 페이로드 | 뜻 |
-|---|---|---|
-| `ping` | 없음 | 살아 있음. **5초마다** — 안 보내면 유휴로 정리된다 |
-| `move` | `{x, z, rot}` | 내 위치. 좌표는 실수 그대로(x100 아님) |
-| `emote` | `"👋"` (문자열, 8자 이하) | 머리 위 표시 |
-| `gift` | `{to, amountEth, tx}` | **이미 체인에서 끝난** 선물을 피드에 알린다 |
-| `stalls:get` | 없음 | 노점 목록 요청 |
-| `stall:open` | `{title, items:[{name, emoji, priceEth}]}` | 내 자리에 노점을 편다 (매물 1~3개) |
-| `stall:close` | 없음 | 접는다 |
-| `stall:buy` | `{stallId, itemId, tx}` | **이미 체인에서 끝난** 구매를 알린다 |
-| `guilds:get` | 없음 | 길드 목록 요청 |
-| `guild:create` | `{name, emblem}` | 길드 창설 |
-| `guild:join` | `{guildId}` | 가입 |
-| `guild:leave` | 없음 | 탈퇴 |
-| `dungeon:enter` | 없음 | 원정 시작 (길드원만) |
-| `dungeon:pick` | `{door}` — 0·1·2 | 문을 고른다 |
-| `dungeon:bank` | 없음 | 지금까지 오른 층을 확정한다 |
-
-`gift`·`stall:buy`의 `tx`는 **표시용**이다. 서버는 형식만 보고(0x + 64 hex) 잔액을
-믿지 않는다 — 돈은 체인에서만 움직인다.
-
-### 3.5 서버가 보내는 것
-
-| 이름 | 페이로드 | 언제 |
-|---|---|---|
-| `snapshot` | `[{id, name, address, color, x, z, rot}, …]` | **15Hz**, 전원 |
-| `leave` | `"세션id"` | 누가 나감 |
-| `emote` | `{id, emote}` | 누가 이모트 |
-| `gift` | `{kind:"gift", from, fromName, to, toName, amountEth, tx, at}` | 선물 피드 |
-| `stalls` | `[{id, ownerAddress, ownerName, title, tag?, x, z, items[], brand?, theme?, createdAt}, …]` | 목록 요청·변경 |
-| `stall:sale` | `{kind:"sale", stallId, stallTitle, itemName, itemEmoji, priceEth, buyer, buyerName, buyerAddress, ownerName, tx, at}` | 누가 삼 |
-| `guilds` | `[{id, name, emblem, members[], dungeon:{floor}}, …]` | 목록 요청·변경 |
-| `guild:error` | `"사람이 읽을 한 줄"` | 거절 사유 |
-| `dungeon:state` | `{guildId, guildName, emblem, epoch, seedBlock, seedHash, offchain, floor, tentative, attempt}` | 원정 시작 |
-| `dungeon:result` | `{outcome:"safe"\|"bonus"\|"trap", door, tentative, floor, ended}` | 문을 연 결과 |
-| `dungeon:banked` | `{floors, floor}` | 확정됨 |
-
-`snapshot`에는 **나도 들어 있다.** 첫 스냅샷에서 내 `id`를 찾아 그 자리를
-출발점으로 삼고, 그다음부터 내 항목은 무시한다(내 위치는 내가 안다).
-
-### 3.6 서버가 강제하는 것
-
-거절은 조용하다 — 형식이 틀린 메시지는 **답 없이 버려진다**. 로그를 보고 고칠 것.
-
-| | |
-|---|---|
-| 정원 | **60명** |
-| 좌표 | ±55로 잘린다 |
-| 이름 | 글자·숫자·`_.-`·공백만, 16자 |
-| 노점 제목 | 20자, `<`·`>` 제거 |
-| 매물 | 1~3개 · 이름 16자 · 가격 `0 < p ≤ 1` ETH (소수점 18자리까지) |
-| tx 해시 | `^0x[0-9a-fA-F]{64}$` |
-| 유휴 정리 | 하트비트가 **120초** 없으면 끊는다 |
-
-노점 id는 `s-` + 주소 앞 8자리다. **지갑 하나에 노점 하나** — 다시 열면 덮어쓴다.
-
 ### 3.7 실시간 룸 둘 — `village_live` · `expedition`
 
-위의 `village` 룸과 **같은 서버 · 같은 소켓 · 같은 프레임**(§3.1~3.3)이다. 자리 얻기의 주소만 다르다.
+§3.1~3.3 의 **자리 얻기 · 소켓 · 프레임 그대로**다(원정은 자리 얻기의 주소만 다르다 — 아래).
 둘 다 **영구 기록을 갖지 않는다** — 위치 · 이모트 · 전투는 세션과 함께 사라지고, 돈 · 소유권 · 보상은 여전히
 체인에만 있다. 서버가 없으면 마을과 들판은 그대로 돌고, 산채는 **혼자 하는 연습 원정**으로 열린다(아래 규칙을 클라이언트가
 직접 돌린다 — 웹 · Unity 둘 다). 서버가 있어야 하는 것은 동료와 함께하는 원정뿐이다.
@@ -436,8 +375,8 @@ keccak256 · secp256k1 · RLP · ABI 인코딩(EIP-1559).
 
 **참고 구현이 하나 있다** — [`scripts/protocol-smoke.mjs`](scripts/protocol-smoke.mjs).
 이 문서에 적힌 것만으로 짠 클라이언트다(**colyseus.js를 일부러 안 쓴다** — 쓰면
-아무것도 증명하지 못한다). 필요한 만큼의 msgpack까지 합쳐 한 파일이니, 다른
-언어로 옮길 때 이것부터 보면 된다. `npm run smoke:protocol`로 실제 룸에 들여보내
+아무것도 증명하지 못한다). 필요한 만큼의 msgpack까지 합쳐 한 파일이고, 빌려 쓰는 것은
+`identify` 서명(viem)뿐이니 다른 언어로 옮길 때 이것부터 보면 된다. `npm run smoke:protocol`로 실제 룸에 들여보내
 본다 — **이게 실패하면 서버가 아니라 이 문서가 틀린 것이다.**
 
 **단계로 나누면 첫 화면까지 멀지 않다:**
@@ -462,7 +401,7 @@ keccak256 · secp256k1 · RLP · ABI 인코딩(EIP-1559).
 - `world.json`의 필드는 **늘기만 한다.** 모르는 키는 무시하면 된다.
 - 형식을 깨는 변경은 `version`을 올리고 이 문서 맨 위 표를 고친다.
 - 룸 메시지가 늘거나 서버 상수가 바뀌면 `npm test`가 이 문서를 검사해 빨간불을
-  낸다 — 문서가 서버보다 늦는 일은 구조적으로 막아 뒀다(`village` · `village_live` · `expedition` 셋 다).
+  낸다 — 문서가 서버보다 늦는 일은 구조적으로 막아 뒀다(`village_live` · `expedition` 둘 다).
 
 무엇이 막히면 이슈로 남겨 달라. **읽어야 알 수 있는 것이 남아 있다면 이 문서의
 버그다.**
