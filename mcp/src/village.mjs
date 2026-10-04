@@ -112,6 +112,29 @@ export const walletClient = account
 export const MAX_SPEND_ETH = Number(process.env.GIWA_MAX_SPEND_ETH || "0.005");
 /** 이 프로세스가 사는 동안 쓸 수 있는 총액. */
 export const SESSION_BUDGET_ETH = Number(process.env.GIWA_SESSION_BUDGET_ETH || "0.05");
+/** 흥정 수락 하한 — 정가 × 이 비율보다 낮은 제안은 받지 않는다(0 이면 끈다). 모델이 1 wei 흥정에 속지 않게. */
+export const FLOOR_RATIO = Math.min(1, Math.max(0, Number(process.env.GIWA_FLOOR_RATIO ?? "0.5") || 0));
+
+// GiwaMarketV3.openStall 의 한도 — 체인이 거부할 것을 미리 거른다(바이트 단위: 한글은 3바이트)
+export const STALL_LIMITS = { titleBytes: 60, nameBytes: 48, items: 3 };
+const byteLength = (s) => new TextEncoder().encode(s).length;
+
+/**
+ * 흥정을 받아도 되는가 — 내 열린 노점에 그 품목이 있고, 제안가가 정가 × FLOOR_RATIO 이상일 때만.
+ * 구매자가 쓴 품목 이름은 메시지에 되풀이하지 않는다(모델에게 남의 문자열을 넘기지 않는다).
+ * @returns {string|null} 거절 사유(없으면 null)
+ */
+export function offerRejection(offer, myStall, ratio = FLOOR_RATIO) {
+  if (!myStall) return "내 노점이 열려 있지 않아 흥정을 받을 수 없습니다.";
+  const item = myStall.items.find((it) => it.name === offer.itemName);
+  if (!item) return "내 노점에 없는 품목에 걸린 흥정입니다. 받으면 그 이름으로 쿠폰이 발행되므로 거절합니다.";
+  const floor = (parseEther(item.priceEth) * BigInt(Math.round(ratio * 1000))) / 1000n;
+  if (offer.amount < floor) {
+    return `제안가 ${formatEther(offer.amount)} ETH 가 하한 ${formatEther(floor)} ETH(정가 ${item.priceEth} × ${ratio})보다 낮습니다. ` +
+      "하한은 GIWA_FLOOR_RATIO 환경변수로 바꿉니다.";
+  }
+  return null;
+}
 
 let spentWei = 0n;
 
@@ -335,6 +358,11 @@ export async function openStall(title, x, z, items) {
     throw new Error(`마을 밖입니다 (반경 ${WORLD_RADIUS} 이내여야 합니다): x=${x}, z=${z}`);
   }
   if (!items.length) throw new Error("품목이 하나는 있어야 합니다.");
+  if (items.length > STALL_LIMITS.items) throw new Error(`품목은 ${STALL_LIMITS.items}개까지입니다(컨트랙트 한도).`);
+  if (byteLength(title) > STALL_LIMITS.titleBytes) throw new Error(`간판은 ${STALL_LIMITS.titleBytes}바이트(한글 약 20자)까지입니다.`);
+  for (const it of items) {
+    if (byteLength(it.name) > STALL_LIMITS.nameBytes) throw new Error(`품목 이름은 ${STALL_LIMITS.nameBytes}바이트(한글 16자)까지입니다: ${it.name}`);
+  }
   for (const it of items) {
     const p = Number(it.priceEth);
     if (!Number.isFinite(p) || p <= 0) throw new Error(`가격이 올바르지 않습니다: ${it.name}`);
@@ -433,6 +461,9 @@ export async function acceptOffer(id) {
   if (offer.seller.toLowerCase() !== acct.address.toLowerCase()) {
     throw new Error(`흥정 #${id}의 판매자는 내가 아닙니다 (${offer.seller}).`);
   }
+  const mine = (await getStalls()).find((s) => s.owner.toLowerCase() === acct.address.toLowerCase());
+  const why = offerRejection(offer, mine);
+  if (why) throw new Error(`흥정 #${id}: ${why}`);
   return send(() =>
     wc.writeContract({
       account: acct,

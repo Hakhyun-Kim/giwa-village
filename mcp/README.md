@@ -66,7 +66,8 @@ MCP 설정에 다음을 추가한다 (경로는 이 저장소의 절대 경로�
       "env": {
         "GIWA_PRIVATE_KEY": "0x…",
         "GIWA_MAX_SPEND_ETH": "0.005",
-        "GIWA_SESSION_BUDGET_ETH": "0.05"
+        "GIWA_SESSION_BUDGET_ETH": "0.05",
+        "GIWA_FLOOR_RATIO": "0.5"
       }
     }
   }
@@ -91,6 +92,11 @@ claude mcp add giwa-village -- node <클론경로>/mcp/src/index.mjs
 - **세션 예산** (`GIWA_SESSION_BUDGET_ETH`, 기본 0.05) — 프로세스가 사는 동안의
   누적 지출 한도. 넘으면 쓰기가 멈춘다.
 - **소유권 검증** — `accept_offer`는 내가 판매자인 흥정만 수락한다.
+- **품목 · 하한 검증** — `accept_offer`는 내 열린 노점에 있는 품목의 흥정만, 제안가가
+  정가 × `GIWA_FLOOR_RATIO`(기본 0.5, 0 이면 끈다) 이상일 때만 받는다. 구매자가 품목 이름을
+  마음대로 적어 걸 수 있고, 받으면 그 이름으로 쿠폰이 발행되기 때문이다.
+- **컨트랙트 한도** — `open_stall`은 품목 3개 · 간판 60바이트 · 품목 이름 48바이트를 넘기면
+  체인에 보내기 전에 거부한다(한글은 글자당 3바이트).
 - **마을 경계** — `open_stall`은 반경 55 밖 좌표를 거부한다.
 - **nonce 직렬화** — 같은 지갑의 트랜잭션을 큐로 한 줄 세운다.
 - **재화만** — 파는 대상은 쿠폰·코스메틱 같은 재화로 한정한다. 금융상품·오더북은

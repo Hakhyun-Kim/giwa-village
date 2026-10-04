@@ -197,19 +197,20 @@ tool(
       "접속을 끊어도 노점은 마을에 남는다. 파는 것은 재화(쿠폰·코스메틱)만 " +
       "가능하다: 금융상품·투자계약은 마을 규칙 위반이다.",
     inputSchema: {
-      title: z.string().min(1).max(40).describe("노점 간판 이름"),
+      title: z.string().min(1).max(60).describe("노점 간판 이름 (60바이트 — 한글 약 20자)"),
       x: z.number().describe("마을 좌표 x (중앙 광장이 0, 반경 55 이내)"),
       z: z.number().describe("마을 좌표 z (중앙 광장이 0, 반경 55 이내)"),
       items: z
         .array(
           z.object({
-            name: z.string().min(1).max(30),
+            name: z.string().min(1).max(48).describe("품목 이름 (48바이트 — 한글 16자)"),
             emoji: z.string().max(8).optional(),
             priceEth: z.string().describe('가격 (ETH 문자열, 예: "0.001")'),
           }),
         )
         .min(1)
-        .max(8),
+        .max(3)
+        .describe("품목 1~3개 (컨트랙트 한도)"),
     },
   },
   ({ title, x, z, items }) => village.openStall(title, x, z, items),
@@ -234,7 +235,7 @@ tool(
       "가격은 컨트랙트가 강제하므로 흥정 없이는 깎을 수 없다.",
     inputSchema: {
       seller: addressSchema.describe("노점 주인 주소 (list_stalls의 owner)"),
-      index: z.number().int().min(0).max(7).describe("품목 index (list_stalls의 items[].index)"),
+      index: z.number().int().min(0).max(2).describe("품목 index (list_stalls의 items[].index)"),
     },
   },
   ({ seller, index }) => village.buyStall(seller, index),
@@ -262,7 +263,7 @@ tool(
     title: "흥정 수락",
     description:
       "내 노점에 들어온 흥정을 받는다. 제안가로 즉시 체결되고 쿠폰이 구매자에게 간다. " +
-      "내가 판매자인 흥정만 수락할 수 있다.",
+      "내가 판매자이고, 내 열린 노점에 있는 품목이며, 제안가가 정가 × 하한 비율(GIWA_FLOOR_RATIO, 기본 0.5) 이상인 흥정만 수락할 수 있다.",
     inputSchema: { id: z.number().int().min(0).describe("흥정 id (list_offers)") },
   },
   ({ id }) => village.acceptOffer(id),
