@@ -23,6 +23,14 @@ test("코드는 룸 id 모양만 — 잘못된 칸은 없는 것으로, 다른 �
   assert.equal(parseLink("giwa://village?code=AbC123"),null);
   assert.equal(parseLink("https://expedition?code=AbC123"),null);
 });
+test("줄바꿈 · 보이지 않는 공백도 이 규칙대로 — 조각(#)은 줄을 넘지 못하고, trim 은 U+FEFF 를 지우고 U+0085 는 남긴다",()=>{
+  for (const end of ["\n","\r"," "]) assert.equal(parseLink(`giwa://expedition?code=AbC123#a${end}b`),null);
+  assert.equal(parseLink("GİWA://EXPEDITION?code=AbC123"),null);   // 대소문자 무시는 ASCII 만
+  assert.deepEqual(parseLink("giwa://expedition?code=Ab\nC123"),{server:"",code:""});
+  assert.deepEqual(parseLink("﻿giwa://expedition?code=AbC123"),{server:"",code:"AbC123"});
+  assert.deepEqual(parseLink("giwa://expedition?code=AbC123\u0085"),{server:"",code:""});
+  assert.deepEqual(parseLink("giwa://expedition?server=wss%3A%2F%2Fok.example%EF%BB%BF&code=AbC123"),{server:"wss://ok.example",code:"AbC123"});
+});
 test("Android intent 링크는 앱이 없으면 웹으로 돌아온다",()=>{
   const url=intentLink({server:"wss://giwa-village.fly.dev",code:"AbC123"},"https://hakhyun-kim.github.io/giwa-village/?raid=AbC123");
   assert.match(url,/^intent:\/\/expedition\?server=wss%3A%2F%2Fgiwa-village\.fly\.dev&code=AbC123#Intent;scheme=giwa;package=io\.github\.hakhyunkim\.giwavillage;/);

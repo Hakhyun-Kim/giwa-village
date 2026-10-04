@@ -83,4 +83,13 @@ export const LINK_SAMPLES: string[] = [
   "giwa://village?code=AbC123",
   "https://expedition?code=AbC123",
   "",
+  // 줄바꿈 · 보이지 않는 공백 — 정규식 · trim 은 언어마다 다르다: 조각(#…)은 줄을 넘지 못하고, trim 은 U+FEFF 를 지우고 U+0085 는 남긴다
+  "giwa://expedition?code=AbC123#a\nb",
+  "giwa://expedition?code=AbC123#a\rb",
+  "giwa://expedition?code=AbC123#a b",
+  "giwa://expedition?code=Ab\nC123",
+  "GİWA://EXPEDITION?code=AbC123",
+  "﻿giwa://expedition?code=AbC123",
+  "giwa://expedition?code=AbC123\u0085",
+  "giwa://expedition?server=wss%3A%2F%2Fok.example%EF%BB%BF&code=AbC123",
 ];
