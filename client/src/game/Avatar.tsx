@@ -44,7 +44,9 @@ function TrinketMote({ color }: { color: string }) {
   );
 }
 
-/** 칭호 코스메틱: 어깨 옆에 떠서 맴도는 발광 부적(등불) */
+/** 칭호 코스메틱: 어깨 옆에 떠서 맴도는 발광 부적(등불).
+ *  빛은 발광 재질로만 낸다 — 아바타마다 pointLight 를 달면 칭호를 단 사람이 나타나고 사라질 때마다
+ *  장면의 광원 수가 바뀌어 모든 재질의 셰이더가 다시 컴파일된다(끊김). 화면 전체의 픽셀 비용도 광원 수만큼 는다. */
 function HonorCharm({ color }: { color: string }) {
   const orb = useRef<Mesh>(null);
   useFrame(({ clock }) => {
@@ -55,17 +57,10 @@ function HonorCharm({ color }: { color: string }) {
     }
   });
   return (
-    <group>
-      <mesh ref={orb} position={[0.55, 1.75, 0]}>
-        <sphereGeometry args={[0.09, 12, 12]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={1.6}
-        />
-      </mesh>
-      <pointLight position={[0.55, 1.75, 0]} color={color} intensity={1.2} distance={2.2} />
-    </group>
+    <mesh ref={orb} position={[0.55, 1.75, 0]}>
+      <sphereGeometry args={[0.09, 12, 12]} />
+      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.6} />
+    </mesh>
   );
 }
 

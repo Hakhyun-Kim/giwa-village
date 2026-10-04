@@ -1,13 +1,3 @@
-export interface PlayerSnapshot {
-  id: string;
-  name: string;
-  address: string;
-  color: number;
-  x: number;
-  z: number;
-  rot: number;
-}
-
 export interface PlayerInfo {
   name: string;
   address: string;

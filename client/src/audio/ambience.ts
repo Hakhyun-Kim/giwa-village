@@ -254,10 +254,6 @@ function hangFire(tries = 10): void {
   if (!stopFire && tries > 0) setTimeout(() => hangFire(tries - 1), 900);
 }
 
-export function isAmbienceOn(): boolean {
-  return running;
-}
-
 /** 사용자가 저장해 둔 선택 (기본값 = 꺼짐) — 효과음도 같은 선택을 따른다 */
 export function ambiencePreference(): boolean {
   return soundPreference();

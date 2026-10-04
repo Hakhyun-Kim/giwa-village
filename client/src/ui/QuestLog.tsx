@@ -3,6 +3,7 @@ import { useStore } from "../state/store";
 import { loadCoupons } from "../state/coupons";
 import { localPos } from "../net/colyseus";
 import { track } from "../net/analytics";
+import { TOUCH } from "../game/touch";
 
 const STORAGE_KEY = "giwa-quest-step";
 const PATH_KEY = "giwa-quest-path";
@@ -26,9 +27,6 @@ interface Quest {
   check: (s: ReturnType<typeof useStore.getState>, ctx: QuestCtx) => boolean;
 }
 
-const TOUCH =
-  typeof window !== "undefined" &&
-  window.matchMedia("(pointer: coarse)").matches;
 
 const FREE_QUESTS: Quest[] = [
   {

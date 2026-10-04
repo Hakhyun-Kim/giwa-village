@@ -9,10 +9,11 @@
 // 조용히 내려간다. 빈손으로 들어온 사람에게 아무것도 안 보여주는 것보다는
 // 걸어서 보여주는 편이 낫다.
 import { useStore } from "../state/store";
+import { TOUCH } from "../game/touch";
 import { getBalanceEth } from "../wallet/wallet";
 import { loadCoupons } from "../state/coupons";
 import { giwaSepolia, FAUCET_URL, DEMO } from "../config/giwa";
-import { createGuild, dungeonBank, dungeonPick } from "../net/colyseus";
+import { chainCreateGuild as createGuild, chainDungeonBank as dungeonBank, chainDungeonPick as dungeonPick, strikeBoss, refreshBoss } from "../chain/village";
 import {
   HONOR_DEFS,
   fetchHonors,
@@ -72,9 +73,6 @@ const STYLE = `
 @media (pointer: coarse) { .sc-bar { bottom: 160px; font-size: 15px; padding: 10px 16px; } }
 `;
 
-const TOUCH =
-  typeof window !== "undefined" &&
-  window.matchMedia("(pointer: coarse)").matches;
 
 let bar: HTMLDivElement | null = null;
 let skipBtn: HTMLButtonElement | null = null;
@@ -384,7 +382,6 @@ async function showBossBeat() {
   await walk("KeyS", 900);
   await pace(800);
   caption("💥 타격! — 내 기여도가 길드와 함께 체인에 쌓입니다");
-  const { strikeBoss, refreshBoss } = await import("../chain/boss");
   await strikeBoss().catch(() => {});
   await refreshBoss();
   await pace(3200);

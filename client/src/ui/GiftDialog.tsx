@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
 import { sendGiftTx, shortAddress } from "../wallet/wallet";
-import { sendGift } from "../net/colyseus";
+import { demoGift } from "../demo/demo";
 import { giwaSepolia } from "../config/giwa";
 
 const PRESETS = ["0.001", "0.005", "0.01"];
@@ -31,7 +31,7 @@ export default function GiftDialog() {
     setError(null);
     try {
       const { tx, amountEth } = await sendGiftTx(target.address, amount);
-      sendGift(targetId, amountEth, tx);
+      demoGift(targetId, amountEth, tx);
       useStore.getState().addFeed({
         kind: "gift",
         fromName: useStore.getState().selfName || "나",

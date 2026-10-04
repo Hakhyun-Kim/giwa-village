@@ -56,10 +56,6 @@ export function preloadSamples(): void {
   }
 }
 
-export function sampleReady(id: string): boolean {
-  return buffers.has(id);
-}
-
 export interface PlayOpts {
   gain?: number;
   /** 재생 속도 = 음높이. 매번 조금씩 흔들어야 연타가 기계처럼 들리지 않는다 */

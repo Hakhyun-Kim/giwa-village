@@ -535,6 +535,24 @@ it("HUD의 <button>에 붙은 클래스가 pointer-events:auto 를 가진다", (
   console.log(`     검사한 버튼 클래스: ${classes.join(", ")}`);
 });
 
+// ── 첫 짐 — 서버 없는 공개 데모가 받지 않아도 되는 것 ──────────────────────
+describe("첫 짐 — 룸 서버 클라이언트(colyseus.js)는 서버에 붙을 때만 받는다");
+
+it("client/src 에 colyseus.js 를 정적으로 불러오는 파일이 없다 (import type 은 된다)", () => {
+  const offenders = [];
+  const walk = (dir) => {
+    for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, f.name);
+      if (f.isDirectory()) walk(p);
+      else if (/\.tsx?$/.test(f.name) && /^import\s+(?!type\b)[^;]*from\s+["']colyseus\.js["']/m.test(fs.readFileSync(p, "utf8")))
+        offenders.push(path.relative(ROOT, p));
+    }
+  };
+  walk(path.join(ROOT, "client", "src"));
+  ok(offenders.length === 0,
+    `${offenders.join(", ")} — 정적 import 는 서버 없는 데모의 첫 짐에 약 110KB 를 붙인다(net/colyseus.ts 의 liveClient() 를 쓸 것)`);
+});
+
 // ── 재미 루프 — 소셜·선택형 온보딩·KST 일일 부탁 ────────────────────────
 describe("재미 루프 — 무료 소셜 행동과 매일 하나의 선택");
 

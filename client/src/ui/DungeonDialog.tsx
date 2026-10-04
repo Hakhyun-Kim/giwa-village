@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
-import { dungeonEnter, dungeonPick, dungeonBank } from "../net/colyseus";
+import { chainDungeonEnter as dungeonEnter, chainDungeonPick as dungeonPick, chainDungeonBank as dungeonBank } from "../chain/village";
 import { verifyLastRun } from "../chain/guilds";
 import { giwaSepolia, DUNGEON_URL } from "../config/giwa";
 import { DOOR_PROFILES } from "@giwa-village/core";

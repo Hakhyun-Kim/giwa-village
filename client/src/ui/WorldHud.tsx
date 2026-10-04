@@ -11,7 +11,8 @@ export default function WorldHud() {
   const world=useWorld(); const [code,setCode]=useState("");const [copied,setCopied]=useState(false);
   const [tick,setTick]=useState(0);
   const showcasing=useStore(s=>s.showcasing);
-  useEffect(()=>{const id=setInterval(()=>setTick(t=>t+1),150);return()=>clearInterval(id);},[]);
+  // 들판·산채의 거리 · 전투 스냅숏은 React 밖(20Hz)에 있다 — 그것을 읽는 때만 150ms 박자로 다시 그린다. 마을 줄은 useWorld 가 깨운다
+  useEffect(()=>{if(world.zone==="village")return;const id=setInterval(()=>setTick(t=>t+1),150);return()=>clearInterval(id);},[world.zone]);
   useEffect(()=>{if(world.inviteCode)setCode(world.inviteCode);},[world.inviteCode]);
   void tick;
   const snap=combatSnapshot;const me=snap?.players.find(p=>p.id===world.fighterId);

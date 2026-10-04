@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import { startShowcase } from "../demo/showcase";
 import { setAmbience } from "../audio/ambience";
+// 터치 기기에는 ESC가 없다 — 시연 중단 안내를 화면의 건너뛰기 버튼으로 바꾼다
+import { TOUCH } from "../game/touch";
 
 // 첫 방문자에게 한 번만 묻는다 — "자동으로 둘러볼까요?"
 //
@@ -12,10 +14,6 @@ import { setAmbience } from "../audio/ambience";
 const STORAGE_KEY = "giwa-welcome";
 const QUEST_KEY = "giwa-quest-step"; // 이미 온보딩을 시작한 사람은 첫 방문자가 아니다
 
-// 터치 기기에는 ESC가 없다 — 시연 중단 안내를 화면의 건너뛰기 버튼으로 바꾼다
-const TOUCH =
-  typeof window !== "undefined" &&
-  window.matchMedia("(pointer: coarse)").matches;
 
 function seenBefore(): boolean {
   try {

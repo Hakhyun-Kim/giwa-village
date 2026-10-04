@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { AdaptiveDpr } from "@react-three/drei";
 import { trackOnce, sinceBoot } from "./net/analytics";
 import Village from "./game/Village";
 import Player from "./game/Player";
@@ -33,6 +32,7 @@ import WorldHud from "./ui/WorldHud";
 import RaidInvite from "./ui/RaidInvite";
 import { returnVillage } from "./net/expedition";
 import { maybeStartShowcase } from "./demo/showcase";
+import { TOUCH } from "./game/touch";
 
 export default function App() {
   const zone = useWorld(s => s.zone);
@@ -64,7 +64,7 @@ export default function App() {
           const color = colorFromString(address.toLowerCase());
           store.setWallet(address, "burner", slot);
           store.setSelfIdentity(name, color);
-          await joinVillage({ name, address, color });
+          await joinVillage();
           return;
         } catch (err) {
           console.warn("[wallet] burner load failed, joining as guest:", err);
@@ -77,7 +77,7 @@ export default function App() {
       const name = `주민${Math.floor(1000 + Math.random() * 9000)}`;
       const color = colorFromString(name + Math.random().toString(36));
       store.setSelfIdentity(name, color);
-      await joinVillage({ name, color });
+      await joinVillage();
     })();
 
     return () => {
@@ -89,17 +89,14 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* 자동 품질 조절: 프레임이 밀리면 AdaptiveDpr이 해상도를 스스로 낮춘다.
-          저사양 기기·CI 소프트웨어 렌더러에서도 마을이 멈추지 않게 하는 장치이고,
-          렌더 전용이라 온체인 동작과 판정에는 영향이 없다. */}
+      {/* 화소 밀도 상한 — 휴대폰은 1.5 에서 자른다(2 의 절반 남짓의 픽셀). 렌더 전용이라 판정과 무관하다.
+          (전에 있던 AdaptiveDpr 은 아무도 regress() 를 부르지 않아 해상도를 낮춘 적이 없었다) */}
       <Canvas
         shadows
         camera={{ position: [0, 9.5, 11.5], fov: 50 }}
-        dpr={[1, 2]}
-        performance={{ min: 0.5 }}
+        dpr={[1, TOUCH ? 1.5 : 2]}
         onCreated={() => requestAnimationFrame(() => trackOnce("first_frame", { ms: sinceBoot() }))}
       >
-        <AdaptiveDpr pixelated />
         {zone === "village" ? <><Village /><Portal /><Stalls /><RemotePlayers /><VillageExit /></> : <Outside />}
         <Player key={zone} />
       </Canvas>

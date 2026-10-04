@@ -333,31 +333,6 @@ export async function redeemCoupon(tokenId: string): Promise<`0x${string}`> {
   return tx;
 }
 
-/** ERC-1155 쿠폰 토큰 보유 수량 조회 */
-export async function couponOwned(owner: string, tokenId: string): Promise<bigint> {
-  return publicClient.readContract({
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "balanceOf",
-    args: [owner as `0x${string}`, BigInt(tokenId)],
-  });
-}
-
-/** best-effort on-chain listing so the contract can enforce the price */
-export async function listOnMarket(itemId: string, priceEth: string): Promise<void> {
-  const wc = activeWalletClient;
-  if (!wc?.account) return;
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: giwaSepolia,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "list",
-    args: [itemId, parseEther(priceEth)],
-  });
-  await publicClient.waitForTransactionReceipt({ hash: tx });
-}
-
 const dojangCache = new Map<string, boolean>();
 
 /**
@@ -381,19 +356,4 @@ export async function isDojangVerified(address: string): Promise<boolean> {
     console.warn("[dojang] isVerified 조회 실패:", err);
     return false;
   }
-}
-
-/** best-effort on-chain unlisting when a stall closes */
-export async function unlistOnMarket(itemId: string): Promise<void> {
-  const wc = activeWalletClient;
-  if (!wc?.account) return;
-  const tx = await wc.writeContract({
-    account: wc.account,
-    chain: giwaSepolia,
-    address: MARKET_ADDRESS,
-    abi: MARKET_ABI,
-    functionName: "unlist",
-    args: [itemId],
-  });
-  await publicClient.waitForTransactionReceipt({ hash: tx });
 }

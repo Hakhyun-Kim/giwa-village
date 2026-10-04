@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
-import { openStall } from "../net/colyseus";
+import { openStallOnChain } from "../chain/village";
 import { sfxStallOpen } from "../audio/sfx";
 import { track } from "../net/analytics";
 
@@ -69,7 +69,7 @@ export default function StallOpenDialog() {
     }
     setBusy(true);
     try {
-      await openStall(title.trim(), items);
+      await openStallOnChain(title.trim(), items);
       sfxStallOpen();
       track("stall_open", { items: items.length });
       useStore.getState().setStallOpenDialog(false);

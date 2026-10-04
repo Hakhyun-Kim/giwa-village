@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
-import { createGuild, joinGuild, leaveGuild } from "../net/colyseus";
+import { chainCreateGuild as createGuild, chainJoinGuild as joinGuild, chainLeaveGuild as leaveGuild } from "../chain/village";
 import { shortAddress } from "../wallet/wallet";
 
 const EMBLEMS = ["🏯", "🐯", "🐉", "🌸", "⚔️", "🍶", "🎏", "🐢"];

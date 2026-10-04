@@ -1,19 +1,18 @@
-import { Client, Room } from "colyseus.js";
+import type { Client, Room } from "colyseus.js";
 import { WS_URL, DEMO } from "../config/giwa";
 import { track } from "./analytics";
-import { startDemo, demoGift, demoBuy } from "../demo/demo";
-import {
-  openStallOnChain, closeStallOnChain, sendEmoteOnChain,
-  chainCreateGuild, chainJoinGuild, chainLeaveGuild, chainDungeonEnter,
-  chainDungeonPick, chainDungeonBank, applyPeers,
-} from "../chain/village";
+import { startDemo } from "../demo/demo";
+import { sendEmoteOnChain, applyPeers } from "../chain/village";
 import { activeWalletClient } from "../wallet/wallet";
 import { useStore, remoteTargets } from "../state/store";
 import { liveAddresses, liveTargets, useWorld } from "../state/world";
 
 export const localPos = { x: 0, z: 5, rot: 0, ready: false };
-export const liveClient = new Client(WS_URL);
-export interface Identity { name?: string; address?: string; color: number }
+// colyseus.js 는 룸 서버에 붙을 때만 받는다 — 서버 없는 공개 데모는 이 짐(약 110KB)을 받지 않는다.
+let client: Promise<Client> | null = null;
+export function liveClient(): Promise<Client> {
+  return client ??= import("colyseus.js").then(m => new m.Client(WS_URL)).catch(err => { client = null; throw err; });
+}
 interface Peer { id: string; name: string; address: string; color: number; x: number; z: number; rot: number; zone: string }
 let room: Room | null = null;
 let generation = 0;
@@ -61,7 +60,7 @@ async function connect(seq: number) {
   if (seq !== generation) return;
   const s = useStore.getState();
   try {
-    const joined = await liveClient.joinOrCreate("village_live", { name:s.selfName,color:s.selfColor });
+    const joined = await (await liveClient()).joinOrCreate("village_live", { name:s.selfName,color:s.selfColor });
     if (seq !== generation) { void joined.leave(); return; }
     room = joined; useWorld.setState({ server:"online" });
     joined.onMessage("snapshot", (peers: Peer[]) => { if (seq === generation) receive(peers,joined.sessionId); });
@@ -92,7 +91,7 @@ async function connect(seq: number) {
     useWorld.setState({ server:"offline" }); retry = setTimeout(() => void connect(seq),4000);
   }
 }
-export async function joinVillage(_identity: Identity): Promise<void> {
+export async function joinVillage(): Promise<void> {
   const seq = ++generation; disconnect();
   // 재접속 때 NPC·지갑·위치를 재초기화하지 않는다. 브라우저 수명의 공통 런타임.
   runtime ??= startDemo(localPos).catch(err => { runtime = null; throw err; });
@@ -104,13 +103,3 @@ export async function joinVillage(_identity: Identity): Promise<void> {
 export function leaveVillage() { ++generation; disconnect(); useWorld.setState({server:"offline"}); }
 export function sendMove(x:number,z:number,rot:number) { room?.send("move",{x,z,rot,zone:useWorld.getState().zone}); }
 export function sendEmote(icon:string) { track("emote", { icon, via: room ? "server" : "chain" }); if (room) room.send("emote",icon); else sendEmoteOnChain(icon); }
-export function sendGift(to:string,amountEth:string,tx:string) { demoGift(to,amountEth,tx); }
-export function buyStallItem(stallId:string,itemId:string,tx:string) { demoBuy(stallId,itemId,tx); }
-export function openStall(title:string,items:{name:string;emoji:string;priceEth:string}[]) { return openStallOnChain(title,items); }
-export function closeStall() { void closeStallOnChain().catch(e => useStore.getState().setWalletError(String(e))); }
-export const createGuild = chainCreateGuild;
-export const joinGuild = chainJoinGuild;
-export const leaveGuild = chainLeaveGuild;
-export const dungeonEnter = chainDungeonEnter;
-export const dungeonPick = chainDungeonPick;
-export const dungeonBank = chainDungeonBank;

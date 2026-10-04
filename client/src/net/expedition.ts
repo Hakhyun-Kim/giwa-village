@@ -106,9 +106,10 @@ export async function enterExpedition(code = "") {
     if (sequence===seq) { ++sequence; clearSession(); useWorld.setState({entering:false,notice:"입장 응답이 늦습니다. 다시 시도하세요."}); }
   },10000);
   try {
+    const client = await liveClient();
     const joined = code.trim()
-      ? await liveClient.joinById(code.trim(),{name:s.selfName,color:s.selfColor})
-      : await liveClient.create("expedition",{name:s.selfName,color:s.selfColor});
+      ? await client.joinById(code.trim(),{name:s.selfName,color:s.selfColor})
+      : await client.create("expedition",{name:s.selfName,color:s.selfColor});
     if (sequence!==seq) { void joined.leave(); return; }
     // 다른 종류의 룸 코드로 입장하지 않는다.
     if (joined.name !== "expedition") { void joined.leave(); throw new Error("원정 입장 코드가 아닙니다."); }

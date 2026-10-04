@@ -8,7 +8,7 @@ import { DEMO_STALLS } from "./demoData";
 import { PERSONAS as DEMO_NPCS, randomLine } from "./personas";
 import { startOnchainVillage } from "../chain/village";
 import { makeWanderer, tickWander, NPC_TICK_MS } from "./wander";
-import type { PlayerInfo, Stall } from "../types";
+import type { PlayerInfo } from "../types";
 
 interface LocalPos {
   x: number;
@@ -21,7 +21,6 @@ const EMOTES = ["👋", "😄", "🙌"];
 const STORAGE_KEY = "giwa-demo-burner";
 
 let started = false;
-let selfPos: LocalPos | null = null;
 
 function timedEmote(id: string, icon: string, ms = 2200) {
   const s = useStore.getState();
@@ -41,7 +40,6 @@ function timedSay(id: string, text: string, ms = 4200) {
 export async function startDemo(localPos: LocalPos): Promise<void> {
   if (started) return;
   started = true;
-  selfPos = localPos;
   const s = useStore.getState();
 
   // 이미 연결한 지갑/슬롯을 보존한다. 일반 방문자는 브라우저별 버너를 쓴다.
@@ -144,32 +142,4 @@ export function demoBuy(stallId: string, itemId: string, tx: string): void {
   });
   timedEmote("demo-self", "🛍️", 2600);
   // 쿠폰 저장은 구매 당사자(StallDialog)가 에스크로 정보와 함께 직접 한다
-}
-
-/** 데모에서도 내 노점을 펼 수 있다 (로컬 전용, 새로고침 전까지) */
-export function demoOpenStall(
-  title: string,
-  items: { name: string; emoji: string; priceEth: string }[],
-): void {
-  const s = useStore.getState();
-  if (!s.walletAddress || !selfPos) return;
-  const id = `s-${s.walletAddress.slice(2, 10).toLowerCase()}`;
-  const stall: Stall = {
-    id,
-    ownerAddress: s.walletAddress,
-    ownerName: s.selfName,
-    title,
-    x: selfPos.x,
-    z: selfPos.z,
-    items: items.map((it, i) => ({ ...it, id: `${id}-${i}` })),
-    createdAt: Date.now(),
-  };
-  s.setStalls([...s.stalls.filter((x) => x.id !== id), stall]);
-}
-
-export function demoCloseStall(): void {
-  const s = useStore.getState();
-  if (!s.walletAddress) return;
-  const id = `s-${s.walletAddress.slice(2, 10).toLowerCase()}`;
-  s.setStalls(s.stalls.filter((x) => x.id !== id));
 }

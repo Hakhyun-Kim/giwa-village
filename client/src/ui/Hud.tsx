@@ -234,7 +234,7 @@ export default function Hud() {
       const color = colorFromString(address.toLowerCase());
       store.setWallet(address, "injected");
       store.setSelfIdentity(name, color);
-      await joinVillage({ name, address, color });
+      await joinVillage();
     } catch (err) {
       store.setWalletError(err instanceof Error ? err.message : String(err));
     } finally {

@@ -10,7 +10,7 @@ import {
   type StallOffer,
 } from "../chain/village";
 import { useUpidName } from "../wallet/upid";
-import { buyStallItem } from "../net/colyseus";
+import { demoBuy } from "../demo/demo";
 import { addCoupon } from "../state/coupons";
 import { giwaSepolia } from "../config/giwa";
 import { MARKET_ADDRESS } from "../config/market";
@@ -97,7 +97,7 @@ export default function StallDialog() {
             item.priceEth,
           )
         : await buyOnMarket(stall.ownerAddress, item.id, item.priceEth);
-      buyStallItem(stall.id, item.id, tx);
+      demoBuy(stall.id, item.id, tx);
       // 쿠폰은 구매 당사자가 에스크로 정보와 함께 직접 저장한다
       const my = useStore.getState().walletAddress;
       if (my) {
