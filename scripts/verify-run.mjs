@@ -17,9 +17,10 @@ import { createPublicClient, defineChain, http, decodeFunctionData } from "viem"
 import { resolveRun } from "../core/src/index.ts";
 import { GUILDS_ADDRESS, GUILDS_ABI, GUILDS_DEPLOY_BLOCK } from "../client/src/config/guilds.ts";
 
-/** RPC 범위 제한을 피해 청크로 나눠 이벤트를 모은다 */
-async function scanEvents(pub, eventName, fromBlock, toBlock, chunk = 50000n) {
+/** RPC 범위 제한을 피해 청크로 나눠 이벤트를 모은다 — 공개 RPC 의 eth_getLogs 는 1만 블록까지만 받는다(CLAUDE.md §6) */
+async function scanEvents(pub, eventName, fromBlock, toBlock, chunk = 10000n) {
   const out = [];
+  let failed = 0;
   for (let from = fromBlock; from <= toBlock; from += chunk) {
     const to = from + chunk - 1n < toBlock ? from + chunk - 1n : toBlock;
     try {
@@ -32,9 +33,10 @@ async function scanEvents(pub, eventName, fromBlock, toBlock, chunk = 50000n) {
       });
       out.push(...ev);
     } catch {
-      /* 범위 거부 시 해당 청크만 건너뛴다 */
+      failed++; // 한 청크라도 빠지면 "원정이 없다"가 거짓이 된다 — 끝에 알린다
     }
   }
+  if (failed) console.warn(`⚠ ${eventName}: 청크 ${failed}개를 읽지 못했다 — 결과가 빠졌을 수 있다`);
   return out;
 }
 

@@ -48,6 +48,8 @@ let beaconPending = false;
 let lastSent = { x: 0, z: 0, at: 0 };
 let lastBlock = 0n;
 let canBeacon = false;
+/** 가스를 낼 잔액이 있는가 — 비컨과 같은 문턱. 사람이 누르지 않은 자동 쓰기(모닥불 gather 등)는 이것부터 본다 */
+export const hasGasBudget = () => canBeacon;
 let pollSkip = 0;
 
 const BEACON_EVENT = parseAbiItem(

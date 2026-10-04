@@ -25,6 +25,7 @@ import {
   sendBeacon,
   BEACON_INTERVAL_MS,
   READ_INTERVAL_MS,
+  hasGasBudget,
 } from "./presence";
 
 export * from "./core";
@@ -77,7 +78,8 @@ async function hearthTick(): Promise<void> {
   if (useWorld.getState().zone !== "village") return;
   const s = useStore.getState();
   const my = s.walletAddress;
-  if (!my || !s.selfSitting) return;
+  // 잔액이 없으면 시도하지 않는다 — 실패음 · tx 칩이 30초마다 나던 것(첫 방문자의 촌장의 부탁 3단계가 "앉는 데는 노잣돈도 필요 없지")
+  if (!my || !s.selfSitting || !hasGasBudget()) return;
   const st = await fetchHearth(my);
   if (st.prevClaimable) {
     await claimHearth(st.window - 1);
