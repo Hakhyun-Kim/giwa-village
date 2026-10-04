@@ -234,6 +234,8 @@ let lastProof: RunProof | null = null;
 /**
  * 방금 확정된 원정을 코어(resolveRun)로 재현해 온체인 결과와 대조한다.
  * 시드·문 선택만으로 누구나 같은 계산을 돌릴 수 있다 — "검증 가능한 공정성".
+ * 검증 가능하다는 것은 '결과를 조작하지 않았다'이지 '미리 알 수 없다'가 아니다 — 시드가 공개되면
+ * 결과를 미리 계산할 수 있다(GiwaGuilds.settleRun 의 알려진 한계 · guide/V4.md §10).
  */
 export function verifyLastRun():
   | { reproduced: number; onchain: number; matches: boolean; seed: `0x${string}` }
