@@ -25,6 +25,13 @@ try {
   await expedition(a.r.roomId);await expedition(a.r.roomId);
   await assert.rejects(()=>client.joinById(a.r.roomId,{name:"다섯째"}));
   console.log("PASS 실제 소켓: 인스턴스 분리·합류·4인 제한·이동 속도·피해 위조 거절");
+  const solo=await expedition(), token=solo.r.reconnectionToken, sid=solo.r.sessionId;
+  solo.r.removeAllListeners();await solo.r.leave(false);await wait(150);
+  const back=await client.reconnect(token);rooms.push(back);let again;back.onMessage("combat",s=>again=s);back.send("ready");await until(()=>again);
+  assert.equal(back.sessionId,sid);assert.ok(again.players.some(p=>p.id===sid),"끊겼다 돌아온 대원이 원정에 남아 있어야 한다");
+  const guest=await expedition(back.roomId);await until(()=>again.players.length===2);
+  guest.r.removeAllListeners();await guest.r.leave();await until(()=>again.players.length===1);
+  console.log("PASS 재접속: 동의 없이 끊긴 대원은 같은 자리로 이어지고 · 스스로 나간 대원은 바로 빠진다");
   const relay=await client.joinOrCreate("village_live",{name:"상인"});rooms.push(relay);
   let challenge,peers=[];relay.onMessage("challenge",m=>challenge=m);relay.onMessage("snapshot",s=>peers=s);relay.send("ready");await until(()=>challenge);
   assert.equal(peers[0].address,"");

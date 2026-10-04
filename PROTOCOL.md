@@ -361,6 +361,16 @@ POST http://<host>:2567/matchmake/joinById/<roomId>        { "name": "나그네"
 `create`의 응답에 든 `room.roomId`가 **초대 코드**다. 비공개 룸이라 `joinOrCreate`로는 찾을 수 없고, 코드로만 합류한다.
 정원 **4명**. 승리 · 패배로 끝난 원정은 잠긴다.
 
+끊겨도 자리는 **20초** 남는다. 스스로 나간 것(`LEAVE_ROOM`(12)을 보내 서버가 닫는 코드 `4000` 으로 끝낸 것)이 아니면 — 소켓이 끊겼거나 15초 무입력으로 정리됐으면 —
+서버는 그 대원을 20초 동안 원정에 남겨 둔다(그동안 그 자리에 선 채다). 그 안에 다시 붙으면 **같은 `sessionId` · 같은 대원**으로 이어진다:
+
+```
+POST http://<host>:2567/matchmake/reconnect/<roomId>     { "reconnectionToken": "<JOIN_ROOM 의 재접속토큰>" }
+ws://<host>:2567/<processId>/<roomId>?sessionId=<sessionId>&reconnectionToken=<같은 토큰>
+```
+
+휴대폰이 QR 을 찍으러 카메라로 갔다 오거나 알림을 보고 돌아오는 정도의 끊김을 위한 것이다. 끝난 원정은 기다리지 않는다.
+
 | 내가 보내는 것 | 페이로드 | 뜻 |
 |---|---|---|
 | `ready` | 없음 | 입장 직후 한 번. `combat`이 바로 온다 |

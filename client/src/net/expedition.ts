@@ -1,5 +1,5 @@
 import type { Room } from "colyseus.js";
-import { act, addFighter, createExpedition, setInput, tickExpedition, type CombatAction, type ExpeditionState } from "../../../shared/expedition";
+import { act, addFighter, createExpedition, setInput, tickExpedition, type CombatAction, type ExpeditionState, type Fighter } from "../../../shared/expedition";
 import { liveClient, localPos, sendMove } from "./colyseus";
 import { useStore } from "../state/store";
 import { CAVE_GATE, FIELD_GATE, VILLAGE_GATE, fieldWalk, setCombatSnapshot, useWorld } from "../state/world";
@@ -90,6 +90,38 @@ function startPractice() {
     if (stepped) receive(structuredClone(state),PRACTICE_ID);
   },STEP);
 }
+// 서버는 동의 없이 끊긴 대원의 자리를 20초 지킨다(ExpeditionRoom · PROTOCOL.md §3.7) — 그 안에 같은 토큰으로 다시 붙는다.
+// 휴대폰이 QR 을 찍으러 카메라로 갔다 오거나 알림을 보고 돌아와도 같은 대원으로 이어진다.
+const RECONNECT_MS = 18000;
+// 처음 입장과 다시 잇기가 같은 길로 룸을 붙든다
+function hold(room:Room,seq:number,first?:(me:Fighter)=>void) {
+  arena=room; lastSnapshot=Date.now();
+  room.onMessage("combat",(snapshot:ExpeditionState) => {
+    if (seq!==sequence || arena!==room) return;
+    const me=receive(snapshot,room.sessionId); if (!me) return;
+    if (first) { const f=first; first=undefined; f(me); }
+  });
+  // 4000 은 서버가 정중히 내보낸 것(정원 · 잠긴 원정)이다 — 다시 붙지 않는다
+  room.onLeave(code => { if (seq!==sequence || arena!==room) return; if (code===4000) goField("서버 연결이 끊겨 안전한 들판으로 돌아왔습니다. 이번 전투 기록은 세션과 함께 종료됩니다."); else void rejoin(room,seq); });
+  room.send("ready");
+}
+// quiet: 소켓은 멀쩡한데 스냅숏이 끊긴 경우(서버가 답하지 않는다) — 끝내 못 이으면 그렇게 알린다
+async function rejoin(old:Room,seq:number,quiet=false) {
+  if (arena!==old) return;
+  arena=null; old.removeAllListeners();
+  useWorld.setState({notice:"연결이 끊겼어요 — 같은 원정에 다시 잇는 중…"});
+  const until=Date.now()+RECONNECT_MS;
+  while (seq===sequence && Date.now()<until) {
+    try {
+      const room=await (await liveClient()).reconnect(old.reconnectionToken);
+      if (seq!==sequence) { void room.leave(); return; }
+      hold(room,seq); useWorld.setState({notice:"원정에 다시 이어졌어요."}); return;
+    } catch { await new Promise(r => setTimeout(r,1500)); }
+  }
+  if (seq!==sequence) return;
+  if (quiet) goField("원정 서버의 응답이 없어 들판으로 돌아왔습니다.");
+  else goField("서버 연결이 끊겨 안전한 들판으로 돌아왔습니다. 이번 전투 기록은 세션과 함께 종료됩니다.");
+}
 export async function enterExpedition(code = "") {
   const world = useWorld.getState();
   if (world.entering || world.zone !== "field") return;
@@ -113,21 +145,15 @@ export async function enterExpedition(code = "") {
     if (sequence!==seq) { void joined.leave(); return; }
     // 다른 종류의 룸 코드로 입장하지 않는다.
     if (joined.name !== "expedition") { void joined.leave(); throw new Error("원정 입장 코드가 아닙니다."); }
-    arena=joined; lastSnapshot=Date.now();
-    let initialized=false;
-    joined.onMessage("combat",(snapshot:ExpeditionState) => {
-      if (seq!==sequence) return;
-      const me=receive(snapshot,joined.sessionId); if (!me) return;
-      if (!initialized) {
-        initialized=true; clearTimeout(deadline);
-        arrive(me,joined.roomId,joined.sessionId,"다솔: 도깨비에게 다가가 R로 공격해요. 붉은 원 밖으로 피하세요!");
-      }
+    hold(joined,seq,me => {
+      clearTimeout(deadline);
+      arrive(me,joined.roomId,joined.sessionId,"다솔: 도깨비에게 다가가 R로 공격해요. 붉은 원 밖으로 피하세요!");
     });
-    joined.onLeave(() => { if(seq===sequence) goField("서버 연결이 끊겨 안전한 들판으로 돌아왔습니다. 이번 전투 기록은 세션과 함께 종료됩니다."); });
-    joined.send("ready");
     pump=setInterval(() => {
-      if (Date.now()-lastSnapshot>5000) { goField("원정 서버의 응답이 없어 들판으로 돌아왔습니다."); return; }
-      joined.send("input",input);
+      const room=arena; if (!room) return; // 다시 잇는 중
+      // 5초 동안 스냅숏이 없으면 끊긴 것으로 본다 — 스스로 나가지 않고(동의 없는 끊김) 같은 자리로 다시 잇는다
+      if (Date.now()-lastSnapshot>5000) { void rejoin(room,seq,true); void room.leave(false).catch(() => {}); return; }
+      room.send("input",input);
     },50);
   } catch (err) {
     if (seq===sequence) { clearSession(); useWorld.setState({entering:false,notice:`입장하지 못했습니다. 코드·정원·진행 상태를 확인하세요. ${err instanceof Error ? err.message : ""}`}); }

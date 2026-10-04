@@ -962,6 +962,8 @@ it("PROTOCOL.md가 실시간 룸 둘(village_live · expedition)의 메시지와
   ok(section.includes(`**${hz}Hz**`) && section.includes(`**${1000 / Number(tick)}Hz**`), `주기(${hz}Hz · ${1000 / Number(tick)}Hz)가 §3.7과 다릅니다`);
   for (const ms of new Set([...live.matchAll(/>\s*(\d+)\)\s*void c\.leave/g), ...raid.matchAll(/>\s*(\d+)\)\s*void c\.leave/g)].map((m) => m[1])))
     ok(section.includes(`${Number(ms) / 1000}초`), `유휴 정리 ${Number(ms) / 1000}초가 §3.7에 없습니다`);
+  const grace = raid.match(/RECONNECT_SECONDS\s*=\s*(\d+)/)?.[1];
+  ok(grace && section.includes(`**${grace}초**`), `원정 재접속 유예(${grace}초)가 §3.7에 없습니다`);
   console.log(`     village_live ${seats}명 · ${hz}Hz / expedition ${party}명 · ${1000 / Number(tick)}Hz 문서와 일치`);
 });
 
