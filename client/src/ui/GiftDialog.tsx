@@ -77,7 +77,8 @@ export default function GiftDialog() {
           <>
             <div className="gift-emoji">🎁</div>
             <div className="gift-title">{target.name} 님에게 선물</div>
-            <div className="gift-sub">{shortAddress(target.address)}</div>
+            {/* 보내기 전에는 전체 주소 — 앞 6자 · 뒤 4자만 맞춘 위장 주소에 속지 않게(주소 위장 공격이 맞추는 곳이 바로 그 앞뒤다) */}
+            <div className="gift-sub gift-addr">{target.address}</div>
 
             <div className="gift-presets">
               {PRESETS.map((p) => (

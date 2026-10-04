@@ -229,6 +229,11 @@ export default function StallDialog() {
             </button>
           </div>
         )}
+        {canOffer && offerFor && (
+          <div className="gift-note">
+            상인은 사람 대신 AI 나 정해진 규칙으로 흥정에 답할 수 있습니다. 하한선 아래로는 받지 않습니다.
+          </div>
+        )}
 
         {myOffers.length > 0 && (
           <div className="gift-note">

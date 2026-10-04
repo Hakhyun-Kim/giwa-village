@@ -4,6 +4,8 @@ import { chainDungeonEnter as dungeonEnter, chainDungeonPick as dungeonPick, cha
 import { verifyLastRun } from "../chain/guilds";
 import { giwaSepolia, DUNGEON_URL } from "../config/giwa";
 import { DOOR_PROFILES } from "@giwa-village/core";
+import { goField } from "../net/expedition";
+import { fieldWalk } from "../state/world";
 
 type Proof = ReturnType<typeof verifyLastRun>;
 
@@ -65,6 +67,16 @@ export default function DungeonDialog() {
             <div className="gift-actions">
               <button className="gift-btn" onClick={close}>
                 닫기
+              </button>
+              {/* 길드가 없고 잔액도 없으면 여기가 막다른 길이었다 — 가스 0 인 산채 연습으로 가는 문을 함께 둔다 */}
+              <button
+                className="gift-btn"
+                onClick={() => {
+                  goField("길드가 없어도 산채에서 혼자 연습할 수 있어요. 다솔을 따라 북쪽 입구로 가세요.");
+                  fieldWalk.active = true;
+                }}
+              >
+                🌲 산채 혼자 연습
               </button>
               <button className="gift-btn primary" onClick={goGuild}>
                 🏯 길드 보러가기
