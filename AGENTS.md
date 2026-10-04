@@ -195,6 +195,8 @@ npm run test:chain -- --yes  # 실배포본·Dojang·UP.ID 읽기 확인
 npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다)
 ```
 
+- **작업은 main 에 바로 한다** — 혼자 하는 저장소라 브랜치 · PR 을 두지 않는다(2026-10-04 소유자 지침).
+  대신 **main 푸시가 곧 GitHub Pages 배포**이므로, 푸시 전에 최소 `npm test` · `tsc -b` · `VITE_DEMO=1` 빌드 · `smoke:boot` 을 통과시킨다.
 - `test:local`은 anvil을 **chain-id 91342**로 띄워 체인 가드를 그대로 통과시킨다.
   없으면 설치 방법만 안내하고 종료한다(의존성에 넣지 않는 이유는 README 참고).
   **시간 여행이 핵심** — 장날·쿨다운·모닥불 창을 `evm_increaseTime`으로 점프해 본다.
