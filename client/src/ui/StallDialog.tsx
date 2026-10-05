@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../state/store";
 import { track } from "../net/analytics";
-import { buyOnMarket, shortAddress, isDojangVerified } from "../wallet/wallet";
+import { buyOnMarket, shortAddress } from "../wallet/wallet";
 import {
   buyStallOnChain,
   makeOfferOnChain,
@@ -9,7 +9,7 @@ import {
   fetchOffersFor,
   type StallOffer,
 } from "../chain/village";
-import { useUpidName } from "../wallet/upid";
+import { useIdentity } from "../wallet/identity";
 import { demoBuy } from "../demo/demo";
 import { addCoupon } from "../state/coupons";
 import { giwaSepolia } from "../config/giwa";
@@ -30,24 +30,15 @@ export default function StallDialog() {
   const [busyItem, setBusyItem] = useState<string | null>(null);
   const [boughtItem, setBoughtItem] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [ownerDojang, setOwnerDojang] = useState(false);
   const [offerFor, setOfferFor] = useState<string | null>(null);
   const [offerEth, setOfferEth] = useState("");
   const [myOffers, setMyOffers] = useState<StallOffer[]>([]);
 
   const ownerAddress = stall?.ownerAddress;
-  const ownerUpid = useUpidName(ownerAddress ?? null);
-  useEffect(() => {
-    setOwnerDojang(false);
-    if (!ownerAddress) return;
-    let cancelled = false;
-    void isDojangVerified(ownerAddress).then((v) => {
-      if (!cancelled) setOwnerDojang(v);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [ownerAddress]);
+  // 호패가 걸린 노점이면 그 뒤의 진짜 지갑(UP.ID · Dojang)을 보여준다
+  const owner = useIdentity(ownerAddress ?? null);
+  const ownerDojang = !!owner?.dojang;
+  const ownerUpid = owner?.name ?? null;
 
   // 이 판매자에게 내가 걸어둔 흥정 (온체인 노점만)
   useEffect(() => {
@@ -172,6 +163,9 @@ export default function StallDialog() {
           )}{" "}
           {stall.brand ? stall.title : stall.ownerName} ·{" "}
           {ownerUpid ?? shortAddress(stall.ownerAddress)}
+          {owner?.linked && (
+            <span title={`호패 — ${owner.holder} 가 이 노점의 지갑을 대리로 세웠습니다`}> 🪪</span>
+          )}
         </div>
 
         <div className="stall-items">

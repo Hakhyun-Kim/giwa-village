@@ -67,6 +67,7 @@ const TARGETS = [
       deployed.GiwaBoss,
     ],
   },
+  { file: "GiwaIdentity.sol", name: "GiwaIdentity", out: "identity.ts", prefix: "IDENTITY" },
 ];
 
 // 현재 config가 배포 주소의 원본이다. 부분 재배포 시 생성자 인자와 마이그레이션

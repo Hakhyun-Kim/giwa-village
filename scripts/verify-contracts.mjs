@@ -23,6 +23,7 @@ const TARGETS = [
   { file: "GiwaWorkshop.sol", name: "GiwaWorkshop" },
   { file: "GiwaBoss.sol", name: "GiwaBoss" },
   { file: "GiwaProfile.sol", name: "GiwaProfile" },
+  { file: "GiwaIdentity.sol", name: "GiwaIdentity" },
 ];
 
 const ver = "v" + solc.version().replace(/\.Emscripten.*$/, "");
@@ -31,6 +32,10 @@ console.log("[verify] solc", ver);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 for (const t of TARGETS) {
+  if (!DEPLOYMENTS[t.name]) {
+    console.log(`[verify] ${t.name} — 아직 배포 전 (건너뜀)`);
+    continue;
+  }
   const address = DEPLOYMENTS[t.name].address;
   const status = await fetch(`${BASE}/${address}`).then((r) => r.json());
   if (status?.is_verified) {

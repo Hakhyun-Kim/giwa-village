@@ -1,4 +1,4 @@
-// 로컬 체인 E2E — 컨트랙트 10종 전체를 배포하고 마을의 주요 흐름을 돌린다.
+// 로컬 체인 E2E — 컨트랙트 11종 전체를 배포하고 마을의 주요 흐름을 돌린다.
 // 테스트넷 ETH를 한 방울도 쓰지 않으므로 몇 번을 돌려도 된다.
 //
 // anvil을 chain-id 91342(GIWA Sepolia와 동일)로 띄우므로 코드의 체인 가드가
@@ -14,7 +14,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { formatEther, parseEther } from "viem";
+import { formatEther, hashTypedData, parseEther, parseSignature } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import {
   ANVIL_KEYS, ROOT, anvilMissingMessage, compileAll, deployAll, findAnvil,
@@ -52,7 +52,7 @@ async function shouldRevert(label, fn, expect = "") {
   }
 }
 
-console.log("로컬 체인 E2E — 컨트랙트 10종 (anvil · chain-id 91342 · 가스 무제한)");
+console.log("로컬 체인 E2E — 컨트랙트 11종 (anvil · chain-id 91342 · 가스 무제한)");
 
 const chain = await startChain();
 const send = async (wallet, req) => {
@@ -68,9 +68,9 @@ try {
   // ── 배포 ────────────────────────────────────────────────────────────────
   section("배포");
   const artifacts = compileAll();
-  check("컴파일", true, "10종 · optimizer off");
+  check("컴파일", true, "11종 · optimizer off");
   const C = await deployAll(chain, ANVIL_KEYS[0], artifacts);
-  check("배포", Object.keys(C).length === 10, Object.keys(C).join(", "));
+  check("배포", Object.keys(C).length === 11, Object.keys(C).join(", "));
 
   // 참가자 — 상인, 손님, 이웃(모닥불 2인 요건용)
   const [merchantKey, buyerKey, neighborKey] = [ANVIL_KEYS[0], ANVIL_KEYS[1], ANVIL_KEYS[2]];
@@ -449,6 +449,80 @@ try {
   check("온기 집계", p.warmth >= 3, `온기 ${p.warmth}`);
   check("한 번의 호출로 전부", true, "guild·honor·trinket·wear·warmth·trophies");
 
+  // ── 호패 (GiwaIdentity) — 진짜 지갑 ↔ 버너 ─────────────────────────────
+  section("호패 (GiwaIdentity) — 진짜 지갑이 버너를 대리로 세운다");
+  const principal = privateKeyToAccount(ANVIL_KEYS[3]); // UP.ID 를 가진 진짜 지갑 역할 — 가스 없이 서명만
+  const linkTypes = {
+    Link: [
+      { name: "burner", type: "address" },
+      { name: "principal", type: "address" },
+      { name: "nonce", type: "uint256" },
+      { name: "deadline", type: "uint256" },
+    ],
+  };
+  const linkDomain = {
+    name: "GiwaIdentity", version: "1", chainId: chain.chain.id, verifyingContract: C.GiwaIdentity.address,
+  };
+  const signLink = async (signer, burner, nonce, deadline) =>
+    parseSignature(await signer.signTypedData({
+      domain: linkDomain, types: linkTypes, primaryType: "Link",
+      message: { burner, principal: principal.address, nonce, deadline },
+    }));
+  const linkArgs = (sig, deadline) => [principal.address, deadline, Number(sig.v ?? 27n + BigInt(sig.yParity)), sig.r, sig.s];
+  const idDeadline = BigInt((await chain.now()) + 3600);
+  const nonce0 = await read(C.GiwaIdentity, "nonces", [principal.address]);
+  check(
+    "컨트랙트의 다이제스트 = viem signTypedData 의 해시",
+    (await read(C.GiwaIdentity, "linkDigest", [buyer.address, principal.address, nonce0, idDeadline])) ===
+      hashTypedData({
+        domain: linkDomain, types: linkTypes, primaryType: "Link",
+        message: { burner: buyer.address, principal: principal.address, nonce: nonce0, deadline: idDeadline },
+      }),
+  );
+  const sigOk = await signLink(principal, buyer.address, nonce0, idDeadline);
+  await shouldRevert(
+    "남의 버너가 그 서명을 가로채 걸 수 없다",
+    () => send(wN, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "link", args: linkArgs(sigOk, idDeadline) }),
+    "bad sig",
+  );
+  const sigForged = await signLink(neighbor, buyer.address, nonce0, idDeadline);
+  await shouldRevert(
+    "진짜 지갑이 아닌 사람의 서명은 거부",
+    () => send(wB, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "link", args: linkArgs(sigForged, idDeadline) }),
+    "bad sig",
+  );
+  await send(wB, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "link", args: linkArgs(sigOk, idDeadline) });
+  check("버너에 호패가 걸림", (await read(C.GiwaIdentity, "principalOf", [buyer.address])) === principal.address);
+  check("identityOf(버너) = 진짜 지갑", (await read(C.GiwaIdentity, "identityOf", [buyer.address])) === principal.address);
+  check("호패 없는 주소는 자기 자신", (await read(C.GiwaIdentity, "identityOf", [neighbor.address])) === neighbor.address);
+  await shouldRevert(
+    "같은 서명은 두 번 쓰이지 않는다",
+    () => send(wB, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "link", args: linkArgs(sigOk, idDeadline) }),
+    "bad sig",
+  );
+  const pastDeadline = BigInt((await chain.now()) + 60);
+  const sigLate = await signLink(principal, buyer.address, nonce0 + 1n, pastDeadline);
+  await chain.increaseTime(120);
+  await shouldRevert(
+    "기한이 지난 서명은 거부",
+    () => send(wB, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "link", args: linkArgs(sigLate, pastDeadline) }),
+    "expired",
+  );
+  await shouldRevert(
+    "남이 내 버너의 호패를 거둘 수 없다",
+    () => send(wN, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "revoke", args: [buyer.address] }),
+    "not yours",
+  );
+  await chain.fund(principal.address, parseEther("1"));
+  const wP = chain.wallet(ANVIL_KEYS[3]);
+  await send(wP, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "revoke", args: [buyer.address] });
+  check("진짜 지갑이 잃은 버너의 호패를 거둠", (await read(C.GiwaIdentity, "principalOf", [buyer.address])) === "0x0000000000000000000000000000000000000000");
+  const idDeadline2 = BigInt((await chain.now()) + 3600);
+  const sigAgain = await signLink(principal, buyer.address, await read(C.GiwaIdentity, "nonces", [principal.address]), idDeadline2);
+  await send(wB, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "link", args: linkArgs(sigAgain, idDeadline2) });
+  await send(wB, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "unlink", args: [] });
+  check("버너가 스스로 호패를 내려놓음", (await read(C.GiwaIdentity, "identityOf", [buyer.address])) === buyer.address);
+
   // ── v1 → v2 상태 보존 재배포 ───────────────────────────────────────────
   section("v2 마이그레이션 — 길드·칭호·전리품 상태 보존");
   const deployOne = async (name, args) => {
@@ -512,7 +586,7 @@ try {
   console.log(`\n${"─".repeat(58)}`);
   console.log(
     fails === 0
-      ? "전부 통과 · 컨트랙트 10종 · 테스트넷 가스 0\n장날·쿨다운·10분 창은 시간을 점프해 검증했습니다 (실시간 대기 없음)"
+      ? "전부 통과 · 컨트랙트 11종 · 테스트넷 가스 0\n장날·쿨다운·10분 창은 시간을 점프해 검증했습니다 (실시간 대기 없음)"
       : `실패 ${fails}건`,
   );
 } catch (err) {

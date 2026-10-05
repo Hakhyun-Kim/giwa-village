@@ -10,6 +10,7 @@ import { bossHit, feel, tickFeel } from "./feel";
 import { localPos, sendMove } from "../net/colyseus";
 import { performSocialEmote } from "./social";
 import { useStore } from "../state/store";
+import { isVerifiedIdentity, useIdentity } from "../wallet/identity";
 import { sfxStep } from "../audio/sfx";
 import { syncListener } from "../audio/audio";
 import { combatSnapshot, fieldWalk, useWorld } from "../state/world";
@@ -41,6 +42,8 @@ export default function Player() {
   const selfSitting = useStore((s) => s.selfSitting);
   const selfWear = useStore((s) => s.selfWear);
   const walletAddress = useStore((s) => s.walletAddress);
+  // 호패를 건 버너면 이름표가 그 사람의 UP.ID 로 바뀌고, 업비트가 확인한 사람에게만 ✓ 가 붙는다
+  const identity = useIdentity(walletAddress);
   const emote = useStore((s) => (s.selfId ? s.emotes[s.selfId] : undefined));
 
   useEffect(() => {
@@ -261,9 +264,9 @@ export default function Player() {
       </group>
       <Avatar
         color={selfColor}
-        name={selfName || "나"}
+        name={identity?.name ?? (selfName || "나")}
         emote={emote?.icon}
-        verified={!!walletAddress}
+        verified={isVerifiedIdentity(identity)}
         speedRef={speedRef}
         honor={selfHonor ?? undefined}
         trinket={selfTrinket ?? undefined}

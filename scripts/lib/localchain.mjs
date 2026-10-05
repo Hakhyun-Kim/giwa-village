@@ -163,6 +163,7 @@ export const TARGETS = [
       d.GiwaGuilds, d.GiwaHonors, d.GiwaBoxes, d.GiwaHearth, d.GiwaWorkshop, d.GiwaBoss,
     ],
   },
+  { file: "GiwaIdentity.sol", name: "GiwaIdentity" },
 ];
 
 /** solc로 전부 컴파일 (deploy-village.mjs와 같은 설정 — optimizer off) */

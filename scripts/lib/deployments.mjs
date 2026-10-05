@@ -18,6 +18,8 @@ const SPECS = {
   GiwaWorkshop: ["workshop", "WORKSHOP"],
   GiwaBoss: ["boss", "BOSS"],
   GiwaProfile: ["profile", "PROFILE"],
+  // 호패는 아직 배포 전일 수 있다 — config 의 주소가 null 이면 목록에서 빠진다
+  GiwaIdentity: ["identity", "IDENTITY"],
 };
 
 function readDeployment(file, prefix) {
@@ -25,6 +27,7 @@ function readDeployment(file, prefix) {
     path.join(ROOT, "client", "src", "config", `${file}.ts`),
     "utf8",
   );
+  if (new RegExp(`export const ${prefix}_ADDRESS = null`).test(source)) return null;
   const pick = (suffix, pattern) => {
     const match = source.match(new RegExp(`export const ${prefix}_${suffix} = ${pattern}`));
     if (!match) throw new Error(`config/${file}.ts에서 ${prefix}_${suffix}를 찾지 못했습니다`);
@@ -38,10 +41,9 @@ function readDeployment(file, prefix) {
 }
 
 export const DEPLOYMENTS = Object.fromEntries(
-  Object.entries(SPECS).map(([name, [file, prefix]]) => [
-    name,
-    readDeployment(file, prefix),
-  ]),
+  Object.entries(SPECS)
+    .map(([name, [file, prefix]]) => [name, readDeployment(file, prefix)])
+    .filter(([, deployment]) => deployment),
 );
 
 export const deployedAddresses = Object.fromEntries(

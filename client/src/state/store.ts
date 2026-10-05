@@ -38,7 +38,6 @@ interface VillageStore {
   stallOpenDialog: boolean;
   couponsOpen: boolean;
   couponsVersion: number;
-  selfDojang: boolean;
   guilds: Guild[];
   guildOpen: boolean;
   guildError: string | null;
@@ -89,7 +88,6 @@ interface VillageStore {
   setStallOpenDialog: (v: boolean) => void;
   setCouponsOpen: (v: boolean) => void;
   bumpCoupons: () => void;
-  setSelfDojang: (v: boolean) => void;
   setGuilds: (g: Guild[]) => void;
   setGuildOpen: (v: boolean) => void;
   setGuildError: (msg: string | null) => void;
@@ -133,7 +131,6 @@ export const useStore = create<VillageStore>((set) => ({
   stallOpenDialog: false,
   couponsOpen: false,
   couponsVersion: 0,
-  selfDojang: false,
   guilds: [],
   guildOpen: false,
   guildError: null,
@@ -203,7 +200,6 @@ export const useStore = create<VillageStore>((set) => ({
   setStallOpenDialog: (stallOpenDialog) => set({ stallOpenDialog }),
   setCouponsOpen: (couponsOpen) => set({ couponsOpen }),
   bumpCoupons: () => set((s) => ({ couponsVersion: s.couponsVersion + 1 })),
-  setSelfDojang: (selfDojang) => set({ selfDojang }),
   setGuilds: (guilds) => set({ guilds }),
   setGuildOpen: (guildOpen) => set({ guildOpen, guildError: null }),
   setGuildError: (guildError) => set({ guildError }),

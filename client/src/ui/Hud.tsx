@@ -9,9 +9,15 @@ import {
 import { joinVillage } from "../net/colyseus";
 import { giwaSepolia, FAUCET_URL } from "../config/giwa";
 import { loadCoupons } from "../state/coupons";
-import { isDojangVerified, fundBurnerFromInjected } from "../wallet/wallet";
+import { fundBurnerFromInjected } from "../wallet/wallet";
 import { refreshBeaconBudget, marketDayLabel } from "../chain/village";
-import { useUpidName } from "../wallet/upid";
+import {
+  hopaeAvailable,
+  linkHopaeFromInjected,
+  unlinkHopae,
+  useIdentity,
+  type Identity,
+} from "../wallet/identity";
 import { currentDaylight } from "../game/daylight";
 import { ambiencePreference, setAmbience } from "../audio/ambience";
 
@@ -122,6 +128,66 @@ function FundButton() {
   );
 }
 
+/**
+ * 호패: 버너 뒤에 선 사람을 밝힌다. UP.ID 를 가진 내 지갑이 가스 없이 서명 한 번 하면
+ * 이름표 · 노점 · 흥정 상대에게 그 사람의 UP.ID 와 업비트 인증이 보인다.
+ */
+function HopaeButton({ identity }: { identity: Identity | null }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  if (!hopaeAvailable || !identity) return null;
+
+  async function run(fn: () => Promise<string>) {
+    if (busy) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      setMsg(await fn());
+      setTimeout(() => setMsg(null), 5000);
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      setMsg(m.length > 90 ? m.slice(0, 90) + "…" : m);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="hud-stall-btns">
+      {identity.linked ? (
+        <button
+          className="hud-btn sub"
+          onClick={() =>
+            run(async () => {
+              await unlinkHopae();
+              return "호패를 내려놓았습니다";
+            })
+          }
+          disabled={busy}
+          title="이 버너에 건 호패를 내려놓습니다 — 이름표가 다시 나그네로 돌아갑니다"
+        >
+          {busy ? "처리 중…" : "🪪 호패 내려놓기"}
+        </button>
+      ) : (
+        <button
+          className="hud-btn sub"
+          onClick={() =>
+            run(async () => {
+              const id = await linkHopaeFromInjected();
+              return `호패를 걸었습니다 — 이제 ${id.name ?? "업비트 인증 상인"}(으)로 보입니다`;
+            })
+          }
+          disabled={busy}
+          title="UP.ID 를 가진 내 지갑이 서명 한 번(가스 없음)으로 이 버너를 대리로 세웁니다 — 이름표 · 노점에 UP.ID 와 인증이 보입니다"
+        >
+          {busy ? "서명 기다리는 중…" : "🪪 UP.ID 호패 걸기"}
+        </button>
+      )}
+      {msg && <div className="hud-fund-msg">{msg}</div>}
+    </div>
+  );
+}
+
 const STATUS_LABEL = {
   connecting: "연결 중…",
   connected: "온라인",
@@ -193,20 +259,17 @@ export default function Hud() {
     const next = !soundOn;
     setSoundOn(await setAmbience(next));
   }
-  const selfDojang = useStore((s) => s.selfDojang);
-  const myUpid = useUpidName(walletAddress);
+  const myIdentity = useIdentity(walletAddress);
+  const selfDojang = !!myIdentity?.dojang;
+  const myUpid = myIdentity?.name ?? null;
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!walletAddress) {
       useStore.getState().setBalance(null);
-      useStore.getState().setSelfDojang(false);
       return;
     }
-    void isDojangVerified(walletAddress).then((v) =>
-      useStore.getState().setSelfDojang(v),
-    );
     let stop = false;
     const tick = async () => {
       try {
@@ -312,6 +375,11 @@ export default function Hud() {
               <span className="slot">슬롯 {walletSlot}</span>
             )}
             {selfDojang && <span className="dojang">Dojang ✔</span>}
+            {myIdentity?.linked && (
+              <span className="dojang" title={`호패 — ${myIdentity.holder} 가 이 버너를 대리로 세웠습니다`}>
+                🪪
+              </span>
+            )}
             <button
               className="addr"
               onClick={onCopy}
@@ -339,6 +407,7 @@ export default function Hud() {
         {walletError && <div className="hud-error">{walletError}</div>}
         {walletAddress && <StallButtons walletAddress={walletAddress} />}
         {walletAddress && walletKind === "burner" && <FundButton />}
+        {walletAddress && walletKind === "burner" && <HopaeButton identity={myIdentity} />}
       </div>
 
       <div className="hud-bottom">

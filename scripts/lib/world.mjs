@@ -61,13 +61,14 @@ export async function buildWorld() {
   const cfg = {};
   for (const name of [
     "market", "honors", "guilds", "presence", "offers",
-    "boxes", "hearth", "workshop", "boss", "profile",
+    "boxes", "hearth", "workshop", "boss", "profile", "identity",
   ]) {
     cfg[name] = await import(ts("config", `${name}.ts`));
   }
   const key = (name) => name.toUpperCase();
   const contracts = {};
   for (const [name, mod] of Object.entries(cfg)) {
+    if (!mod[`${key(name)}_ADDRESS`]) continue; // 아직 배포 전(호패) — 배포 뒤 export-world 가 싣는다
     contracts[name] = {
       address: mod[`${key(name)}_ADDRESS`],
       // 이벤트를 훑을 때 여기서부터 보면 된다 (그 앞은 컨트랙트가 없다)

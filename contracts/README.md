@@ -26,6 +26,7 @@ node scripts/verify-contracts.mjs                  # Blockscout standard-input �
 | **GiwaWorkshop** | `0x664762337e529f853949a94e6ed50e6d8016c975` | `workshop` | 문양 공방(UGC) — 8x8 픽셀 문양 온체인 등록·판매(대금 창작자 직송)·착용 |
 | **GiwaBoss** | `0x11dbe73cc9185cd4c7c278bedf7065ea6f459d63` | `boss` | 주간 도깨비 토벌 — v1 전리품 폴백, 개인·길드 기여, 장날 2배 |
 | **GiwaProfile** | `0xf4c2a73ac75fd9fee1856cc2b7c929b1fc66fdf3` | (SDK) | v2 소셜 프로필 애그리게이터 — 길드·칭호·장신구·문양·온기·전리품 1콜 집계 |
+| **GiwaIdentity** | (배포 대기) | `wallet/identity` | 호패 — UP.ID 를 가진 진짜 지갑이 EIP-712 서명(가스 0)으로 버너를 대리로 세우고, 버너가 `link()`로 올린다. `principalOf(버너)` · `identityOf` · 버너의 `unlink` · 진짜 지갑의 `revoke`(버너를 잃었을 때). 이름 · 인증 판정은 하지 않는다 — 클라이언트가 그 주소의 UP.ID · Dojang 을 읽는다 |
 
 > `GiwaGuilds` v2는 2026-08-29 배포됐다. 생성자가 v1 길드·회원·최고층 기록을
 > 복사했고, 진행 중이던 원정만 주차 경계 안전을 위해 만료했다. `GiwaHonors`와

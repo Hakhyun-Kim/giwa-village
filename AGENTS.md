@@ -49,6 +49,7 @@
 | 유저 제작 문양 | **문양 공방** | GiwaWorkshop |
 | 소울바운드 칭호 | **칭호** (이름표에 붙는다) | GiwaHonors |
 | 온보딩 | **촌장의 부탁** (무료 첫걸음 뒤 3가지 길 선택) | — (클라이언트) |
+| 진짜 지갑이 버너를 대리로 세운 증표 | **호패** (이름표 · 노점에 UP.ID 와 업비트 인증이 뜬다) | GiwaIdentity |
 
 마을 시각은 **KST 기준**이다(주야 사이클·장날 모두). 시간을 다루는 코드를 고칠 때
 UTC로 슬쩍 바꾸지 말 것 — 장날이 조용히 어긋난다.
@@ -76,7 +77,7 @@ server/  Colyseus 룸 — 선택 사항이다. 서버 0으로도 마을이 돈�
 shared/  서버 판정과 클라이언트 표시가 함께 읽는 실시간 원정 규칙(expedition.ts) — 세션 기록일 뿐 체인에 아무것도 쓰지 않는다.
          순수 모듈이라 npm test가 그대로 걸어 보고, 다른 클라이언트도 같은 규칙으로 혼자 하는 연습 원정을 돌릴 수 있다
          + 크로스플레이 링크(crosslink.ts) — 웹의 원정을 Unity 앱 · PC 게임이 giwa://expedition 으로 이어받는다(PROTOCOL.md §3.8 · 지갑은 넘기지 않는다)
-contracts/ Solidity 10종 (전부 GIWA Sepolia 배포·검증 완료)
+contracts/ Solidity 11종 (10종은 GIWA Sepolia 배포·검증 완료 · 호패 GiwaIdentity 는 배포 대기 — 주소가 null 이면 화면은 호패 없이 돈다)
 scripts/ 테스트·배포·봇·스모크
 sdk/     외부에서 프로필을 읽는 패키지
 guide/   사람이 읽는 문서 (놀기·이어붙이기·검증·이어만들기) — README는 색인이다
@@ -188,7 +189,7 @@ DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 �
 ```bash
 npm test                     # 로직 68건 + 원정 규칙 7건 + 크로스플레이 링크 5건 · 체인 없음 · 2초 미만 (저장할 때마다)
 npm run export-world         # 배치표를 client/public/world.json 으로 굽는다
-npm run test:local           # 컨트랙트 10종 E2E 54건 · 로컬 anvil · 가스 0
+npm run test:local           # 컨트랙트 11종 E2E 63건 · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)
 npm run smoke:protocol       # PROTOCOL.md만 보고 짠 클라이언트로 룸에 입장 (서버 자동 기동)
 npm run smoke:realtime       # village_live · expedition 룸에 실제 소켓으로 들어가 본다 (격리된 로컬 서버 · 체인·키 없음)
@@ -244,6 +245,10 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
 우선순위 순. 착수 전에 3-Gate로 거른다 —
 **① 코드로 만들 수 있는가 ② 결정(선택)을 더하는가 ③ 봇이 측정할 수 있는가.**
 
+- [ ] **호패(UP.ID) — 증명 가능한 장터** (2026-10-05 소유자: 익명 지갑이 아니라 이름 있는 사람과 거래한다).
+  웹 · 컨트랙트 · 로컬 시험은 됐다. 남은 것: GIWA Sepolia 배포(`node scripts/deploy-village.mjs GiwaIdentity` →
+  `node scripts/verify-contracts.mjs` → `npm run export-world`) · Unity 이식(이름표 · 노점이 `principalOf` 를 먼저 따라간다) ·
+  노점 창에 체인 거래 이력(평판) · 흥정에 정해진 말 몇 마디
 - [ ] **계측 스키마를 모든 클라이언트에** — [guide/ANALYTICS.md](guide/ANALYTICS.md)가 한 벌이다. 웹은 `net/analytics.ts`
   (기본 꺼짐 · 주소/tx 해시 없음 · smoke 에서 꺼짐)로 주요 이벤트를 달았고, 남은 것(`raid_*` · `peers_seen` ·
   `wallet_panel_open` · `balance_first_positive`)과 Unity 는 같은 이름으로 단다. 새 이벤트는 문서에 먼저 적는다
@@ -268,7 +273,7 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
 
 ```
 anvil --chain-id 91342          # 로컬 체인 (가스 0, 시간 여행 가능)
-  → 컨트랙트 10종 배포          # test-local.mjs가 이미 하는 일
+  → 컨트랙트 11종 배포          # test-local.mjs가 이미 하는 일
   → (선택) 로컬 Colyseus 서버   # 붐비는 장터를 흉내 낼 때만
   → 상인 봇 N명 + 손님 봇       # 하루치를 몇 초로 점프해 돌린다
   → client/public/chronicle/<KST 날짜>.json  로 커밋

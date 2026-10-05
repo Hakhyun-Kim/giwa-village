@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { Group } from "three";
 import Avatar from "./Avatar";
 import { useStore, remoteTargets } from "../state/store";
-import { useUpidName } from "../wallet/upid";
+import { isVerifiedIdentity, useIdentity } from "../wallet/identity";
 import type { PlayerInfo } from "../types";
 
 function lerpAngle(a: number, b: number, t: number): number {
@@ -19,9 +19,8 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
   const initialized = useRef(false);
   const emote = useStore((s) => s.emotes[id]);
   const say = useStore((s) => s.says[id]);
-  const giftable = !!info.address;
-  // UP.ID 이름이 있으면 서버 이름 대신 표시
-  const upidName = useUpidName(info.address || null);
+  // UP.ID 이름이 있으면(호패를 건 버너면 그 뒤의 진짜 지갑 것) 서버 이름 대신 표시
+  const identity = useIdentity(info.address || null);
 
   function onClick(e: { stopPropagation: () => void }) {
     e.stopPropagation();
@@ -66,10 +65,10 @@ function RemotePlayer({ id, info }: { id: string; info: PlayerInfo }) {
     >
       <Avatar
         color={info.color}
-        name={upidName ?? info.name}
+        name={identity?.name ?? info.name}
         emote={emote?.icon}
         say={say?.icon}
-        verified={giftable}
+        verified={isVerifiedIdentity(identity)}
         speedRef={speedRef}
         honor={info.honor}
         trinket={info.trinket}
