@@ -4,6 +4,7 @@ import { useStore } from "../state/store";
 import { Hanok } from "./Village";
 import { setDynamicColliders, stallCollider } from "./collide";
 import { useSurfaces } from "./textures";
+import { colorFromString } from "../wallet/wallet";
 import type { Stall } from "../types";
 
 function hover(on: boolean) {
@@ -12,7 +13,7 @@ function hover(on: boolean) {
 
 /** 좌판 노점: 평상 + 기둥 + 차양 + 상품 */
 function StallBooth({ stall }: { stall: Stall }) {
-  const awning = `#${((stall.ownerName.length * 2654435761) % 0xffffff | 0x404040).toString(16).padStart(6, "0")}`;
+  const awning = colorFromString(stall.ownerAddress.toLowerCase()); // 주인 지갑의 색 — 아바타 옷 색과 같다(Unity GiwaChain.Build 와 짝)
   const tex = useSurfaces();
   const texKey = Object.keys(tex).length;
   return (
