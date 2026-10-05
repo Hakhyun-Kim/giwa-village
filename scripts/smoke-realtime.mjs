@@ -1,5 +1,6 @@
 // 실제 Colyseus 소켓 검증. 격리된 로컬 서버만 띄우며 체인·지갑 키 파일을 사용하지 않는다.
 import assert from "node:assert/strict";
+import http from "node:http";
 import { spawn } from "node:child_process";
 import { Client } from "colyseus.js";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
@@ -16,8 +17,17 @@ async function expedition(code){const r=code?await client.joinById(code,{name:"�
 try {
   await until(async()=>{try{return (await fetch(url)).ok;}catch{return false;}});
   // 터널 · 프록시는 루프백으로 들어온다 — 전달 헤더가 붙은 요청에는 개발 지갑 창구가 닫혀야 한다(파일을 읽기 전에 거절한다)
-  for(const h of ["x-forwarded-for","cf-connecting-ip","forwarded","x-real-ip"])assert.equal((await fetch(`${url}/dev/wallets`,{headers:{[h]:"203.0.113.7"}})).status,403,h);
-  console.log("PASS 개발 지갑 창구: 터널 · 프록시를 거친 요청(전달 헤더 넷)은 403");
+  for(const h of ["x-forwarded-for","x-forwarded-host","cf-connecting-ip","true-client-ip","forwarded","x-real-ip","via"])assert.equal((await fetch(`${url}/dev/wallets`,{headers:{[h]:"203.0.113.7"}})).status,403,h);
+  // 아무 웹페이지(Origin)나 DNS 리바인딩(Host)으로 온 요청도 막고, 와일드카드 CORS 를 주지 않는다. 키 본문은 읽지 않는다
+  // fetch 는 Host 를 바꾸지 못한다 — node:http 로 묻는다
+  const dev=headers=>new Promise((ok,no)=>http.get(`${url}/dev/wallets`,{headers},r=>{r.resume();ok(r);}).on("error",no));
+  assert.equal((await dev({origin:"https://evil.example"})).statusCode,403,"남의 Origin");
+  assert.equal((await dev({origin:"null"})).statusCode,403,"Origin null");
+  assert.equal((await dev({host:`rebind.evil.example:${port}`})).statusCode,403,"리바인딩 Host");
+  const local=await dev({origin:"http://localhost:5173"});
+  assert.notEqual(local.statusCode,403,"이 기기의 페이지");assert.equal(local.headers["access-control-allow-origin"],"http://localhost:5173");
+  assert.notEqual((await fetch(url)).headers.get("access-control-allow-origin"),null,"상태 확인 GET / 은 어디서든 읽힌다");
+  console.log("PASS 개발 지갑 창구: 터널 · 프록시(전달 헤더 일곱) · 남의 Origin · 리바인딩 Host 는 403 · 이 기기의 페이지에만 그 Origin 을 돌려준다");
   const a=await expedition(), b=await expedition(), mate=await expedition(a.r.roomId);
   await until(()=>a.state.players.length===2);
   assert.notEqual(a.r.roomId,b.r.roomId);assert.equal(b.state.players.length,1);

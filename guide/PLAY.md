@@ -84,7 +84,8 @@ http://localhost:5173/test.html 이 열리며 한 화면에 클라이언트 2개
 
 test.html 상단에 서버 상태 · 슬롯별 지갑 주소/잔액(복사·익스플로러 링크) · 포셋
 바로가기가 표시된다. 지갑 목록은 개발 서버의 로컬 전용 엔드포인트
-`GET :2567/dev/wallets`에서 온다 (localhost에서만 응답 · 터널 · 프록시를 거친 요청은 거절 · production 서버에서는 닫힌다).
+`GET :2567/dev/wallets`에서 온다 (루프백 · localhost 페이지에만 응답 · 전달 헤더가 붙은 프록시 요청과 다른 웹페이지 · DNS 리바인딩은 거절 ·
+production 서버에서는 닫힌다. 헤더를 붙이지 않는 TCP 터널은 가려내지 못하므로 개발 서버를 밖에 내놓지 않는다).
 
 마을 주민(보부상 두칠, 주모 향단…)은 서버 없이 각 클라이언트가 직접 걷게 한다 —
 명단·성격은 [data/npcs.json](../data/npcs.json) 하나가 단일 소스다([FEATURES.md](FEATURES.md)).

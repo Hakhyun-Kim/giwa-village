@@ -58,9 +58,11 @@ npm run demo-server                     # 룸 서버(production · 127.0.0.1) + 
 - 빠른 터널은 시험용이다 — 동시 요청 200 · 보증 없음.
 
 **개발 모드 서버를 터널 · 프록시 뒤에 두지 않는다.** 개발 모드는 `/dev/wallets`(이 기기의 테스트 지갑 키)를 연다.
-터널은 루프백으로 들어오므로 "이 기기에서만" 검사를 지나친다. 서버는 전달 헤더(`X-Forwarded-For` · `CF-Connecting-IP` ·
-`Forwarded` · `X-Real-IP`)가 붙은 요청을 403 으로 막지만(`npm run smoke:realtime` 이 본다), 그것은 두 번째 문이다.
-`npm run demo-server` 는 언제나 `NODE_ENV=production` · `HOST=127.0.0.1` 로 띄우고, 같은 포트에 서버가 이미 떠 있으면 거절한다.
+터널은 루프백으로 들어오므로 "이 기기에서만" 검사를 지나친다. 서버는 전달 헤더(`X-Forwarded-For` · `X-Forwarded-Host` ·
+`CF-Connecting-IP` · `True-Client-IP` · `Forwarded` · `X-Real-IP` · `Via`)가 붙은 요청, localhost 가 아닌 `Host`(DNS 리바인딩)와 `Origin`(다른 웹페이지)을 403 으로 막지만
+(`npm run smoke:realtime` 이 본다), 그것은 두 번째 문이다 — 헤더를 붙이지 않는 TCP 전달(`ssh -R` · `ngrok tcp`)은 알아채지 못한다.
+막아 주는 것은 **production 모드**뿐이다. `npm run demo-server` 는 언제나 `NODE_ENV=production` · `HOST=127.0.0.1` 로 띄우고,
+같은 포트에 서버가 이미 떠 있으면 거절한다.
 
 ## 3) 손으로 확인하기
 
@@ -77,6 +79,7 @@ npm run build -w client; npm run preview -w client
 
 ## 4) 지갑
 
-- 테스트 지갑 슬롯(A~D)은 **로컬 개발 전용**이다 — `/dev/wallets` 는 개발 모드 서버가 이 기기의 요청(전달 헤더 없음)에만 답하고,
+- 테스트 지갑 슬롯(A~D)은 **로컬 개발 전용**이다 — `/dev/wallets` 는 개발 모드 서버만 열고, 루프백으로 들어와 전달 헤더가 없고
+  `Host` · `Origin` 이 localhost 인 요청에만 답한다(TCP 터널은 가려내지 못한다 — 개발 모드 서버를 밖에 내놓지 않는다),
   웹은 그 키를 언제나 `http://localhost:2567` 에서만 받는다(빌드가 가리키는 룸 서버가 키를 주입하지 못하게). 공개 빌드(`VITE_DEMO=1`)는 `?slot` 을 끈다.
 - 퍼블릭 방문자는 **지갑 연결(MetaMask 등)** 로 GIWA Sepolia 에 연결하거나, 이 기기에서 만든 버너로 입장해 구경할 수 있다.
