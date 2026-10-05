@@ -249,8 +249,8 @@ async function showGuildDungeon(my: string) {
   for (let i = 0; i < 2; i++) {
     const d = useStore.getState().dungeon;
     if (!d || d.ended) break;
-    caption("🚪 문을 골라 오르는 중… 함정을 밟으면 이번 원정 수확을 잃습니다");
-    dungeonPick(Math.floor(Math.random() * 3));
+    caption("🚪 기척을 듣고 문을 고르는 중… 함정을 밟으면 이번 원정 수확을 잃습니다");
+    dungeonPick(d.omen && d.omen.shows !== "trap" ? d.omen.door : d.omen?.door === 0 ? 1 : 0); // 기척을 따른다 — 함정이 들리면 그 문을 비킨다
     await waitFor(() => useStore.getState().dungeon?.busy === false, 10000);
     await pace(1800);
   }

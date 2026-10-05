@@ -85,6 +85,8 @@ export interface DungeonView {
   /** 1=배포된 동일 확률 문, 2=돌/바람/도깨비 위험표 */
   lastOutcome?: "safe" | "bonus" | "trap";
   lastDoor?: number;
+  /** 다음 걸음의 기척 — 문 하나에서 들리는 것(core omenAt · 열에 여덟은 맞는다) */
+  omen?: { door: number; shows: "safe" | "bonus" | "trap" };
   ended?: boolean;
   banked?: number;
   busy?: boolean;

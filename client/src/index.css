@@ -877,6 +877,15 @@ body,
 .dungeon-door b { display: block; margin-top: 3px; color: #eef2f8; font-size: 11px; }
 .dungeon-door em { display: block; margin-top: 3px; color: #8ea0bd; font-size: 9px; font-style: normal; }
 
+/* 기척이 들리는 문 — 글자 줄(.dungeon-omen)과 같은 문을 가리킨다 */
+.dungeon-door.omen { border-style: dashed; border-color: #8ea0bd; }
+.dungeon-omen {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #c9d4e6;
+}
+.dungeon-omen small { display: block; margin-top: 2px; font-size: 10px; color: #8ea0bd; }
+
 .dungeon-door:hover:not(:disabled) {
   transform: translateY(-3px);
   border-color: #ffd66b;

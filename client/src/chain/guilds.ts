@@ -3,7 +3,7 @@
 // 문 판정은 @giwa-village/core 의 doorRoll 단일 소스를 쓴다 — 온체인 settleRun 과
 // 바이트 단위로 동일하고, 봇·검증기도 같은 함수를 공유한다.
 import { decodeEventLog } from "viem";
-import { doorRoll, resolveRun } from "@giwa-village/core";
+import { doorRoll, omenAt, resolveRun } from "@giwa-village/core";
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { GUILDS_ADDRESS, GUILDS_ABI } from "../config/guilds";
 import { useStore } from "../state/store";
@@ -194,6 +194,7 @@ export async function chainDungeonEnter(): Promise<void> {
       floor: guild.dungeon.floor,
       tentative: 0,
       attempt,
+      omen: omenAt(seed, BigInt(guild.id), attempt, 0),
       busy: false,
     });
   } catch (err) {
@@ -215,6 +216,7 @@ export function chainDungeonPick(door: number): void {
   s.patchDungeon({
     lastOutcome: outcome,
     lastDoor: door,
+    omen: omenAt(run.seed, BigInt(run.guildId), run.attempt, run.picks.length),
     tentative: d.tentative + (outcome === "safe" ? 1 : 2),
     busy: false,
   });

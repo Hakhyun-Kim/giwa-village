@@ -3,7 +3,7 @@ import { useStore } from "../state/store";
 import { chainDungeonEnter as dungeonEnter, chainDungeonPick as dungeonPick, chainDungeonBank as dungeonBank } from "../chain/village";
 import { verifyLastRun } from "../chain/guilds";
 import { giwaSepolia, DUNGEON_URL } from "../config/giwa";
-import { DOOR_PROFILES } from "@giwa-village/core";
+import { DOOR_PROFILES, OMEN_NOTE, OMEN_WORDS } from "@giwa-village/core";
 import { goField } from "../net/expedition";
 import { fieldWalk } from "../state/world";
 
@@ -155,11 +155,18 @@ export default function DungeonDialog() {
                     ? OUTCOME_TEXT[dungeon.lastOutcome]
                     : "문을 골라 오르세요 — 욕심은 함정을 부른다"}
                 </div>
+                {dungeon.omen && (
+                  <div className="dungeon-omen">
+                    👂 {DOOR_PROFILES[dungeon.omen.door].emoji} {DOOR_PROFILES[dungeon.omen.door].name}{" "}
+                    {OMEN_WORDS[dungeon.omen.shows]}
+                    <small>{OMEN_NOTE}</small>
+                  </div>
+                )}
                 <div className="dungeon-doors">
                   {DOOR_PROFILES.map((door) => (
                     <button
                       key={door.id}
-                      className="dungeon-door"
+                      className={dungeon.omen?.door === door.id ? "dungeon-door omen" : "dungeon-door"}
                       disabled={dungeon.busy}
                       onClick={() => dungeonPick(door.id)}
                       title={`${door.name} · ${door.style}`}

@@ -6,7 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { parseEther } from "viem";
+import { concat, hexToBytes, keccak256, numberToBytes, parseEther, stringToBytes } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { BAND, classify, decideDeterministic, enforce, floorOf } from "./lib/haggle.mjs";
 
@@ -329,6 +329,106 @@ it("첫 원정 시드는 지연될 수 있는 RPC 조회보다 영수증을 우�
   );
   ok(/eventName\s*===\s*"SeedPinned"/.test(chainGuilds), "SeedPinned 영수증을 읽지 않습니다");
   ok(/receiptSeed\s*&&\s*receiptSeedBlock/.test(chainGuilds), "영수증 시드 우선 분기가 없습니다");
+});
+
+// ── 기척(omenAt) — 문 고르기가 결정이 되게 하는 클라이언트 힌트 ─────────────
+// 표만으로는 기대값 최선이 늘 돌문 하나로 굳는다(guide/V4.md §10). 걸음마다 문 하나의 기척을
+// 들려주면(열에 여덟은 맞는다) 최선의 수가 세 문에 퍼진다. 체인 · doorRoll 은 그대로다.
+
+describe("던전 기척 — 문 앞의 힌트가 고르기를 결정으로 만든다 (체인은 그대로)");
+
+const { omenAt, OMEN_ACCURACY_LT, OMEN_WORDS, DOOR_PROFILES } = await import(
+  pathToFileURL(path.join(ROOT, "core", "src", "index.ts")).href
+);
+const OUTCOMES = ["safe", "bonus", "trap"];
+
+/** 기척을 명세대로 바이트를 직접 쌓아 다시 계산한다 — omenAt 도, encodePacked 도 거치지 않는다 */
+function omenSpec(seed, guildId, attempt, step) {
+  const head = concat([hexToBytes(seed), numberToBytes(guildId, { size: 32 }), numberToBytes(attempt, { size: 4 }), numberToBytes(step, { size: 32 })]);
+  const d = keccak256(concat([head, stringToBytes("omen")]), "bytes");
+  const door = ((d[0] << 8) | d[1]) % 3;
+  const b = keccak256(concat([head, numberToBytes(door, { size: 1 })]), "bytes")[0]; // = 온체인 doorRoll
+  const truth = b < DOOR_PROFILES[door].safeLt ? "safe" : b < DOOR_PROFILES[door].bonusLt ? "bonus" : "trap";
+  const others = OUTCOMES.filter((o) => o !== truth);
+  return { door, truth, shows: d[2] < OMEN_ACCURACY_LT ? truth : others[d[3] & 1] };
+}
+const OMEN_SEEDS = Array.from({ length: 8 }, (_, k) => `0x${(k * 37 + 11).toString(16).padStart(2, "0").repeat(32)}`);
+const omenSamples = Array.from({ length: 20000 }, (_, i) => {
+  const args = [OMEN_SEEDS[i % 8], BigInt(i % 5), 1 + (i % 11), i];
+  return { args, ...omenSpec(...args) };
+});
+
+it("기척은 결정론이고 명세대로 다시 계산한 값과 같다 — 화면에는 참 여부를 내주지 않는다", () => {
+  for (let i = 0; i < omenSamples.length; i += 10) {
+    const { args, door, shows } = omenSamples[i];
+    const o = omenAt(...args);
+    eq(JSON.stringify(o), JSON.stringify({ door, shows }), `표본 ${i}: `);
+    eq(JSON.stringify(omenAt(...args)), JSON.stringify(o), "같은 입력 두 번: ");
+  }
+  for (const k of OUTCOMES) ok(OMEN_WORDS[k] && !OMEN_WORDS[k].startsWith("함정 "), `기척 문구 ${k} — 비었거나 "함정 "으로 시작한다(Unity 굽기가 위험 안내로 센다)`);
+});
+
+it("기척은 열에 여덟 참을 말하고 세 문을 고루 가리킨다 (표본 20,000)", () => {
+  const n = omenSamples.length;
+  const told = omenSamples.filter((x) => x.shows === x.truth).length / n;
+  ok(Math.abs(told - 0.8) <= 0.015, `참을 말한 비율 ${told.toFixed(4)}`);
+  const doors = [0, 1, 2].map((d) => omenSamples.filter((x) => x.door === d).length / n);
+  for (const [d, share] of doors.entries()) ok(Math.abs(share - 1 / 3) <= 0.015, `문 ${d}이 기척 문인 비율 ${share.toFixed(4)}`);
+  console.log(`     참 ${(told * 100).toFixed(1)}% · 기척 문 ${doors.map((x) => (x * 100).toFixed(1)).join(" / ")}%`);
+});
+
+/**
+ * 웹 화면 규칙(함정이면 그 원정의 걸음을 버린다)에서 최선의 수를 뒤에서부터 푼다(DP).
+ * 걸음마다 고르게 뽑힌 문 하나의 기척을 듣는다 — acc 확률로 참, 아니면 나머지 둘 중 하나.
+ * acc = 1/3 이면 기척은 아무것도 알려 주지 않는다(기척이 없는 것과 같다).
+ * 돌려주는 것: 0층에서의 기대 확정 층수 V0 와, 최선의 수를 따라갈 때 세 문이 골리는 비율.
+ */
+function doorDP(acc, T = 60) {
+  const P = DOOR_PROFILES.map(({ safeLt, bonusLt }) => [safeLt / 256, (bonusLt - safeLt) / 256, (256 - bonusLt) / 256]);
+  const V = new Float64Array(T + 3);
+  const plan = []; // plan[t] = 기척(문 h · 들린 결과 c)마다 { 확률 w, 최선의 수 act(-1 = 귀환), 고른 문의 결과 분포 pr }
+  for (let t = T + 2; t >= 0; t--) {
+    if (t >= T) { V[t] = t; continue; }
+    plan[t] = [];
+    for (let h = 0; h < 3; h++) for (let c = 0; c < 3; c++) {
+      const joint = P[h].map((p, k) => p * (k === c ? acc : (1 - acc) / 2));
+      const pc = joint[0] + joint[1] + joint[2];
+      if (pc === 0) continue;
+      let best = t, act = -1, pr = null;
+      for (let d = 0; d < 3; d++) {
+        const q = d === h ? joint.map((x) => x / pc) : P[d];
+        const value = q[0] * V[t + 1] + q[1] * V[t + 2]; // 함정은 0
+        if (value > best + 1e-9) { best = value; act = d; pr = q; }
+      }
+      V[t] += (pc / 3) * best;
+      plan[t].push({ w: pc / 3, act, pr });
+    }
+  }
+  const picks = [0, 0, 0];
+  for (let dist = new Map([[0, 1]]); dist.size; ) {
+    const next = new Map();
+    for (const [t, pt] of dist) {
+      if (t >= T) continue;
+      for (const { w, act, pr } of plan[t]) {
+        if (act < 0) continue;
+        picks[act] += pt * w;
+        next.set(t + 1, (next.get(t + 1) ?? 0) + pt * w * pr[0]);
+        next.set(t + 2, (next.get(t + 2) ?? 0) + pt * w * pr[1]);
+      }
+    }
+    dist = next;
+  }
+  const total = picks[0] + picks[1] + picks[2];
+  return { V0: V[0], share: picks.map((x) => x / total) };
+}
+
+it("기척이 있으면 문 고르기가 한 문으로 굳지 않는다 — 세 문 모두 10% 이상, 기대 층수도 오른다", () => {
+  const blind = doorDP(1 / 3);
+  const heard = doorDP(OMEN_ACCURACY_LT / 256);
+  for (const [d, share] of heard.share.entries()) ok(share >= 0.1, `${DOOR_PROFILES[d].name}이 최선인 비율 ${(share * 100).toFixed(1)}%`);
+  ok(heard.V0 > blind.V0, `기척이 있어도 기대 층수가 오르지 않는다 (${heard.V0.toFixed(2)} ≤ ${blind.V0.toFixed(2)})`);
+  const pct = (r) => r.share.map((x) => `${(x * 100).toFixed(0)}%`).join(" · ");
+  console.log(`     기척 없음 V0 ${blind.V0.toFixed(2)}층 (돌 · 바람 · 도깨비 ${pct(blind)}) → 기척 V0 ${heard.V0.toFixed(2)}층 (${pct(heard)})`);
 });
 
 // ── 풍류(배경음·효과음) ───────────────────────────────────────────────────

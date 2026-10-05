@@ -11,7 +11,12 @@ export {
   resolveRun,
   safeDoorAt,
   OUTCOME_CLIMB,
+  omenAt,
+  OMEN_ACCURACY_LT,
+  OMEN_WORDS,
+  OMEN_NOTE,
   type DoorOutcome,
+  type Omen,
   type RunResult,
 } from "./dungeon.ts";
 
