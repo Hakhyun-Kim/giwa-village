@@ -43,5 +43,5 @@ const stop = village.watchPresence((b) => console.log(b.who, b.x, b.z));
 
 이 SDK는 TypeScript에서 마을을 **읽는** 길이다. 다른 언어·다른 엔진으로
 **마을에 들어가는** 클라이언트를 만들려면 [PROTOCOL.md](../PROTOCOL.md)를 본다 —
-좌표계·충돌 규칙·프레즌스 비컨·룸 메시지 24종의 공개 명세이고, 한옥과 벽의 배치는
+좌표계·충돌 규칙·프레즌스 비컨·실시간 룸 둘(`village_live` · `expedition`)의 메시지를 담은 공개 명세이고, 한옥과 벽의 배치는
 [`world.json`](../client/public/world.json) 한 파일에 있다.
