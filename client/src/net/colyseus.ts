@@ -100,7 +100,12 @@ async function connect(seq: number) {
       room = null; clearInterval(heartbeat); clearPeers(); later(seq);
     });
     joined.send("ready"); sendMove(localPos.x,localPos.z,localPos.rot);
-    heartbeat = setInterval(() => sendMove(localPos.x,localPos.z,localPos.rot),1000);
+    let lastX = localPos.x, lastZ = localPos.z;
+    heartbeat = setInterval(() => {
+      // 걸었으면 손댄 것이다 — 조이스틱을 떼지 않고 걷는 휴대폰 · 자동 시연도 깨어 있다(아래 nap)
+      if (localPos.x !== lastX || localPos.z !== lastZ) { lastX = localPos.x; lastZ = localPos.z; nap(); }
+      sendMove(localPos.x,localPos.z,localPos.rot);
+    },1000);
   } catch {
     if (seq === generation) later(seq);
   }
@@ -115,14 +120,18 @@ export async function joinVillage(): Promise<void> {
   useWorld.setState({server:"connecting"}); void connect(seq);
 }
 export function leaveVillage() { ++generation; napping = false; disconnect(); useWorld.setState({server:"offline"}); }
-// 잊고 열어 둔 탭이 무료 서버의 대역폭을 갉지 않게(guide/DEPLOY.md) — 2분 숨어 있으면 마을 룸에서 내리고, 다시 보이면 잇는다
+// 잊고 열어 둔 탭이 무료 서버의 대역폭을 갉지 않게(guide/DEPLOY.md) — 2분 숨어 있거나 5분 손대지 않으면 마을 룸에서 내리고
+// (서버를 두드리는 것도 멈춘다), 다시 보이거나 손대면 잇는다. 하트비트는 걷지 않아도 나가므로 서버의 15초 정리로는 잡히지 않는다
 // (뒤 탭으로 열려 한 번도 보이지 않은 페이지도 같다 — 처음에 한 번 본다)
-let napping = false, hidden: ReturnType<typeof setTimeout> | undefined;
+let napping = false, idle: ReturnType<typeof setTimeout> | undefined;
 function nap() {
-  clearTimeout(hidden);
-  if (document.hidden) hidden = setTimeout(() => { if (WS_URL && runtime && !napping) { leaveVillage(); napping = true; } },120000);
-  else if (napping) { napping = false; void joinVillage(); }
+  clearTimeout(idle);
+  idle = setTimeout(() => { if (WS_URL && runtime && !napping) { leaveVillage(); napping = true; } },document.hidden ? 120000 : 300000);
+  if (napping && !document.hidden) { napping = false; void joinVillage(); }
 }
-if (typeof document !== "undefined") { document.addEventListener("visibilitychange",nap); nap(); }
+if (typeof document !== "undefined") {
+  for (const e of ["visibilitychange","keydown","pointerdown"]) document.addEventListener(e,nap,{ capture:true,passive:true });
+  nap();
+}
 export function sendMove(x:number,z:number,rot:number) { room?.send("move",{x,z,rot,zone:useWorld.getState().zone}); }
 export function sendEmote(icon:string) { track("emote", { icon, via: room ? "server" : "chain" }); if (room) room.send("emote",icon); else sendEmoteOnChain(icon); }

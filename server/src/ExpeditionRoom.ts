@@ -3,6 +3,8 @@ import { addFighter, act, createExpedition, MAX_PARTY, setInput, tickExpedition,
 
 /** 동의 없이 끊긴 대원(소켓이 끊겼거나 15초 무입력으로 내보낸 사람)의 자리를 지키는 시간 — PROTOCOL.md §3.7 */
 const RECONNECT_SECONDS = 20;
+/** 끝난 원정을 닫기까지의 시간 — 결과 카드는 클라이언트에 남는다. 잊고 열어 둔 탭이 20Hz 를 계속 받지 않게(guide/DEPLOY.md) */
+const FINISHED_SECONDS = 60;
 
 /** 한 룸 = 한 원정. 자산·지갑·온체인 보상을 다루지 않는 서버 권위 전투. */
 export class ExpeditionRoom extends Room {
@@ -23,7 +25,10 @@ export class ExpeditionRoom extends Room {
       // 모두가 잠깐 끊긴 동안(혼자 하던 원정)은 시간을 세운다 — 돌아오면 떠난 그 순간 그대로다
       if (this.combat.players.length || !this.away.size) tickExpedition(this.combat, dt);
       for (const c of this.clients) if (this.combat.now - (this.seen.get(c.sessionId) ?? 0) > 15000) void c.leave();
-      if (!this.finished && (this.combat.phase === "victory" || this.combat.phase === "defeat")) { this.finished=true; void this.lock(); }
+      if (!this.finished && (this.combat.phase === "victory" || this.combat.phase === "defeat")) {
+        this.finished=true; void this.lock();
+        this.clock.setTimeout(() => void this.disconnect(), FINISHED_SECONDS * 1000);
+      }
       this.broadcast("combat", this.combat);
     }, 50);
   }
