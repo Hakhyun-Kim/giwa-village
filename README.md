@@ -13,9 +13,10 @@ GIWA 체인 위의 **한옥 저잣거리** — 지갑으로 접속해 아바타�
 지갑의 기능을 공간의 문화로 번역한다.
 
 > 🌐 **[라이브 데모](https://hakhyun-kim.github.io/giwa-village/)는 풀온체인
-> 서버리스입니다** — 게임 서버 없이 GIWA 체인만으로 동작합니다. 다른 방문자의
+> 서버리스입니다** — 게임 서버 없이도 GIWA 체인만으로 동작합니다. 다른 방문자의
 > 아바타(프레즌스 비컨)와 노점이 그대로 보이고, 테스트 ETH만 받으면 노점 개설 →
-> 구매 → 길드 던전까지 전부 실동작합니다.
+> 구매 → 길드 던전까지 전부 실동작합니다. 사람이 모이는 때에만 시연 서버가 떠서
+> 걸음이 부드러워지고 동료와 함께 원정을 갈 수 있습니다 — 꺼져 있으면 조용히 체인만으로 돌아갑니다.
 >
 > **처음 오시면 촌장이 한 번 묻습니다** — *"마을을 대신 걸어서 보여줄까?"*
 > **예**를 고르면 자막과 함께 자동 시연이 돌고(ESC로 언제든 멈춤), 잔액이 없으면
@@ -107,7 +108,7 @@ core/       던전 판정 순수 모듈 — 클라이언트와 검증기가 같�
 contracts/  Solidity 10종 (카탈로그: contracts/README.md)
 sdk/        @giwa-village/sdk — 외부 dApp·봇용 읽기 SDK
 mcp/        기와장터 MCP 서버 — LLM이 마을을 읽고 키가 있으면 직접 장사한다
-server/     (선택) Colyseus 룸 서버 — 성능용 위치 릴레이. 없어도 마을은 돈다
+server/     (선택) Colyseus 룸 서버 — 위치 릴레이 · 함께하는 원정. 없어도 마을은 돈다 (render.yaml · 0원 시연 서버)
 scripts/    배포·검증·봇·스모크
 ```
 
@@ -125,7 +126,7 @@ scripts/    배포·검증·봇·스모크
 | 외부 dApp에서 프로필 읽기 | [sdk/README.md](sdk/README.md) |
 | 로드맵 · 규제 안전선 | [guide/ROADMAP.md](guide/ROADMAP.md) |
 | 반입 에셋 원장 (출처·라이선스) | [ASSETS.md](ASSETS.md) |
-| 서버 호스팅 (선택) | [guide/DEPLOY.md](guide/DEPLOY.md) |
+| 시연 서버 0원 호스팅 (선택) | [guide/DEPLOY.md](guide/DEPLOY.md) |
 | 계측 스키마 (모든 클라이언트 공용 · 기본 꺼짐) | [guide/ANALYTICS.md](guide/ANALYTICS.md) |
 | 개인정보 처리방침 · 이용약관 (v0 초안 · 법률 자문 아님) | [guide/PRIVACY.md](guide/PRIVACY.md) · [guide/TERMS.md](guide/TERMS.md) |
 | 작업 규칙 (사람·AI 공용) | [CLAUDE.md](CLAUDE.md) |

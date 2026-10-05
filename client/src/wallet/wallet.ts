@@ -9,7 +9,7 @@ import {
   type WalletClient,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { giwaSepolia, WS_URL } from "../config/giwa";
+import { giwaSepolia } from "../config/giwa";
 import { useStore } from "../state/store";
 import { sfxFail, sfxSent } from "../audio/sfx";
 import { track, txReason } from "../net/analytics";
@@ -164,10 +164,10 @@ interface TestWallet {
 /**
  * Load a throwaway test wallet for the given slot (A–D) from the dev server.
  * Keys live in .testwallets.json (git-ignored); dev/testnet use only.
+ * 키는 언제나 이 기기의 개발 서버에서만 받는다 — 빌드가 가리키는 룸 서버(WS_URL)가 키를 주입하지 못하게.
  */
 export async function loadBurner(slot: string): Promise<`0x${string}`> {
-  const base = WS_URL.replace(/^ws/, "http");
-  const res = await fetch(`${base}/dev/wallets`);
+  const res = await fetch("http://localhost:2567/dev/wallets");
   if (!res.ok) {
     throw new Error("테스트 지갑 파일이 없습니다. `npm run wallets`를 실행하세요.");
   }

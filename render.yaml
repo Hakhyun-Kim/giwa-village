@@ -1,0 +1,22 @@
+# Render 무료 웹 서비스 — 시연용 룸 서버(Colyseus)만. 클라이언트는 GitHub Pages 그대로다.
+# 0원은 결제 수단을 등록하지 않은 계정에서만이다: 월 송신 5GB 를 넘기면 청구 대신 그달 정지(guide/DEPLOY.md).
+# 15분 조용하면 잠들고 첫 요청에 약 1분 걸려 깬다 — 서버는 영구 기록이 없어 잃을 것이 없다.
+services:
+  - type: web
+    name: giwa-village
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /
+    # 서버를 이루는 파일이 바뀐 푸시에만 다시 짓는다(문서 · 클라이언트만 바뀐 푸시로 빌드 시간을 쓰지 않게)
+    buildFilter:
+      paths:
+        - server/**
+        - shared/**
+        - Dockerfile
+        - package.json
+        - package-lock.json
+    envVars:
+      # /dev/* 를 닫는다 — Dockerfile 에도 있지만 여기서 한 번 더 못 박는다. PORT 는 Render 가 넣고 서버가 그것을 읽는다
+      - key: NODE_ENV
+        value: production

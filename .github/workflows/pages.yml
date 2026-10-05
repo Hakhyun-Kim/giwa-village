@@ -34,15 +34,19 @@ jobs:
       # 부팅 스모크 = 배포 게이트. 첫 방문자 동선을 실제 브라우저로 밟아 보고,
       # 실패하면 여기서 멈춰 깨진 데모가 올라가지 않게 한다.
       # 스모크는 base 없이 빌드한 산출물로 돌린다 (프리뷰가 "/" 로 서빙되도록).
+      # 룸 서버는 일부러 닫힌 포트를 준다 — 시연 서버가 꺼져 있을 때 조용히 서버 없이 도는지가 게이트다.
       - run: npx playwright install --with-deps chromium
       - run: npm run build -w client
         env:
           VITE_DEMO: "1"
+          VITE_WS_URL: ws://127.0.0.1:2599
       - run: npm run smoke:boot
 
+      # 시연 서버 주소는 저장소 변수 DEMO_WS_URL(guide/DEPLOY.md) — 비어 있으면 서버 없이 돈다
       - run: npm run build -w client
         env:
           VITE_DEMO: "1"
+          VITE_WS_URL: ${{ vars.DEMO_WS_URL }}
           VITE_BASE: /${{ github.event.repository.name }}/
       - uses: actions/upload-pages-artifact@v5
         with:

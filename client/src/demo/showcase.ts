@@ -509,10 +509,10 @@ async function tour(my: string | null) {
 async function run(gasless: boolean, patient: boolean) {
   mountOverlay();
   try {
-    // 0) 접속·지갑 대기 (데모 모드 = 풀온체인 서버리스로 그대로 시연)
+    // 0) 접속·지갑 대기 (시연 서버가 있든 없든 체인 위에서 그대로 시연)
     caption(
       "🏮 <b>기와장터</b> — 지갑이 아바타가 되는 한옥 저잣거리입니다",
-      DEMO ? "풀온체인 서버리스 — 서버 없이 GIWA 체인만으로 동작 중" : "접속 중…",
+      DEMO ? "풀온체인 — 서버가 없어도 GIWA 체인만으로 마을이 돌아갑니다" : "접속 중…",
     );
     const ready = await waitFor(() => {
       const s = useStore.getState();

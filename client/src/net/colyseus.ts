@@ -1,5 +1,5 @@
 import type { Client, Room } from "colyseus.js";
-import { WS_URL, DEMO } from "../config/giwa";
+import { WS_URL } from "../config/giwa";
 import { track } from "./analytics";
 import { startDemo } from "../demo/demo";
 import { sendEmoteOnChain, applyPeers } from "../chain/village";
@@ -8,7 +8,7 @@ import { useStore, remoteTargets } from "../state/store";
 import { liveAddresses, liveTargets, useWorld } from "../state/world";
 
 export const localPos = { x: 0, z: 5, rot: 0, ready: false };
-// colyseus.js 는 룸 서버에 붙을 때만 받는다 — 서버 없는 공개 데모는 이 짐(약 110KB)을 받지 않는다.
+// colyseus.js 는 룸 서버에 붙을 때만 받는다 — 서버가 없거나 꺼져 있으면 이 짐(약 110KB)을 받지 않는다.
 let client: Promise<Client> | null = null;
 export function liveClient(): Promise<Client> {
   return client ??= import("colyseus.js").then(m => new m.Client(WS_URL)).catch(err => { client = null; throw err; });
@@ -19,6 +19,9 @@ let generation = 0;
 let retry: ReturnType<typeof setTimeout> | undefined;
 let heartbeat: ReturnType<typeof setInterval> | undefined;
 let runtime: Promise<void> | null = null;
+// 꺼진 서버를 두드리는 간격 — 4초에서 두 배씩 60초까지. 붙으면 처음으로 돌아간다
+const FIRST_WAIT = 4000;
+let wait = FIRST_WAIT;
 let applied = new Set<string>();
 const sessionKeys = new Map<string, string>();
 
@@ -56,13 +59,26 @@ function receive(snapshot: Peer[], selfId: string) {
   if (changed) s.setPlayers(players);
   s.setOnlineCount(Object.keys(players).filter(id => !id.startsWith("npc-")).length + 1);
 }
+function later(seq: number) {
+  useWorld.setState({ server:"offline" }); // 그동안은 서버 없이 돈다 — 체인 프레즌스 · 혼자 연습
+  retry = setTimeout(() => void connect(seq),wait); wait = Math.min(wait*2,60000);
+}
+// 서버가 떠 있는지 한 번 묻는다(PROTOCOL.md §0 — GET /). 꺼져 있으면 colyseus.js 도 받지 않고 /matchmake 도 두드리지 않는다
+async function reachable(): Promise<boolean> {
+  try {
+    const res = await fetch(`${WS_URL.replace(/^ws/,"http")}/`,{ cache:"no-store",signal:AbortSignal.timeout(3000) });
+    return (await res.json())?.service === "giwa-village-server";
+  } catch { return false; }
+}
 async function connect(seq: number) {
+  if (seq !== generation) return;
+  if (!(await reachable())) { if (seq === generation) later(seq); return; }
   if (seq !== generation) return;
   const s = useStore.getState();
   try {
     const joined = await (await liveClient()).joinOrCreate("village_live", { name:s.selfName,color:s.selfColor });
     if (seq !== generation) { void joined.leave(); return; }
-    room = joined; useWorld.setState({ server:"online" });
+    room = joined; wait = FIRST_WAIT; useWorld.setState({ server:"online" });
     joined.onMessage("snapshot", (peers: Peer[]) => { if (seq === generation) receive(peers,joined.sessionId); });
     joined.onMessage("challenge", async (message: string) => {
       const wc = activeWalletClient;
@@ -81,25 +97,32 @@ async function connect(seq: number) {
     });
     joined.onLeave(() => {
       if (seq !== generation) return;
-      room = null; clearInterval(heartbeat); clearPeers(); useWorld.setState({ server:"offline" });
-      retry = setTimeout(() => void connect(seq),4000);
+      room = null; clearInterval(heartbeat); clearPeers(); later(seq);
     });
     joined.send("ready"); sendMove(localPos.x,localPos.z,localPos.rot);
     heartbeat = setInterval(() => sendMove(localPos.x,localPos.z,localPos.rot),1000);
   } catch {
-    if (seq !== generation) return;
-    useWorld.setState({ server:"offline" }); retry = setTimeout(() => void connect(seq),4000);
+    if (seq === generation) later(seq);
   }
 }
 export async function joinVillage(): Promise<void> {
-  const seq = ++generation; disconnect();
+  const seq = ++generation; disconnect(); wait = FIRST_WAIT;
   // 재접속 때 NPC·지갑·위치를 재초기화하지 않는다. 브라우저 수명의 공통 런타임.
   runtime ??= startDemo(localPos).catch(err => { runtime = null; throw err; });
   await runtime;
   if (seq !== generation) return;
-  if (DEMO) { useWorld.setState({server:"offline"}); return; }
+  if (!WS_URL) { useWorld.setState({server:"offline"}); return; }
   useWorld.setState({server:"connecting"}); void connect(seq);
 }
-export function leaveVillage() { ++generation; disconnect(); useWorld.setState({server:"offline"}); }
+export function leaveVillage() { ++generation; napping = false; disconnect(); useWorld.setState({server:"offline"}); }
+// 잊고 열어 둔 탭이 무료 서버의 대역폭을 갉지 않게(guide/DEPLOY.md) — 2분 숨어 있으면 마을 룸에서 내리고, 다시 보이면 잇는다
+// (뒤 탭으로 열려 한 번도 보이지 않은 페이지도 같다 — 처음에 한 번 본다)
+let napping = false, hidden: ReturnType<typeof setTimeout> | undefined;
+function nap() {
+  clearTimeout(hidden);
+  if (document.hidden) hidden = setTimeout(() => { if (WS_URL && runtime && !napping) { leaveVillage(); napping = true; } },120000);
+  else if (napping) { napping = false; void joinVillage(); }
+}
+if (typeof document !== "undefined") { document.addEventListener("visibilitychange",nap); nap(); }
 export function sendMove(x:number,z:number,rot:number) { room?.send("move",{x,z,rot,zone:useWorld.getState().zone}); }
 export function sendEmote(icon:string) { track("emote", { icon, via: room ? "server" : "chain" }); if (room) room.send("emote",icon); else sendEmoteOnChain(icon); }

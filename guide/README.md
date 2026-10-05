@@ -36,7 +36,7 @@
 | 문서 | 여기에 있는 것 |
 |---|---|
 | [ROADMAP.md](ROADMAP.md) | 지나온 것·다음 후보·규제 안전선(설계 원칙) |
-| [DEPLOY.md](DEPLOY.md) | (선택) Colyseus 서버 호스팅 — 없어도 마을은 돈다 |
+| [DEPLOY.md](DEPLOY.md) | (선택) 시연 서버를 0원으로 — Render 무료 · PC + 터널. 없어도 마을은 돈다 |
 | [PRIVACY.md](PRIVACY.md) · [TERMS.md](TERMS.md) | 개인정보 처리방침 · 이용약관 v0 초안(법률 자문 아님) — 테스트넷 전용 · 금전 가치 없음 · 체인 기록은 지울 수 없음 |
 | [V4.md](V4.md) | 다음 컨트랙트 판(V4) 설계 노트 — 설계만 · 임시 조치 표 포함 |
 | [ANALYTICS.md](ANALYTICS.md) | 계측 이벤트 스키마 — 웹 · Unity 가 같은 이름으로 센다 · 기본 꺼짐 · 주소 · tx 해시 없음 |

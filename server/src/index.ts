@@ -17,6 +17,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const WALLETS_FILE = path.resolve(ROOT, ".testwallets.json");
 
 const LOCAL_ADDRESSES = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+// 터널 · 리버스 프록시(cloudflared 등)는 루프백으로 들어온다 — 전달 헤더가 하나라도 붙었으면 이 기기의 요청이 아니다
+const FORWARDED = ["x-forwarded-for", "cf-connecting-ip", "forwarded", "x-real-ip"];
 
 const httpServer = http.createServer((req, res) => {
   const cors = { "Access-Control-Allow-Origin": "*" };
@@ -29,7 +31,7 @@ const httpServer = http.createServer((req, res) => {
   }
 
   if (req.url?.startsWith("/dev/wallets")) {
-    if (!LOCAL_ADDRESSES.has(req.socket.remoteAddress ?? "")) {
+    if (!LOCAL_ADDRESSES.has(req.socket.remoteAddress ?? "") || FORWARDED.some((h) => h in req.headers)) {
       res.writeHead(403, cors);
       res.end("local only");
       return;

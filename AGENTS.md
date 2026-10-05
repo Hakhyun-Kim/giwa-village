@@ -65,7 +65,7 @@ client/  Vite + React Three Fiber + zustand + viem + Colyseus.js
             + collide.ts(배치표·충돌 — 그리는 쪽과 막는 쪽이 같은 표를 읽는다)
   ui/       HUD·다이얼로그 + Welcome.tsx(첫 방문자에게 시연 여부를 한 번 묻는 카드)
             + QuestLog.tsx(촌장의 부탁 — 시연 중에는 비켜 준다)
-  demo/     서버 없는 모드(VITE_DEMO=1): NPC 로컬 시뮬 + 온체인은 실동작
+  demo/     NPC 로컬 시뮬 + 온체인은 실동작 — 서버가 있든 없든 돈다(VITE_DEMO=1 은 공개 정적 빌드: ?slot 끔 · 시연 문구)
             (걸음 규칙은 wander.ts — 순수 모듈이라 npm test가 그대로 걸려 본다)
             showcase.ts는 두 갈래 — 실거래 시연과 쓰기 0인 구경 모드
   audio/    배경음(파일 0개 · 절차 생성) + 효과음(합성 + 반입한 CC0 조각)
@@ -197,6 +197,7 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
 
 - **작업은 main 에 바로 한다** — 혼자 하는 저장소라 브랜치 · PR 을 두지 않는다(2026-10-04 소유자 지침).
   대신 **main 푸시가 곧 GitHub Pages 배포**이므로, 푸시 전에 최소 `npm test` · `tsc -b` · `VITE_DEMO=1` 빌드 · `smoke:boot` 을 통과시킨다.
+  서버를 이루는 파일(`server/` · `shared/` · Dockerfile · 패키지 파일)을 고친 푸시는 Render 의 0원 시연 서버도 다시 짓는다(`render.yaml` · [guide/DEPLOY.md](guide/DEPLOY.md)).
 - `test:local`은 anvil을 **chain-id 91342**로 띄워 체인 가드를 그대로 통과시킨다.
   없으면 설치 방법만 안내하고 종료한다(의존성에 넣지 않는 이유는 README 참고).
   **시간 여행이 핵심** — 장날·쿨다운·모닥불 창을 `evm_increaseTime`으로 점프해 본다.
@@ -206,7 +207,8 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
   localStorage(첫 방문자)로** 여는 것이 요점이다 — 개발자 브라우저에는 온보딩
   진행 기록이 남아 있어 "첫 방문자에게만 나는 문제"를 영영 못 잡는다.
   공개 테스트넷 RPC에서 온 콘솔 에러는 일부러 걸러낸다. 남의 사정으로 게이트가
-  빨간불이 되면 곧 아무도 안 본다.
+  빨간불이 되면 곧 아무도 안 본다. CI 는 닫힌 룸 서버 주소(`ws://127.0.0.1:2599`)로
+  빌드한다 — 시연 서버가 꺼져 있어도 조용히 서버 없이 도는지가 배포 게이트다.
 
 ### 자동화 훅
 

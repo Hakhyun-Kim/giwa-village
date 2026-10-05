@@ -1,5 +1,5 @@
 // 크로스플레이 링크를 이 페이지에서 짓는 쪽 — 규칙은 shared/crosslink.ts, 화면은 ui/CrossPlay.tsx · ui/RaidInvite.tsx.
-import { buildLink, cleanCode, cleanServer, intentLink } from "../../../shared/crosslink";
+import { buildLink, cleanCode, intentLink } from "../../../shared/crosslink";
 import { WS_URL } from "../config/giwa";
 
 const UA = typeof navigator === "undefined" ? "" : navigator.userAgent;
@@ -15,7 +15,7 @@ export function inviteUrl(code: string): string {
 
 /** 앱을 여는 주소 — Android 는 intent(앱이 없으면 웹으로 돌아온다), Windows 는 giwa://. 앱이 없는 곳은 null */
 export function appHref(code: string, online: boolean): string | null {
-  const link = { server: online ? cleanServer(WS_URL) : "", code: online ? cleanCode(code) : "" };
+  const link = { server: online ? WS_URL : "", code: online ? cleanCode(code) : "" };
   if (PLATFORM === "other") return null;
   return PLATFORM === "android" ? intentLink(link, inviteUrl(link.code)) : buildLink(link);
 }

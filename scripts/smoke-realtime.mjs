@@ -15,6 +15,9 @@ async function expedition(code){const r=code?await client.joinById(code,{name:"�
   r.onMessage("combat",s=>snapshot=s);r.send("ready");await until(()=>snapshot);return {r,get state(){return snapshot;}};}
 try {
   await until(async()=>{try{return (await fetch(url)).ok;}catch{return false;}});
+  // 터널 · 프록시는 루프백으로 들어온다 — 전달 헤더가 붙은 요청에는 개발 지갑 창구가 닫혀야 한다(파일을 읽기 전에 거절한다)
+  for(const h of ["x-forwarded-for","cf-connecting-ip","forwarded","x-real-ip"])assert.equal((await fetch(`${url}/dev/wallets`,{headers:{[h]:"203.0.113.7"}})).status,403,h);
+  console.log("PASS 개발 지갑 창구: 터널 · 프록시를 거친 요청(전달 헤더 넷)은 403");
   const a=await expedition(), b=await expedition(), mate=await expedition(a.r.roomId);
   await until(()=>a.state.players.length===2);
   assert.notEqual(a.r.roomId,b.r.roomId);assert.equal(b.state.players.length,1);

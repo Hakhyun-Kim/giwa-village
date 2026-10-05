@@ -9,6 +9,7 @@
     "dev": "concurrently -n server,client -c blue,green \"npm run dev -w server\" \"npm run dev -w client\"",
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
+    "demo-server": "node scripts/demo-server.mjs",
     "playtest": "node scripts/launch-test.mjs",
     "showcase": "node scripts/launch-test.mjs --showcase",
     "test": "node scripts/test-logic.mjs && node --test scripts/test-expedition.mjs scripts/test-crosslink.mjs",

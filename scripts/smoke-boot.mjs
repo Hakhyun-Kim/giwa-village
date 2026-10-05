@@ -5,12 +5,14 @@
 //   ② 온보딩(촌장의 부탁)이 첫 방문자에게 보인다
 //   ③ 환영 카드에 답하면 풍류가 함께 켜진다 (효과음이 얹히는 컨텍스트)
 //   ④ 미처리 예외 0건, 우리 코드에서 난 콘솔 에러 0건
+//   ⑤ 룸 서버가 꺼져 있으면 조용히 서버 없이 돈다 — 표시는 "서버 없이", /matchmake 요청 0건
 //
 // 일부러 검사하지 않는 것: 온체인 읽기의 성공 여부. 공개 테스트넷 RPC는
 // 레이트리밋·리플리카 지연이 일상이라, 그걸 게이트에 넣으면 게이트가 남의 사정으로
 // 빨간불이 되고 곧 아무도 안 본다. RPC 호스트에서 온 에러는 걸러낸다.
 //
 // 로컬: npm run build -w client (VITE_DEMO=1) 후 npm run smoke:boot
+//       CI 는 VITE_WS_URL=ws://127.0.0.1:2599(닫힌 포트)로 빌드한다 — 꺼진 시연 서버 갈래까지 본다.
 //       설치된 Chrome을 재사용하므로 브라우저 다운로드가 필요 없다.
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -20,6 +22,7 @@ import { WORLD_FILE } from "./lib/world.mjs";
 
 const PORT = 4179;
 const RPC_HOST = "giwa.io"; // 공개 테스트넷 RPC·포셋·익스플로러 — 우리 결함이 아니다
+const DEAD_SERVER = "127.0.0.1:2599"; // CI 빌드가 가리키는 꺼진 룸 서버 — 거절당하는 것이 정상이다(.github/workflows/pages.yml)
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const fails = [];
@@ -59,6 +62,7 @@ function collectErrors(page) {
     const url = m.location()?.url ?? "";
     const text = m.text();
     if ((url + text).includes(RPC_HOST)) return;
+    if ((url + text).includes(DEAD_SERVER)) return;
     if (/favicon|apple-touch-icon/.test(url + text)) return;
     errors.push(`[console] ${text}${url ? ` ← ${url}` : ""}`);
   });
@@ -111,6 +115,12 @@ try {
   // 계측은 smoke 에서 꺼져 있어야 한다(guide/ANALYTICS.md) — 키를 넣고 빌드해도 자동화에서는 보내지 않는다
   const beacons = [];
   page.on("request", (r) => { if (/\/batch\/?$/.test(new URL(r.url()).pathname)) beacons.push(r.url()); });
+  // 룸 서버 — 상태 확인(GET /)만 하고, 답이 없으면 /matchmake 를 두드리지 않아야 한다
+  const probes = [], matchmake = [];
+  page.on("request", (r) => {
+    if (r.url().includes(DEAD_SERVER)) probes.push(r.url());
+    if (r.url().includes("/matchmake/")) matchmake.push(r.url());
+  });
 
   // ?rafshim: 헤드리스에서 배경 탭 스로틀로 프레임이 멈추는 것을 막는다
   await page.goto(`http://localhost:${PORT}/?rafshim&debug`, {
@@ -164,6 +174,13 @@ try {
     .then(() => true)
     .catch(() => false);
   must(quest, "촌장의 부탁(온보딩)이 첫 방문자에게 보인다");
+
+  // 시연 서버는 창에만 뜬다 — 없거나 꺼져 있으면 첫 방문자는 아무것도 모른 채 서버 없이 논다
+  const serverless = await page
+    .waitForSelector(".server-dot.offline", { timeout: 15000 })
+    .then(() => true)
+    .catch(() => false);
+  must(serverless, "룸 서버가 없거나 꺼져 있으면 ‘서버 없이 마을 진행 중’으로 선다");
 
   // 풍류 — 자동재생 정책상 사용자 제스처 안에서만 열리는데, 환영 카드 답변이
   // 곧 첫 제스처다. 그래서 따로 누르지 않아도 이 시점엔 이미 켜져 있어야 한다.
@@ -461,6 +478,7 @@ try {
   // 몇 초 더 돌려 NPC 이동·주야 사이클·비컨 경로에서 터지는 것이 없는지 본다
   await wait(6000);
   must(beacons.length === 0, `계측이 꺼져 있다 (분석 전송 ${beacons.length}건)`);
+  must(matchmake.length === 0, `꺼진 룸 서버에 자리를 청하지 않는다 (/matchmake ${matchmake.length}건 · 상태 확인 ${probes.length}번)`);
   must(errors.length === 0, `콘솔 에러 0 (${errors.length}건)`);
   errors.forEach((e) => console.log("   " + e));
 
