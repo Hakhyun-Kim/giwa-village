@@ -16,7 +16,7 @@
 | `doorRoll(seed, guildId, attempt, step, door)` | `GiwaGuilds.doorRoll` | 던전 문 1개 판정 (safe/bonus/trap) |
 | `resolveRun(seed, guildId, attempt, picks)` | `GiwaGuilds.settleRun` 재계산 루프 | 문 배열 전체 판정 — 옵티미스틱 시뮬 + 검증 |
 | `safeDoorAt(seed, guildId, attempt, step)` | — | 봇/AI 주민이 비-함정 문 선택 |
-| `omenAt(seed, guildId, attempt, step)` | — (화면 힌트 · `doorRoll` 과 다른 해시 영역) | 걸음마다 문 하나의 기척 `{ door, shows }` — 열에 여덟(`OMEN_ACCURACY_LT` 205/256)은 맞는다 |
+| `omenAt(seed, guildId, attempt, step)` | — (화면 힌트 · `doorRoll` 과 다른 해시 영역) | 걸음마다 문 하나의 기척 `{ door, shows }` — 205/256(`OMEN_ACCURACY_LT`)은 참 그대로, 나머지는 같은 문을 한 번 더 굴린 것이라 어느 기척이든 열에 여덟 이상 맞는다 |
 | `strikeDamage(prevBlockHash, striker, ts, warmth, marketDay)` | `GiwaBoss.strike` | 보스 실제 데미지 재현 (검증기) |
 | `strikeRange(warmth, marketDay)` | — | 타격 전 데미지 범위 (옵티미스틱 UI) |
 

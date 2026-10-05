@@ -169,7 +169,7 @@ DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 �
 | 수치 | 사는 곳 | 지키는 장치 |
 |---|---|---|
 | 던전 문 확률 (safe/bonus/trap) | `contracts/GiwaGuilds.sol` · `core/src/dungeon.ts` (클라이언트는 core 를 임포트한다) | `npm test` — 두 곳의 경계값 일치 + 손익분기가 2~8층 안에 있을 것 |
-| 문 앞 기척의 정확도 (열에 여덟) | `core/src/dungeon.ts` 의 `OMEN_ACCURACY_LT` **한 곳** (화면 힌트 · 체인에는 없다) | `npm test` — 표본 20,000 이 80% ± 1.5%p + 기척을 따르는 최선의 수(DP)에서 세 문이 모두 10% 이상 |
+| 문 앞 기척의 정확도 (열에 여덟) | `core/src/dungeon.ts` 의 `OMEN_ACCURACY_LT` **한 곳** (화면 힌트 · 체인에는 없다) | `npm test` — 표본 1,500 이 명세와 바이트까지 같다 + 어느 기척이든 80% 이상 맞고 문이 낼 수 없는 결과는 들리지 않는다 + 기척을 따르는 최선의 수(DP)에서 세 문이 모두 10% 이상 |
 | 흥정 하한선 판단 | `scripts/lib/haggle.mjs` **한 곳** (봇과 테스트가 공유) | `npm test` |
 | 장날 판정 | `contracts/GiwaHearth.sol` · `client/src/chain/hearth.ts` | `npm run test:local` — 표본 64개 대조 |
 | 주야 사이클 밝기 | `client/src/game/daylight.ts` | `npm test` — 밤에도 읽을 수 있는 하한 |

@@ -5,7 +5,7 @@
 //   문별 경계는 DOOR_PROFILES에 있다. 돌문은 안정, 바람문은 균형, 도깨비문은 고위험·고보너스로 설계했다.
 //   기척(omenAt · guide/V4.md §10.2): 표만으로는 웹 화면의 규칙(함정이면 그 원정의 걸음을 버린다)에서 기대값으로 돌문이
 //   0~5층 늘 최선이고 6층부터는 귀환이 낫다 — 문 고르기가 결정이 되지 못했다. 그래서 걸음마다 문 하나의 기척을 미리 들려준다
-//   (열에 여덟은 맞는다). 기척을 따르면 최선의 수가 세 문에 퍼진다(npm test 가 DP 로 잰다). 표 · doorRoll · 체인은 그대로다.
+//   (어느 기척이든 열에 여덟 이상 맞는다). 기척을 따르면 최선의 수가 세 문에 퍼진다(npm test 가 DP 로 잰다). 표 · doorRoll · 체인은 그대로다.
 //   남은 한계(guide/V4.md §10): 시드가 공개되면 결과를 미리 계산할 수 있고(GiwaGuilds.settleRun 주석), 함정을 밟은 회차도
 //   앞부분만으로 다시 정산할 수 있다(되돌림이 정산 표시를 지운다). 둘 다 걸음마다 온체인에 봉인해야 막힌다 — 설계로만 둔다.
 // 이 파일은 그 로직을 프레임워크 없이 재현해, 아래 넷이 "같은 코드"를 쓰게 한다:
@@ -52,14 +52,19 @@ export function doorRoll(
       [seed, guildId, attempt, BigInt(step), door],
     ),
   );
-  const b = hexToBytes(digest)[0];
+  return outcomeOf(door, hexToBytes(digest)[0]);
+}
+
+/** 바이트 하나(0~255)를 문 표에 대어 본 결과 — doorRoll 과 기척이 같은 경계를 쓴다 */
+function outcomeOf(door: number, b: number): DoorOutcome {
   const profile = DOOR_PROFILES[door] ?? DOOR_PROFILES[2];
   if (b < profile.safeLt) return "safe";
   if (b < profile.bonusLt) return "bonus";
   return "trap";
 }
 
-/** 기척이 참을 말하는 경계 — 바이트 하나가 이보다 작으면 참 (205/256 ≈ 0.80, 열에 여덟) */
+/** 기척이 참을 그대로 말하는 경계 — 바이트 하나가 이보다 작으면 참 (205/256 ≈ 0.80). 나머지도 그 문을 한 번 더 굴린 것이라
+ *  어느 기척이든 열에 여덟 이상 맞는다(돌문의 으르렁거림이 가장 낮아 83%) */
 export const OMEN_ACCURACY_LT = 205;
 
 /** 기척 문구 — 웹 · Unity 화면이 함께 읽는다(Unity 는 굽는다). "함정 "으로 시작하는 글자를 두지 않는다 */
@@ -76,14 +81,13 @@ export interface Omen {
   shows: DoorOutcome;
 }
 
-const OUTCOMES: readonly DoorOutcome[] = ["safe", "bonus", "trap"];
-
 /**
  * 이 걸음(step)의 기척 — 문을 고르기 전에 문 하나의 결과를 들려준다. 체인에는 없는 클라이언트 힌트다.
  * doorRoll 과 다른 해시 영역("omen" 꼬리)에서 뽑으므로 문 판정은 한 비트도 바뀌지 않는다.
  *   d = keccak256(abi.encodePacked(seed, guildId, attempt, step, "omen"))
- *   문 = (d[0]<<8 | d[1]) % 3  ·  d[2] < OMEN_ACCURACY_LT 면 그 문의 참 결과,
- *   아니면 나머지 두 결과 중 d[3]&1 번째(safe·bonus·trap 순서에서 참을 뺀 것)
+ *   문 = (d[0]<<8 | d[1]) % 3  ·  d[2] < OMEN_ACCURACY_LT 면 그 문의 참 결과(doorRoll),
+ *   아니면 d[3] 을 같은 문의 표에 대어 본 결과 — 그 문이 낼 수 없는 것(돌문의 순풍)은 들리지 않고,
+ *   어느 기척이든 맞을 확률이 OMEN_ACCURACY_LT/256 + (1 − 그것)·(그 결과의 확률) ≥ 열에 여덟이다
  */
 export function omenAt(
   seed: `0x${string}`,
@@ -100,9 +104,7 @@ export function omenAt(
     ),
   );
   const door = ((d[0] << 8) | d[1]) % 3;
-  const truth = doorRoll(seed, guildId, attempt, step, door);
-  if (d[2] < OMEN_ACCURACY_LT) return { door, shows: truth };
-  return { door, shows: OUTCOMES.filter((o) => o !== truth)[d[3] & 1] };
+  return { door, shows: d[2] < OMEN_ACCURACY_LT ? doorRoll(seed, guildId, attempt, step, door) : outcomeOf(door, d[3]) };
 }
 
 export interface RunResult {
