@@ -14,10 +14,10 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { formatEther, hashTypedData, parseEther, parseSignature } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { formatEther, hashTypedData, parseEther, parseEventLogs, parseSignature } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
-  ANVIL_KEYS, ROOT, anvilMissingMessage, compileAll, deployAll, findAnvil,
+  ANVIL_KEYS, ROOT, UPBIT_KOREA_ATTESTER_ID, anvilMissingMessage, compileAll, deployAll, findAnvil,
   nextMarketDayStart, startChain,
 } from "./lib/localchain.mjs";
 
@@ -70,7 +70,8 @@ try {
   const artifacts = compileAll();
   check("컴파일", true, "13종 · 장터 v4 묶음만 optimizer");
   const C = await deployAll(chain, ANVIL_KEYS[0], artifacts);
-  check("배포", Object.keys(C).length === 13, Object.keys(C).join(", "));
+  const real = Object.keys(C).filter((name) => name !== "DojangMock"); // 시험 전용 Dojang 은 셈에서 뺀다
+  check("배포", real.length === 13, real.join(", "));
 
   // 참가자 — 상인, 손님, 이웃(모닥불 2인 요건용)
   const [merchantKey, buyerKey, neighborKey] = [ANVIL_KEYS[0], ANVIL_KEYS[1], ANVIL_KEYS[2]];
@@ -318,6 +319,33 @@ try {
     }),
     "wait",
   );
+  // 256블록이 지나면 v1 은 keccak(블록, 주소)로 정해 열기 전에 계산할 수 있었다 — v2 는 봉인을 무른다 (V4.md §6)
+  const boxCooldown = Number(await read(C.GiwaBoxes, "COOLDOWN"));
+  await chain.increaseTime(boxCooldown + 1);
+  await send(wB, { address: C.GiwaBoxes.address, abi: C.GiwaBoxes.abi, functionName: "openBox", args: [] });
+  await chain.mine(257);
+  const expiredRcpt = await send(wB, {
+    address: C.GiwaBoxes.address, abi: C.GiwaBoxes.abi, functionName: "reveal", args: [],
+  });
+  const boxEvents = parseEventLogs({ abi: C.GiwaBoxes.abi, logs: expiredRcpt.logs }).map((e) => e.eventName);
+  const [maskAfterExpiry, , pendingAfterExpiry, nextOpenAfterExpiry] = await read(C.GiwaBoxes, "profileOf", [buyer.address]);
+  check(
+    "256블록 뒤 개봉 — 결과 없이 봉인만 무름 (미리 계산할 수 있는 결과를 주지 않는다)",
+    boxEvents.includes("BoxExpired") && !boxEvents.includes("BoxRevealed") &&
+      maskAfterExpiry === trinketMask && pendingAfterExpiry === 0n,
+    boxEvents.join(", "),
+  );
+  check("무른 뒤에는 쿨다운 없이 다시 열 수 있다", nextOpenAfterExpiry === 0n);
+  await send(wB, { address: C.GiwaBoxes.address, abi: C.GiwaBoxes.abi, functionName: "openBox", args: [] });
+  await send(wB, { address: C.GiwaBoxes.address, abi: C.GiwaBoxes.abi, functionName: "reveal", args: [] });
+  check(
+    "다시 연 상자는 열기 뒤의 블록 해시로 정해진다",
+    (await read(C.GiwaBoxes, "profileOf", [buyer.address]))[0] !== 0n,
+  );
+  check(
+    "확률표가 계약 상수다 (여덟 가지 모두 1/8)",
+    (await read(C.GiwaBoxes, "KINDS")) === 8 && (await read(C.GiwaBoxes, "ODDS_DENOMINATOR")) === 8,
+  );
 
   // ── 문양 공방 (GiwaWorkshop) — 대금 창작자 직송 ─────────────────────────
   section("문양 공방 UGC (GiwaWorkshop)");
@@ -358,8 +386,31 @@ try {
   );
 
   // ── 모닥불 온기 (GiwaHearth) — 시간 여행 ────────────────────────────────
-  section("모닥불 온기 (GiwaHearth) — 10분 창 시간 여행");
+  section("모닥불 온기 (GiwaHearth) — 10분 창 시간 여행 · 지갑이 아니라 사람을 센다");
   const WINDOW = Number(await read(C.GiwaHearth, "WINDOW"));
+  const gatherAs = (wallet) =>
+    send(wallet, { address: C.GiwaHearth.address, abi: C.GiwaHearth.abi, functionName: "gather", args: [] });
+  // 인증 없는 지갑 둘 — 한 사람이 지갑 둘로 혼자 쬐는 것과 구별할 수 없다 (V4.md §8)
+  await gatherAs(wM);
+  await gatherAs(wN);
+  const wGuests = await read(C.GiwaHearth, "windowNow");
+  check("인증 없는 지갑 둘은 반 사람씩", (await read(C.GiwaHearth, "weightOf", [wGuests])) === 2);
+  await chain.increaseTime(WINDOW + 1);
+  await shouldRevert(
+    "인증 없는 지갑 둘로는 온기가 생기지 않는다",
+    () => send(wM, {
+      address: C.GiwaHearth.address, abi: C.GiwaHearth.abi, functionName: "claim", args: [wGuests],
+    }),
+    "alone",
+  );
+  // 업비트 Dojang 인증을 받은 두 사람
+  for (const a of [merchant, neighbor]) {
+    await send(wM, {
+      address: C.DojangMock.address, abi: C.DojangMock.abi, functionName: "setVerified",
+      args: [a.address, UPBIT_KOREA_ATTESTER_ID, true],
+    });
+  }
+  check("Dojang 인증은 한 사람 몫", (await read(C.GiwaHearth, "weightFor", [merchant.address])) === 2);
   await send(wM, { address: C.GiwaHearth.address, abi: C.GiwaHearth.abi, functionName: "gather", args: [] });
   const w0 = await read(C.GiwaHearth, "windowNow");
   await shouldRevert(
@@ -369,7 +420,10 @@ try {
     }),
   );
   await send(wN, { address: C.GiwaHearth.address, abi: C.GiwaHearth.abi, functionName: "gather", args: [] });
-  check("두 사람이 같은 창에 모임", (await read(C.GiwaHearth, "countOf", [w0])) === 2);
+  check(
+    "인증받은 두 사람이 같은 창에 모임",
+    (await read(C.GiwaHearth, "countOf", [w0])) === 2 && (await read(C.GiwaHearth, "weightOf", [w0])) === 4,
+  );
 
   await chain.increaseTime(WINDOW + 1); // 창을 닫는다
   await send(wM, {
@@ -440,6 +494,17 @@ try {
   const s2 = await read(C.GiwaBoss, "statusOf", [merchant.address]);
   check(`쿨다운(${COOLDOWN}초) 경과 후 재타격 성공`, s2[3] > s1[3], `누적 기여 ${s2[3]}`);
   check("온기가 데미지에 반영됨 (온기 보유자)", s2[3] > 0n);
+  // 주는 장날이 끝나는 순간(토 22:00 KST)에 넘어간다 — 장날이 한 주의 절정 (V4.md §7)
+  const marketEnd = marketStart + 3600;
+  await chain.setTime(marketEnd - 60);
+  const weekInMarket = await read(C.GiwaBoss, "week");
+  await chain.setTime(marketEnd + 60);
+  const weekAfter = await read(C.GiwaBoss, "week");
+  check("장날 마지막 1분과 장날 직후 1분은 다른 주다", weekAfter === weekInMarket + 1n, `주 ${weekInMarket} → ${weekAfter}`);
+  check(
+    "새 주에는 도깨비가 다시 온전하다",
+    (await read(C.GiwaBoss, "statusOf", [merchant.address]))[1] === 2000n,
+  );
 
   // ── 프로필 애그리게이터 (GiwaProfile) — RPC 1콜 ─────────────────────────
   section("프로필 애그리게이터 (GiwaProfile)");
@@ -643,6 +708,34 @@ try {
   await send(wB, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "unlink", args: [] });
   check("버너가 스스로 호패를 내려놓음", (await read(C.GiwaIdentity, "identityOf", [buyer.address])) === buyer.address);
 
+  // ── 모닥불이 호패를 따라 사람을 센다 ───────────────────────────────────
+  section("모닥불 v2 — 같은 사람의 버너 둘은 한 사람 · 인증은 호패를 따라간다");
+  await send(wM, {
+    address: C.DojangMock.address, abi: C.DojangMock.abi, functionName: "setVerified",
+    args: [principal.address, UPBIT_KOREA_ATTESTER_ID, true],
+  });
+  const idDeadline3 = BigInt((await chain.now()) + 3600);
+  const sigHearth = await signLink(principal, buyer.address, await read(C.GiwaIdentity, "nonces", [principal.address]), idDeadline3);
+  await send(wB, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "link", args: linkArgs(sigHearth, idDeadline3) });
+  check("호패를 건 버너는 주인의 인증을 따른다", (await read(C.GiwaHearth, "weightFor", [buyer.address])) === 2);
+  await chain.increaseTime(WINDOW + 1);
+  await gatherAs(wP);
+  await shouldRevert("같은 사람의 두 번째 버너는 모닥불에 더해지지 않는다", () => gatherAs(wB), "same-person");
+  const guestKeys = [generatePrivateKey(), generatePrivateKey()]; // 처음 보는 손님 둘
+  for (const k of guestKeys) await chain.fund(privateKeyToAccount(k).address, parseEther("1"));
+  check("호패도 인증도 없으면 반 사람", (await read(C.GiwaHearth, "weightFor", [privateKeyToAccount(guestKeys[0]).address])) === 1);
+  for (const k of guestKeys) await gatherAs(chain.wallet(k));
+  const wMixed = await read(C.GiwaHearth, "windowNow");
+  check(
+    "인증받은 한 사람 + 손님 둘 = 두 사람 몫",
+    (await read(C.GiwaHearth, "countOf", [wMixed])) === 3 && (await read(C.GiwaHearth, "weightOf", [wMixed])) === 4,
+  );
+  const principalWarmth = await read(C.GiwaHearth, "warmthOf", [principal.address]);
+  await chain.increaseTime(WINDOW + 1);
+  await send(wP, { address: C.GiwaHearth.address, abi: C.GiwaHearth.abi, functionName: "claim", args: [wMixed] });
+  check("섞인 모임도 온기를 받는다", (await read(C.GiwaHearth, "warmthOf", [principal.address])) > principalWarmth);
+  await send(wB, { address: C.GiwaIdentity.address, abi: C.GiwaIdentity.abi, functionName: "unlink", args: [] });
+
   // ── v1 → v2 상태 보존 재배포 ───────────────────────────────────────────
   section("v2 마이그레이션 — 길드·칭호·전리품 상태 보존");
   const deployOne = async (name, args) => {
@@ -687,6 +780,24 @@ try {
     (await read(bossV2, "trophiesOf", [merchant.address])) ===
       (await read(C.GiwaBoss, "trophiesOf", [merchant.address])),
   );
+  const hearthV3 = await deployOne("GiwaHearth", [
+    C.GiwaHearth.address,
+    C.GiwaIdentity.address,
+    C.DojangMock.address,
+    UPBIT_KOREA_ATTESTER_ID,
+  ]);
+  check(
+    "모닥불 — 앞 판의 온기를 잇는다",
+    (await read(hearthV3, "warmthOf", [merchant.address])) ===
+      (await read(C.GiwaHearth, "warmthOf", [merchant.address])),
+  );
+  const boxesV3 = await deployOne("GiwaBoxes", [C.GiwaBoxes.address]);
+  const [oldBoxMask, oldBoxEquipped] = await read(C.GiwaBoxes, "profileOf", [buyer.address]);
+  const [newBoxMask, newBoxEquipped] = await read(boxesV3, "profileOf", [buyer.address]);
+  check("복주머니 — 앞 판의 장신구 · 장착을 잇는다", newBoxMask === oldBoxMask && newBoxEquipped === oldBoxEquipped);
+  const ownedKind = [1, 2, 3, 4, 5, 6, 7, 8].find((k) => (oldBoxMask & (1n << BigInt(k))) !== 0n);
+  await send(wB, { address: boxesV3.address, abi: boxesV3.abi, functionName: "equipTrinket", args: [ownedKind] });
+  check("앞 판에서 얻은 장신구를 새 판에서 단다", (await read(boxesV3, "profileOf", [buyer.address]))[1] === ownedKind);
   const profileV2 = await deployOne("GiwaProfile", [
     guildsV2.address,
     honorsV2.address,

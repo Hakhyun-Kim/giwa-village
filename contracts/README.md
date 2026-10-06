@@ -33,6 +33,10 @@ node scripts/verify-contracts.mjs                  # Blockscout standard-input �
 > `GiwaGuilds` v2는 2026-08-29 배포됐다. 생성자가 v1 길드·회원·최고층 기록을
 > 복사했고, 진행 중이던 원정만 주차 경계 안전을 위해 만료했다. `GiwaHonors`와
 > `GiwaBoss`는 이전 주소를 읽는 폴백으로 기존 소울바운드 칭호·전리품을 보존한다.
+>
+> **소스가 체인보다 한 판 앞선 것(배포 대기 · guide/V4.md §6~§8):** `GiwaBoxes`(v2 — 256블록 지난 봉인은 결과 없이 무르고 다시 열기),
+> `GiwaHearth`(v2 — 지갑이 아니라 사람을 센다: 호패의 주인 단위 · Dojang 인증 무게 2 · 아니면 1 · 무게 4 부터 온기),
+> `GiwaBoss`(v3 — 주가 장날 끝 토 22시 KST 에 넘어간다). 셋 다 앞 판을 legacy 로 읽어 잇는다. 위 표의 주소는 앞 판이다.
 
 기존 Dojang(`0xd5077b…`)·UPNameRegistry(`0x091D00…`)는 외부 발행 컨트랙트로
 읽기만 한다 (`client/src/config/dojang.ts` · `client/src/wallet/upid.ts`).

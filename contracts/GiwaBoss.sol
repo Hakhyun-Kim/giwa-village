@@ -19,8 +19,14 @@ interface ILegacyBoss {
 /// 참가비 없음(가스만), 보상은 양도 불가 전리품 카운터 — 규제 안전선 유지.
 /// 데미지는 블록 해시 롤 + 온기 보정, 장날(토 21시 KST)엔 2배.
 /// 개인·길드 기여도가 온체인에 쌓인다.
+///
+/// v3: 한 주가 장날이 끝나는 순간(토 22:00 KST = 13:00 UTC)에 넘어간다 — 장날이 그 주의 마지막
+/// 한 시간, 곧 절정이 된다(guide/V4.md §7). v2 까지는 목요일 09:00 KST 에 넘어가 장날이 주 가운데에 끼었다.
+/// v2 의 전리품은 legacyBoss 로 읽어 잇는다(v2 가 다시 v1 을 잇는다).
 contract GiwaBoss {
     uint256 public constant EPOCH = 7 days;
+    /// 1970-01-01(목) 00:00 UTC 에서 토 13:00 UTC 까지가 2일 13시간 — 그만큼 당겨 주의 경계를 장날 끝에 맞춘다
+    uint256 public constant WEEK_OFFSET = 385200; // 7일 − (2일 13시간)
     uint128 public constant BASE_HP = 2000;
     uint64 public constant COOLDOWN = 30; // 초
 
@@ -53,7 +59,7 @@ contract GiwaBoss {
     }
 
     function week() public view returns (uint256) {
-        return block.timestamp / EPOCH;
+        return (block.timestamp + WEEK_OFFSET) / EPOCH;
     }
 
     /// 타격 — 쿨다운 30초. 데미지 = 10~30 랜덤 + 온기(최대 20) 보정, 장날 2배.

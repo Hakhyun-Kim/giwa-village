@@ -16,6 +16,9 @@ const require = createRequire(import.meta.url);
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const CHAIN_ID = 91342; // GIWA Sepolia와 같게 — 코드의 체인 가드를 그대로 통과시킨다
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+/** 업비트 Korea Dojang 발행자 ID — 실배포와 같은 값(client/src/config/dojang.ts) */
+export const UPBIT_KOREA_ATTESTER_ID =
+  "0xd99b42e778498aa3c9c1f6a012359130252780511687a35982e8e52735453034";
 
 /** anvil이 미리 넣어 주는 결정론적 계정 (Foundry 문서에 공개된 값 — 실자산 없음) */
 export const ANVIL_KEYS = [
@@ -148,8 +151,16 @@ export const TARGETS = [
     args: (d) => [d.GiwaMarketV3, d.GiwaGuilds, ZERO_ADDRESS],
   },
   { file: "GiwaOffers.sol", name: "GiwaOffers", args: (d) => [d.GiwaMarketV3] },
-  { file: "GiwaBoxes.sol", name: "GiwaBoxes" },
-  { file: "GiwaHearth.sol", name: "GiwaHearth" },
+  // 호패는 모닥불이 사람을 셀 때 읽는다 — 모닥불보다 먼저
+  { file: "GiwaIdentity.sol", name: "GiwaIdentity" },
+  // 로컬 시험 전용 Dojang (실배포는 DojangScroll — deploy-village.mjs)
+  { file: "test/DojangMock.sol", name: "DojangMock", mock: true },
+  { file: "GiwaBoxes.sol", name: "GiwaBoxes", args: () => [ZERO_ADDRESS] },
+  {
+    file: "GiwaHearth.sol",
+    name: "GiwaHearth",
+    args: (d) => [ZERO_ADDRESS, d.GiwaIdentity, d.DojangMock, UPBIT_KOREA_ATTESTER_ID],
+  },
   { file: "GiwaWorkshop.sol", name: "GiwaWorkshop" },
   {
     file: "GiwaBoss.sol",
@@ -163,7 +174,6 @@ export const TARGETS = [
       d.GiwaGuilds, d.GiwaHonors, d.GiwaBoxes, d.GiwaHearth, d.GiwaWorkshop, d.GiwaBoss,
     ],
   },
-  { file: "GiwaIdentity.sol", name: "GiwaIdentity" },
   // v4 장터 묶음 — 흥정 v2 의 주소를 생성자에 고정한다(바로 다음 배포 · predict(1))
   { file: "GiwaMarketV4.sol", name: "GiwaMarketV4", optimize: true, args: (_d, predict) => [predict(1)] },
   { file: "GiwaOffersV2.sol", name: "GiwaOffersV2", optimize: true, args: (d) => [d.GiwaMarketV4] },

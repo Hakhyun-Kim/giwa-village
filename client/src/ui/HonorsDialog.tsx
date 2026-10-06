@@ -89,6 +89,8 @@ export default function HonorsDialog() {
       }
       const kind = await revealBoxOnChain();
       setLastKind(kind);
+      // 256블록이 지난 봉인은 결과 없이 풀린다(미리 계산할 수 있으므로) — 기다림 없이 다시 연다
+      if (kind === 0) setError("봉인이 오래돼 결과 없이 풀렸습니다. 기다리지 않고 바로 다시 열 수 있어요.");
       setBox(await fetchBoxProfile(walletAddress));
     } catch (err) {
       const m = err instanceof Error ? err.message : String(err);

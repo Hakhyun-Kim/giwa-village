@@ -18,6 +18,9 @@ import { compileAll } from "./lib/localchain.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MAX_CODE = 24576; // EIP-170
+// Dojang (GIWA Sepolia) — client/src/config/dojang.ts 와 같은 값
+const DOJANG_SCROLL = "0xd5077b67dcb56caC8b270C7788FC3E6ee03F17B9";
+const UPBIT_KOREA_ATTESTER_ID = "0xd99b42e778498aa3c9c1f6a012359130252780511687a35982e8e52735453034";
 
 const TARGETS = [
   { file: "GiwaMarketV3.sol", name: "GiwaMarketV3", out: "market.ts", prefix: "MARKET" },
@@ -43,8 +46,24 @@ const TARGETS = [
     prefix: "OFFERS",
     args: (deployed) => [deployed.GiwaMarketV3],
   },
-  { file: "GiwaBoxes.sol", name: "GiwaBoxes", out: "boxes.ts", prefix: "BOXES" },
-  { file: "GiwaHearth.sol", name: "GiwaHearth", out: "hearth.ts", prefix: "HEARTH" },
+  // 호패는 모닥불이 사람을 셀 때 읽는다 — 모닥불보다 먼저
+  { file: "GiwaIdentity.sol", name: "GiwaIdentity", out: "identity.ts", prefix: "IDENTITY" },
+  // 복주머니 v2 — 앞 판의 보유 · 장착을 legacyBoxes 로 잇는다(지금 config 의 주소가 앞 판)
+  {
+    file: "GiwaBoxes.sol",
+    name: "GiwaBoxes",
+    out: "boxes.ts",
+    prefix: "BOXES",
+    args: (deployed) => [deployed.GiwaBoxes],
+  },
+  // 모닥불 v2 — 사람을 센다(호패 · Dojang). 앞 판의 온기를 legacyHearth 로 잇는다
+  {
+    file: "GiwaHearth.sol",
+    name: "GiwaHearth",
+    out: "hearth.ts",
+    prefix: "HEARTH",
+    args: (deployed) => [deployed.GiwaHearth, deployed.GiwaIdentity, DOJANG_SCROLL, UPBIT_KOREA_ATTESTER_ID],
+  },
   { file: "GiwaWorkshop.sol", name: "GiwaWorkshop", out: "workshop.ts", prefix: "WORKSHOP" },
   {
     file: "GiwaBoss.sol",
@@ -67,7 +86,6 @@ const TARGETS = [
       deployed.GiwaBoss,
     ],
   },
-  { file: "GiwaIdentity.sol", name: "GiwaIdentity", out: "identity.ts", prefix: "IDENTITY" },
   // v4 장터 묶음 — 둘을 함께, 이 순서로 배포한다(장터가 바로 다음 nonce 의 흥정 주소를 고정한다)
   {
     file: "GiwaMarketV4.sol",
@@ -99,6 +117,23 @@ if (unknown.length) {
 const marketBundle = ["GiwaMarketV4", "GiwaOffersV2"];
 if (marketBundle.some((name) => only.includes(name)) && !marketBundle.every((name) => only.includes(name))) {
   throw new Error(`[deploy] 장터 v4 는 흥정 v2 와 함께 배포해야 합니다: ${marketBundle.join(" ")}`);
+}
+// 생성자에 주소를 고정하는 것끼리 — 앞의 것을 바꾸면 뒤의 것도 다시 지어야 옛 주소를 붙들지 않는다
+const DEPENDENTS = {
+  GiwaHearth: ["GiwaBoss", "GiwaProfile"],
+  GiwaBoss: ["GiwaProfile"],
+  GiwaBoxes: ["GiwaProfile"],
+  GiwaWorkshop: ["GiwaProfile"],
+  GiwaHonors: ["GiwaProfile"],
+};
+for (const name of only) {
+  const missing = (DEPENDENTS[name] ?? []).filter((dep) => !only.includes(dep));
+  if (missing.length) {
+    throw new Error(`[deploy] ${name} 을 바꾸면 ${missing.join(" ")} 도 함께 배포해야 합니다`);
+  }
+}
+if (only.includes("GiwaHearth") && !deployed.GiwaIdentity && !only.includes("GiwaIdentity")) {
+  throw new Error("[deploy] 모닥불 v2 는 호패(GiwaIdentity)를 읽습니다 — 호패를 먼저(또는 함께) 배포하세요");
 }
 const guildBundle = ["GiwaGuilds", "GiwaHonors", "GiwaBoss", "GiwaProfile"];
 if (only.includes("GiwaGuilds")) {

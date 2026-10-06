@@ -72,7 +72,7 @@ export async function openBoxOnChain(): Promise<void> {
   await publicClient.waitForTransactionReceipt({ hash: tx });
 }
 
-/** 개봉 — 결과 kind(1..8)를 반환 */
+/** 개봉 — 결과 kind(1..8)를 반환. 봉인이 256블록을 넘겨 풀렸으면(BoxExpired) 0 */
 export async function revealBoxOnChain(): Promise<number> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 없습니다.");

@@ -77,7 +77,8 @@ server/  Colyseus 룸 — 선택 사항이다. 서버 0으로도 마을이 돈�
 shared/  서버 판정과 클라이언트 표시가 함께 읽는 실시간 원정 규칙(expedition.ts) — 세션 기록일 뿐 체인에 아무것도 쓰지 않는다.
          순수 모듈이라 npm test가 그대로 걸어 보고, 다른 클라이언트도 같은 규칙으로 혼자 하는 연습 원정을 돌릴 수 있다
          + 크로스플레이 링크(crosslink.ts) — 웹의 원정을 Unity 앱 · PC 게임이 giwa://expedition 으로 이어받는다(PROTOCOL.md §3.8 · 지갑은 넘기지 않는다)
-contracts/ Solidity 13종 (10종은 GIWA Sepolia 배포·검증 완료 · 호패 GiwaIdentity · 장터 v4 묶음(GiwaMarketV4 · GiwaOffersV2)은 배포 대기 — 주소가 null 이면 화면은 지금 판으로 돈다)
+contracts/ Solidity 13종 (10종은 GIWA Sepolia 배포·검증 완료 · 호패 GiwaIdentity · 장터 v4 묶음(GiwaMarketV4 · GiwaOffersV2)은 배포 대기 — 주소가 null 이면 화면은 지금 판으로 돈다
+           · 복주머니 v2 · 모닥불 v2 · 도깨비 v3 · 프로필은 소스만 새 판이고 체인에는 앞 판이 떠 있다 — guide/V4.md §6~§8)
 scripts/ 테스트·배포·봇·스모크
 sdk/     외부에서 프로필을 읽는 패키지
 guide/   사람이 읽는 문서 (놀기·이어붙이기·검증·이어만들기) — README는 색인이다
@@ -187,9 +188,9 @@ DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 �
 ## 5. 검증 — 가스를 아끼는 순서
 
 ```bash
-npm test                     # 로직 68건 + 원정 규칙 7건 + 크로스플레이 링크 5건 · 체인 없음 · 2초 미만 (저장할 때마다)
+npm test                     # 로직 69건 + 원정 규칙 7건 + 크로스플레이 링크 5건 · 체인 없음 · 2초 미만 (저장할 때마다)
 npm run export-world         # 배치표를 client/public/world.json 으로 굽는다
-npm run test:local           # 컨트랙트 13종 E2E 91건(봇 지갑이 있으면 흥정 봇까지) · 로컬 anvil · 가스 0
+npm run test:local           # 컨트랙트 13종 E2E 108건(봇 지갑이 있으면 흥정 봇까지) · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)
 npm run smoke:protocol       # PROTOCOL.md만 보고 짠 클라이언트로 룸에 입장 (서버 자동 기동)
 npm run smoke:realtime       # village_live · expedition 룸에 실제 소켓으로 들어가 본다 (격리된 로컬 서버 · 체인·키 없음)
@@ -258,6 +259,10 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
   정산 때 쿠폰 · 환불은 쿠폰 없음 · 흥정도 에스크로 · 7일 만료 · 온체인 쿠폰 JSON · 페이지 목록). 남은 것: 배포
   (`node scripts/deploy-village.mjs GiwaMarketV4 GiwaOffersV2` → `node scripts/list-brand-items.mjs --v4 --yes` → verify) ·
   웹 · 봇 · mcp · Unity 를 새 ABI 로(`openStalls(offset, limit)` · 흥정 계약 분리 · `purchaseOf` 의 tokenId · 쿠폰은 확정 뒤 생김)
+- [ ] **복주머니 · 모닥불 · 도깨비 새 판 배포** — guide/V4.md §6~§8 을 소스 · 로컬 시험으로 끝냈다(256블록 지난 봉인은 결과 없이 무르고 다시 열기 ·
+  모닥불은 지갑이 아니라 사람을 센다: 호패를 따라간 주인 단위 · Dojang 인증은 한 사람, 아니면 반 사람 · 도깨비의 주는 장날 끝(토 22시 KST)에 넘어간다).
+  남은 것: `node scripts/deploy-village.mjs GiwaIdentity GiwaBoxes GiwaHearth GiwaBoss GiwaProfile`(앞 판의 장신구 · 온기 · 전리품은 legacy 로 잇는다 ·
+  생성자에 주소를 고정한 것끼리 함께 배포하지 않으면 스크립트가 멈춘다) → verify → 웹의 모닥불 안내를 "두 사람 몫"(`weightOf`)으로 바꾼다
 - [ ] **일일 봇 실주행을 콘텐츠로** — 아래 §8 설계 참고 (로컬 무가스 주행)
 - [ ] **기록 카드 PNG** — 오늘 한 일·칭호·길드 층수를 캔버스로 그려 공유(구매 내역·가격은 싣지 않는다 — 카드가 남의 지갑을 엿보는 창이 되지 않게)
 - [ ] Dojang 어테스테이션 테스트넷 발급 협의

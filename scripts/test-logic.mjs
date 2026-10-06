@@ -1095,6 +1095,32 @@ it("문서가 가리키는 월드 상수가 world.json 과 같다", () => {
   );
 });
 
+describe("도깨비 주 경계 — 장날이 그 주의 마지막 한 시간");
+
+it("주가 장날이 끝나는 순간(토 22:00 KST)에 넘어간다 — GiwaBoss.WEEK_OFFSET ↔ 장날 판정", () => {
+  const boss = fs.readFileSync(path.join(ROOT, "contracts", "GiwaBoss.sol"), "utf8");
+  const offset = Number(boss.match(/WEEK_OFFSET\s*=\s*(\d+)/)?.[1]);
+  ok(/EPOCH\s*=\s*7 days/.test(boss), "GiwaBoss.EPOCH 가 7일이 아닙니다");
+  ok(/\(block\.timestamp \+ WEEK_OFFSET\) \/ EPOCH/.test(boss), "week() 가 WEEK_OFFSET 을 쓰지 않습니다");
+  // 장날 판정은 컨트랙트(GiwaHearth.isMarketDay) · 클라이언트(hearth.ts)가 같은 식이다 — test:local 이 표본으로 대조한다
+  const hearth = fs.readFileSync(path.join(ROOT, "client", "src", "chain", "hearth.ts"), "utf8");
+  ok(/day % 7 === 2 && sec >= 12 \* 3600 && sec < 13 \* 3600/.test(hearth), "hearth.ts 의 장날 식이 바뀌었습니다");
+  const isMarketDay = (ts) => Math.floor(ts / 86400) % 7 === 2 && ts % 86400 >= 12 * 3600 && ts % 86400 < 13 * 3600;
+  const week = (ts) => Math.floor((ts + offset) / (7 * 86400));
+  // 2026-10-01 부터 1년 — 주가 바뀌는 순간마다 바로 앞 1초가 장날이어야 한다
+  const start = Date.UTC(2026, 9, 1) / 1000;
+  let boundaries = 0;
+  for (let ts = start; ts < start + 365 * 86400; ts += 3600) {
+    if (week(ts) !== week(ts - 1)) {
+      boundaries++;
+      ok(isMarketDay(ts - 1) && !isMarketDay(ts), `${new Date(ts * 1000).toISOString()} 에 주가 넘어가는데 장날 끝이 아닙니다`);
+      ok(week(ts - 3600) === week(ts - 1), "장날 한 시간이 두 주에 걸쳤습니다");
+    }
+  }
+  ok(boundaries >= 52, `주 경계 ${boundaries}번`);
+  console.log(`     WEEK_OFFSET ${offset} · 1년 동안 주 경계 ${boundaries}번 모두 장날 끝(토 13:00 UTC)`);
+});
+
 // ── 결과 ──────────────────────────────────────────────────────────────────
 
 console.log(`\n${"─".repeat(50)}`);
