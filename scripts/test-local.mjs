@@ -1,4 +1,4 @@
-// 로컬 체인 E2E — 컨트랙트 11종 전체를 배포하고 마을의 주요 흐름을 돌린다.
+// 로컬 체인 E2E — 컨트랙트 13종 전체를 배포하고 마을의 주요 흐름을 돌린다.
 // 테스트넷 ETH를 한 방울도 쓰지 않으므로 몇 번을 돌려도 된다.
 //
 // anvil을 chain-id 91342(GIWA Sepolia와 동일)로 띄우므로 코드의 체인 가드가
@@ -52,7 +52,7 @@ async function shouldRevert(label, fn, expect = "") {
   }
 }
 
-console.log("로컬 체인 E2E — 컨트랙트 11종 (anvil · chain-id 91342 · 가스 무제한)");
+console.log("로컬 체인 E2E — 컨트랙트 13종 (anvil · chain-id 91342 · 가스 무제한)");
 
 const chain = await startChain();
 const send = async (wallet, req) => {
@@ -68,9 +68,9 @@ try {
   // ── 배포 ────────────────────────────────────────────────────────────────
   section("배포");
   const artifacts = compileAll();
-  check("컴파일", true, "11종 · optimizer off");
+  check("컴파일", true, "13종 · 장터 v4 묶음만 optimizer");
   const C = await deployAll(chain, ANVIL_KEYS[0], artifacts);
-  check("배포", Object.keys(C).length === 11, Object.keys(C).join(", "));
+  check("배포", Object.keys(C).length === 13, Object.keys(C).join(", "));
 
   // 참가자 — 상인, 손님, 이웃(모닥불 2인 요건용)
   const [merchantKey, buyerKey, neighborKey] = [ANVIL_KEYS[0], ANVIL_KEYS[1], ANVIL_KEYS[2]];
@@ -449,6 +449,126 @@ try {
   check("온기 집계", p.warmth >= 3, `온기 ${p.warmth}`);
   check("한 번의 호출로 전부", true, "guild·honor·trinket·wear·warmth·trophies");
 
+  // ── 장터 v4 · 흥정 v2 (GiwaMarketV4 · GiwaOffersV2) — guide/V4.md ──────────
+  section("장터 v4 · 흥정 v2 — 리스팅 없는 구매 막기 · 정산 때 쿠폰 · 흥정도 에스크로");
+  const M4 = C.GiwaMarketV4;
+  const O2 = C.GiwaOffersV2;
+  const w4 = (wallet, c, functionName, args = [], value) =>
+    send(wallet, { address: c.address, abi: c.abi, functionName, args, ...(value ? { value } : {}) });
+  const bal = (a) => chain.pub.getBalance({ address: a });
+  const coupons = (who, tid) => read(M4, "balanceOf", [who, tid]);
+  check(
+    "장터와 흥정이 서로를 가리킨다 (배포 때 고정 · 바꾸는 함수 없음)",
+    (await read(M4, "offers")).toLowerCase() === O2.address.toLowerCase() &&
+      (await read(O2, "market")).toLowerCase() === M4.address.toLowerCase(),
+  );
+  const P4 = parseEther("0.002");
+  // 사용자 정의 에러는 shortMessage 에 이름이 없다 — viem 이 풀어 둔 errorName 으로 본다
+  const revertsWith = async (label, fn, errorName) => {
+    try {
+      await fn();
+      check(label, false, "revert 되어야 하는데 통과했습니다");
+    } catch (err) {
+      const got = err.walk?.((e) => e.data?.errorName)?.data?.errorName;
+      check(label, got === errorName, got ? `${got}` : (err.shortMessage ?? err.message));
+    }
+  };
+  await revertsWith("리스팅 없는 buy 는 거부 (1 wei 쿠폰 막힘)", () => w4(wB, M4, "buy", [merchant.address, "엿"], 1n), "NotListed");
+  await w4(wM, M4, "list", ["엿", P4]);
+  await revertsWith("리스팅 값과 다른 금액은 거부", () => w4(wB, M4, "buy", [merchant.address, "엿"], P4 - 1n), "WrongPrice");
+  const yeotTid = await read(M4, "tokenIdOf", [merchant.address, "엿"]);
+  await w4(wB, M4, "buy", [merchant.address, "엿"], P4);
+  const pBuy = (await read(M4, "purchaseCount")) - 1n;
+  check("정산 전에는 쿠폰이 아직 없다 (계약이 쥔다)", (await coupons(buyer.address, yeotTid)) === 0n);
+  const mBefore4 = await bal(merchant.address);
+  await w4(wB, M4, "confirm", [pBuy]);
+  check("정산 확정 → 쿠폰이 구매자에게", (await coupons(buyer.address, yeotTid)) === 1n);
+  check("정산 확정 → 대금이 판매자에게", (await bal(merchant.address)) - mBefore4 === P4);
+  const uri4 = await read(M4, "uri", [yeotTid]);
+  check(
+    "uri 는 온체인 JSON (이름 · 판매자 · 테스트넷)",
+    uri4.startsWith("data:application/json;utf8,") &&
+      JSON.parse(uri4.slice("data:application/json;utf8,".length)).name === "엿" &&
+      uri4.includes(merchant.address.toLowerCase()),
+  );
+  await w4(wM, M4, "list", ["따옴표\"엿", P4]);
+  await w4(wB, M4, "buy", [merchant.address, "따옴표\"엿"], P4);
+  const quoteTid = await read(M4, "tokenIdOf", [merchant.address, "따옴표\"엿"]);
+  const quoteUri = await read(M4, "uri", [quoteTid]);
+  check("이름에 따옴표가 있어도 JSON 이 깨지지 않는다", JSON.parse(quoteUri.slice(quoteUri.indexOf(",") + 1)).name === '따옴표"엿');
+
+  // 환불은 쿠폰을 남기지 않는다
+  await w4(wB, M4, "buy", [merchant.address, "엿"], P4);
+  const pRefund = (await read(M4, "purchaseCount")) - 1n;
+  await w4(wB, M4, "dispute", [pRefund]);
+  const bBefore4 = await bal(buyer.address);
+  await w4(wM, M4, "refund", [pRefund]);
+  check("분쟁 → 판매자 환불: 대금이 구매자에게", (await bal(buyer.address)) - bBefore4 === P4);
+  check("환불된 구매는 쿠폰을 남기지 않는다 (돈도 쿠폰도 가진 상태 없음)", (await coupons(buyer.address, yeotTid)) === 1n);
+  await shouldRevert("환불 뒤 확정은 거부", () => w4(wB, M4, "confirm", [pRefund]), "settled");
+  await shouldRevert(
+    "흥정 계약이 아니면 purchaseFor 를 못 부른다",
+    () => w4(wB, M4, "purchaseFor", [buyer.address, merchant.address, "엿"], 1n),
+    "offers",
+  );
+
+  // 노점 · 페이지 · 한 번에 받기
+  await w4(wM, M4, "openStall", ["달래네 엿", 1350, -390, [{ name: "가락엿", emoji: "🍬", price: P4 }]]);
+  await w4(wN, M4, "openStall", ["이웃 좌판", 1400, -300, [{ name: "떡", emoji: "🍡", price: P4 }]]);
+  let [, , total4] = await read(M4, "openStalls", [0n, 10n]);
+  check("열린 노점 페이지 — 둘", total4 === 2n);
+  await w4(wM, M4, "closeStall");
+  const [owners4, , totalAfter] = await read(M4, "openStalls", [0n, 10n]);
+  check("닫은 노점은 목록에서 빠진다 (swap-and-pop)", totalAfter === 1n && owners4[0] === neighbor.address);
+  check("페이지 끝 너머는 빈 목록", (await read(M4, "openStalls", [5n, 10n]))[0].length === 0);
+  await w4(wB, M4, "buyStall", [neighbor.address, 0], P4);
+  await w4(wB, M4, "buyStall", [neighbor.address, 0], P4);
+  const n4 = await read(M4, "purchaseCount");
+  const due = [n4 - 2n, n4 - 1n];
+  const early = await chain.pub.simulateContract({
+    account: merchant.address, address: M4.address, abi: M4.abi, functionName: "releaseMany", args: [due],
+  });
+  check("기한 전 releaseMany 는 아무것도 정산하지 않는다", early.result === 0n);
+  await chain.increaseTime(24 * 3600 + 1);
+  const nBefore4 = await bal(neighbor.address);
+  await w4(wM, M4, "releaseMany", [due]); // 누구나 부를 수 있다 — 대금은 판매자에게
+  check("24시간 뒤 releaseMany — 두 건을 한 번에 판매자에게", (await bal(neighbor.address)) - nBefore4 === 2n * P4);
+  check("정산된 노점 구매도 쿠폰이 구매자에게", (await coupons(buyer.address, await read(M4, "tokenIdOf", [neighbor.address, "떡"]))) === 2n);
+
+  // 흥정 v2 — 리스팅 값 아래도 받고, 수락 뒤에도 에스크로를 탄다
+  await w4(wB, O2, "makeOffer", [merchant.address, "엿"], P4 / 2n);
+  const off0 = (await read(O2, "offerCount")) - 1n;
+  await w4(wM, O2, "acceptOffer", [off0]);
+  const pOffer = (await read(M4, "purchaseCount")) - 1n;
+  const po = await read(M4, "purchaseOf", [pOffer]);
+  check("리스팅된 품목도 더 낮은 흥정을 받을 수 있다", po[0] === buyer.address && po[2] === P4 / 2n);
+  check("수락한 흥정은 즉시 정산하지 않는다 (에스크로 · 분쟁 경로)", po[4] === false);
+  check("흥정 목록에서 빠진다", (await read(O2, "offersFor", [merchant.address, 0n, 10n]))[2] === 0n);
+  await w4(wB, M4, "confirm", [pOffer]);
+  check("흥정 구매도 확정 때 쿠폰", (await coupons(buyer.address, yeotTid)) === 2n);
+
+  await w4(wB, O2, "makeOffer", [merchant.address, "가락엿"], P4 / 4n);
+  const off1 = (await read(O2, "offerCount")) - 1n;
+  await shouldRevert("남은 흥정을 판매자 아닌 사람이 수락 못 한다", () => w4(wN, O2, "acceptOffer", [off1]), "seller");
+  await shouldRevert("만료 전에는 구매자만 무른다", () => w4(wN, O2, "cancelOffer", [off1]), "buyer");
+  await chain.increaseTime(7 * 24 * 3600 + 1);
+  await shouldRevert("만료된 흥정은 수락 못 한다", () => w4(wM, O2, "acceptOffer", [off1]), "expired");
+  const bBeforeExp = await bal(buyer.address);
+  await w4(wN, O2, "cancelOffer", [off1]);
+  check("만료되면 누구나 무르고, 돈은 구매자에게", (await bal(buyer.address)) - bBeforeExp === P4 / 4n);
+
+  for (const name of ["가", "나", "다"]) await w4(wB, O2, "makeOffer", [merchant.address, name], 1000n);
+  const c3 = await read(O2, "offerCount");
+  await w4(wB, O2, "cancelOffer", [c3 - 2n]);
+  const [ids3, , total3] = await read(O2, "offersFor", [merchant.address, 0n, 10n]);
+  check(
+    "흥정 목록 페이지 — 무른 것은 빠지고 나머지는 남는다",
+    total3 === 2n && ids3.includes(c3 - 3n) && ids3.includes(c3 - 1n) && !ids3.includes(c3 - 2n),
+  );
+  const escrowLeft = await bal(M4.address);
+  const outstanding = await read(M4, "purchaseOf", [n4 - 3n]); // 위의 따옴표엿 — 아직 확정 전
+  check("장터 잔고 = 정산 안 된 대금 (돈이 새지 않는다)", escrowLeft === outstanding[2], `${formatEther(escrowLeft)} ETH`);
+
   // ── 호패 (GiwaIdentity) — 진짜 지갑 ↔ 버너 ─────────────────────────────
   section("호패 (GiwaIdentity) — 진짜 지갑이 버너를 대리로 세운다");
   const principal = privateKeyToAccount(ANVIL_KEYS[3]); // UP.ID 를 가진 진짜 지갑 역할 — 가스 없이 서명만
@@ -586,7 +706,7 @@ try {
   console.log(`\n${"─".repeat(58)}`);
   console.log(
     fails === 0
-      ? "전부 통과 · 컨트랙트 11종 · 테스트넷 가스 0\n장날·쿨다운·10분 창은 시간을 점프해 검증했습니다 (실시간 대기 없음)"
+      ? "전부 통과 · 컨트랙트 13종 · 테스트넷 가스 0\n장날·쿨다운·10분 창은 시간을 점프해 검증했습니다 (실시간 대기 없음)"
       : `실패 ${fails}건`,
   );
 } catch (err) {

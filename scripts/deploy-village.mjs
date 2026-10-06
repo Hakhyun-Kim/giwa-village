@@ -1,20 +1,20 @@
-// 풀온체인 마을 컨트랙트 일괄 배포: GiwaMarketV3 + GiwaGuilds + GiwaPresence
-// (solc-js, optimizer off — WASM 크래시 회피) → 슬롯 A 지갑으로 순차 배포하고
-// client/src/config/{market,guilds,presence}.ts 를 자동 갱신한다.
-// Usage: node scripts/deploy-village.mjs
+// 풀온체인 마을 컨트랙트 배포 — 슬롯 A 지갑으로 순차 배포하고 client/src/config/<모듈>.ts 를 갱신한다.
+// 컴파일은 test:local 과 같은 compileAll(기본 optimizer off · 24KB 에 걸리는 v4 장터 묶음만 켠다).
+// Usage: node scripts/deploy-village.mjs [컨트랙트명 ...]   (예: GiwaMarketV4 GiwaOffersV2)
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createRequire } from "node:module";
 import {
   createPublicClient,
   createWalletClient,
   defineChain,
   formatEther,
+  getContractAddress,
   http,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { deployedAddresses } from "./lib/deployments.mjs";
+import { compileAll } from "./lib/localchain.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MAX_CODE = 24576; // EIP-170
@@ -68,6 +68,23 @@ const TARGETS = [
     ],
   },
   { file: "GiwaIdentity.sol", name: "GiwaIdentity", out: "identity.ts", prefix: "IDENTITY" },
+  // v4 장터 묶음 — 둘을 함께, 이 순서로 배포한다(장터가 바로 다음 nonce 의 흥정 주소를 고정한다)
+  {
+    file: "GiwaMarketV4.sol",
+    name: "GiwaMarketV4",
+    out: "marketV4.ts",
+    prefix: "MARKET_V4",
+    optimize: true,
+    args: (_deployed, predict) => [predict(1)],
+  },
+  {
+    file: "GiwaOffersV2.sol",
+    name: "GiwaOffersV2",
+    out: "offersV2.ts",
+    prefix: "OFFERS_V2",
+    optimize: true,
+    args: (deployed) => [deployed.GiwaMarketV4],
+  },
 ];
 
 // 현재 config가 배포 주소의 원본이다. 부분 재배포 시 생성자 인자와 마이그레이션
@@ -79,6 +96,10 @@ const unknown = only.filter((name) => !known.has(name));
 if (unknown.length) {
   throw new Error(`[deploy] 알 수 없는 컨트랙트: ${unknown.join(", ")}`);
 }
+const marketBundle = ["GiwaMarketV4", "GiwaOffersV2"];
+if (marketBundle.some((name) => only.includes(name)) && !marketBundle.every((name) => only.includes(name))) {
+  throw new Error(`[deploy] 장터 v4 는 흥정 v2 와 함께 배포해야 합니다: ${marketBundle.join(" ")}`);
+}
 const guildBundle = ["GiwaGuilds", "GiwaHonors", "GiwaBoss", "GiwaProfile"];
 if (only.includes("GiwaGuilds")) {
   const missing = guildBundle.filter((name) => !only.includes(name));
@@ -89,9 +110,6 @@ if (only.includes("GiwaGuilds")) {
   }
 }
 
-const require = createRequire(import.meta.url);
-const solc = require("solc");
-
 const giwaSepolia = defineChain({
   id: 91342,
   name: "GIWA Sepolia",
@@ -100,40 +118,15 @@ const giwaSepolia = defineChain({
   testnet: true,
 });
 
-// --- 컴파일 ---
-const sources = {};
+// --- 컴파일 (test:local 과 같은 함수 · 계약마다 optimizer 설정을 따른다) ---
+const artifacts = compileAll(TARGETS);
 for (const t of TARGETS) {
-  sources[t.file] = {
-    content: fs.readFileSync(path.resolve(ROOT, "contracts", t.file), "utf8"),
-  };
-}
-const input = {
-  language: "Solidity",
-  sources,
-  settings: {
-    optimizer: { enabled: false, runs: 200 },
-    outputSelection: {
-      "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] },
-    },
-  },
-};
-const output = JSON.parse(solc.compile(JSON.stringify(input)));
-const errors = (output.errors ?? []).filter((e) => e.severity === "error");
-if (errors.length) {
-  for (const e of errors) console.error(e.formattedMessage);
-  throw new Error("[compile] Solidity 컴파일 실패");
-}
-const artifacts = {};
-for (const t of TARGETS) {
-  const a = output.contracts[t.file][t.name];
-  const initSize = a.evm.bytecode.object.length / 2;
-  const runtimeSize = a.evm.deployedBytecode.object.length / 2;
+  const { runtimeSize } = artifacts[t.name];
   console.log(
-    `[compile] ${t.name} — runtime ${runtimeSize} bytes · init ${initSize} bytes` +
+    `[compile] ${t.name} — runtime ${runtimeSize} bytes${t.optimize ? " · optimizer" : ""}` +
       (runtimeSize > MAX_CODE ? " ⚠ runtime 24KB 초과!" : ""),
   );
   if (runtimeSize > MAX_CODE) throw new Error(`[compile] ${t.name} 런타임 코드 크기 초과`);
-  artifacts[t.name] = { abi: a.abi, bytecode: "0x" + a.evm.bytecode.object };
 }
 
 // --- 배포 (순차 — 같은 지갑 nonce 충돌 방지) ---
@@ -158,11 +151,13 @@ if (balance === 0n) {
 for (const t of TARGETS) {
   if (only.length && !only.includes(t.name)) continue;
   const { abi, bytecode } = artifacts[t.name];
+  const nonce = await pub.getTransactionCount({ address: account.address, blockTag: "pending" });
+  const predict = (k) => getContractAddress({ from: account.address, nonce: BigInt(nonce + k) });
   const hash = await wallet.deployContract({
     abi,
     bytecode,
     account,
-    args: t.args ? t.args(deployed) : [],
+    args: t.args ? t.args(deployed, predict) : [],
   });
   const receipt = await pub.waitForTransactionReceipt({ hash });
   const address = receipt.contractAddress;
@@ -184,5 +179,17 @@ export const ${t.prefix}_ABI = ${JSON.stringify(abi, null, 2)} as const;
     "utf8",
   );
   console.log(`[deploy] client/src/config/${t.out} 갱신`);
+}
+if (only.includes("GiwaMarketV4")) {
+  // 장터가 고정한 흥정 주소가 실제로 배포된 흥정 v2 인가 — 어긋나면 흥정 수락이 영영 막힌다
+  const fixed = await pub.readContract({
+    address: deployed.GiwaMarketV4,
+    abi: artifacts.GiwaMarketV4.abi,
+    functionName: "offers",
+  });
+  if (fixed.toLowerCase() !== deployed.GiwaOffersV2.toLowerCase()) {
+    throw new Error(`[deploy] 장터 v4 의 offers(${fixed}) ≠ 흥정 v2(${deployed.GiwaOffersV2}) — 둘 다 다시 배포하세요`);
+  }
+  console.log("[deploy] 장터 v4 ↔ 흥정 v2 연결 확인");
 }
 console.log("[deploy] 완료");

@@ -1,10 +1,11 @@
-// Blockscout 소스 검증 (standard-input, optimizer off — 배포 설정과 동일).
+// Blockscout 소스 검증 (standard-input · 배포와 같은 solcSettings — v4 장터 묶음만 optimizer).
 // Usage: node scripts/verify-contracts.mjs
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { DEPLOYMENTS } from "./lib/deployments.mjs";
+import { solcSettings } from "./lib/localchain.mjs";
 
 const require = createRequire(import.meta.url);
 const solc = require("solc");
@@ -24,6 +25,8 @@ const TARGETS = [
   { file: "GiwaBoss.sol", name: "GiwaBoss" },
   { file: "GiwaProfile.sol", name: "GiwaProfile" },
   { file: "GiwaIdentity.sol", name: "GiwaIdentity" },
+  { file: "GiwaMarketV4.sol", name: "GiwaMarketV4", optimize: true },
+  { file: "GiwaOffersV2.sol", name: "GiwaOffersV2", optimize: true },
 ];
 
 const ver = "v" + solc.version().replace(/\.Emscripten.*$/, "");
@@ -47,10 +50,7 @@ for (const t of TARGETS) {
     sources: {
       [t.file]: { content: fs.readFileSync(path.resolve(ROOT, "contracts", t.file), "utf8") },
     },
-    settings: {
-      optimizer: { enabled: false, runs: 200 },
-      outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } },
-    },
+    settings: solcSettings(t.optimize),
   };
   const form = new FormData();
   form.append("compiler_version", ver);

@@ -18,8 +18,10 @@ const SPECS = {
   GiwaWorkshop: ["workshop", "WORKSHOP"],
   GiwaBoss: ["boss", "BOSS"],
   GiwaProfile: ["profile", "PROFILE"],
-  // 호패는 아직 배포 전일 수 있다 — config 의 주소가 null 이면 목록에서 빠진다
+  // 호패 · v4 장터 묶음은 아직 배포 전일 수 있다 — config 의 주소가 null 이면 목록에서 빠진다
   GiwaIdentity: ["identity", "IDENTITY"],
+  GiwaMarketV4: ["marketV4", "MARKET_V4"],
+  GiwaOffersV2: ["offersV2", "OFFERS_V2"],
 };
 
 function readDeployment(file, prefix) {

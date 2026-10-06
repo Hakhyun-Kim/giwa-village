@@ -17,6 +17,7 @@
 //
 // Usage: node scripts/list-brand-items.mjs          # 예행
 //        node scripts/list-brand-items.mjs --yes    # 보낸다
+//        node scripts/list-brand-items.mjs --v4 --yes   # 장터 v4 에 (v4 로 옮길 때 한 번)
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -26,6 +27,8 @@ import { DEPLOYMENTS } from "./lib/deployments.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SEND = process.argv.includes("--yes");
+// --v4: 장터 v4 에 올린다. v4 는 리스팅 없는 buy 를 아예 받지 않으므로, v4 로 옮긴 직후에 한 번 돌려야 브랜드 품목이 팔린다
+const V4 = process.argv.includes("--v4");
 
 const giwaSepolia = defineChain({
   id: 91342,
@@ -34,7 +37,9 @@ const giwaSepolia = defineChain({
   rpcUrls: { default: { http: ["https://sepolia-rpc.giwa.io"] } },
   testnet: true,
 });
-const MARKET = DEPLOYMENTS.GiwaMarketV3.address;
+const MARKET_NAME = V4 ? "GiwaMarketV4" : "GiwaMarketV3";
+if (!DEPLOYMENTS[MARKET_NAME]) throw new Error(`${MARKET_NAME} 가 아직 배포되지 않았습니다 (client/src/config 의 주소가 null)`);
+const MARKET = DEPLOYMENTS[MARKET_NAME].address;
 const ABI = parseAbi([
   "function list(string itemId, uint128 price) external",
   "function listingOf(address seller, string itemId) view returns (uint256 price, bool active)",
@@ -75,7 +80,7 @@ const pub = createPublicClient({ chain: giwaSepolia, transport: http() });
 const chainId = await pub.getChainId();
 if (chainId !== giwaSepolia.id) throw new Error(`체인 id 가 ${chainId} 입니다 — GIWA Sepolia(91342)에서만 돕니다`);
 
-console.log(`GiwaMarketV3 ${MARKET} · 브랜드 품목 ${items.length}개 · ${SEND ? "보낸다(--yes)" : "예행 — 보내지 않는다"}\n`);
+console.log(`${MARKET_NAME} ${MARKET} · 브랜드 품목 ${items.length}개 · ${SEND ? "보낸다(--yes)" : "예행 — 보내지 않는다"}\n`);
 
 const todo = [];
 for (const it of items) {
@@ -98,7 +103,7 @@ if (todo.length === 0) {
     console.log(`\n주인 ${o}: ${s ? `키를 찾음 (${s.source})` : "키를 찾지 못함 — BRAND_OWNER_KEY 를 주거나 키 파일을 두세요"}`);
   }
   if (!SEND) {
-    console.log(`\n예행 끝 — list 전송 ${todo.length}건이 필요하다. 보내려면: node scripts/list-brand-items.mjs --yes`);
+    console.log(`\n예행 끝 — list 전송 ${todo.length}건이 필요하다. 보내려면: node scripts/list-brand-items.mjs${V4 ? " --v4" : ""} --yes`);
   } else {
     for (const it of todo) {
       const s = signers.get(it.owner.toLowerCase());

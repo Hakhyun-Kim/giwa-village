@@ -9,7 +9,7 @@ import path from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { createPublicClient, createWalletClient, defineChain, http } from "viem";
+import { createPublicClient, createWalletClient, defineChain, getContractAddress, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 const require = createRequire(import.meta.url);
@@ -164,36 +164,49 @@ export const TARGETS = [
     ],
   },
   { file: "GiwaIdentity.sol", name: "GiwaIdentity" },
+  // v4 장터 묶음 — 흥정 v2 의 주소를 생성자에 고정한다(바로 다음 배포 · predict(1))
+  { file: "GiwaMarketV4.sol", name: "GiwaMarketV4", optimize: true, args: (_d, predict) => [predict(1)] },
+  { file: "GiwaOffersV2.sol", name: "GiwaOffersV2", optimize: true, args: (d) => [d.GiwaMarketV4] },
 ];
 
-/** solc로 전부 컴파일 (deploy-village.mjs와 같은 설정 — optimizer off) */
+/**
+ * solc로 컴파일 (deploy-village.mjs · verify-contracts.mjs 와 같은 설정).
+ * 기본은 optimizer off(옛 solc-js WASM 크래시 — CLAUDE.md §6). 24KB 한도에 걸리는 계약만
+ * 목록에서 `optimize: true` 로 켠다 — 설정이 다른 계약은 따로 한 번 더 컴파일한다.
+ */
+export function solcSettings(optimize) {
+  return {
+    optimizer: { enabled: !!optimize, runs: 200 },
+    outputSelection: { "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] } },
+  };
+}
+
 export function compileAll(targets = TARGETS) {
   const solc = require("solc");
-  const sources = {};
-  for (const t of targets) {
-    sources[t.file] = { content: fs.readFileSync(path.join(ROOT, "contracts", t.file), "utf8") };
-  }
-  const out = JSON.parse(
-    solc.compile(
-      JSON.stringify({
-        language: "Solidity",
-        sources,
-        settings: {
-          optimizer: { enabled: false, runs: 200 },
-          outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } },
-        },
-      }),
-    ),
-  );
-  const errors = (out.errors ?? []).filter((e) => e.severity === "error");
-  if (errors.length) {
-    for (const e of errors) console.error(e.formattedMessage);
-    throw new Error("컴파일 실패");
-  }
   const artifacts = {};
-  for (const t of targets) {
-    const a = out.contracts[t.file][t.name];
-    artifacts[t.name] = { abi: a.abi, bytecode: `0x${a.evm.bytecode.object}` };
+  for (const optimize of [false, true]) {
+    const group = targets.filter((t) => !!t.optimize === optimize);
+    if (!group.length) continue;
+    const sources = {};
+    for (const t of group) {
+      sources[t.file] = { content: fs.readFileSync(path.join(ROOT, "contracts", t.file), "utf8") };
+    }
+    const out = JSON.parse(
+      solc.compile(JSON.stringify({ language: "Solidity", sources, settings: solcSettings(optimize) })),
+    );
+    const errors = (out.errors ?? []).filter((e) => e.severity === "error");
+    if (errors.length) {
+      for (const e of errors) console.error(e.formattedMessage);
+      throw new Error("컴파일 실패");
+    }
+    for (const t of group) {
+      const a = out.contracts[t.file][t.name];
+      artifacts[t.name] = {
+        abi: a.abi,
+        bytecode: `0x${a.evm.bytecode.object}`,
+        runtimeSize: a.evm.deployedBytecode.object.length / 2,
+      };
+    }
   }
   return artifacts;
 }
@@ -205,10 +218,13 @@ export async function deployAll(chain, deployerKey, artifacts, targets = TARGETS
   const contracts = {};
   for (const t of targets) {
     const a = artifacts[t.name];
+    // 서로를 가리키는 쌍(장터 v4 ↔ 흥정 v2)은 다음 nonce 의 주소를 미리 계산해 넣는다
+    const nonce = await chain.pub.getTransactionCount({ address: wallet.account.address });
+    const predict = (k) => getContractAddress({ from: wallet.account.address, nonce: BigInt(nonce + k) });
     const hash = await wallet.deployContract({
       abi: a.abi,
       bytecode: a.bytecode,
-      args: t.args ? t.args(addresses) : [],
+      args: t.args ? t.args(addresses, predict) : [],
     });
     const r = await chain.pub.waitForTransactionReceipt({ hash });
     if (r.status !== "success" || !r.contractAddress) throw new Error(`${t.name} 배포 실패`);

@@ -77,7 +77,7 @@ server/  Colyseus 룸 — 선택 사항이다. 서버 0으로도 마을이 돈�
 shared/  서버 판정과 클라이언트 표시가 함께 읽는 실시간 원정 규칙(expedition.ts) — 세션 기록일 뿐 체인에 아무것도 쓰지 않는다.
          순수 모듈이라 npm test가 그대로 걸어 보고, 다른 클라이언트도 같은 규칙으로 혼자 하는 연습 원정을 돌릴 수 있다
          + 크로스플레이 링크(crosslink.ts) — 웹의 원정을 Unity 앱 · PC 게임이 giwa://expedition 으로 이어받는다(PROTOCOL.md §3.8 · 지갑은 넘기지 않는다)
-contracts/ Solidity 11종 (10종은 GIWA Sepolia 배포·검증 완료 · 호패 GiwaIdentity 는 배포 대기 — 주소가 null 이면 화면은 호패 없이 돈다)
+contracts/ Solidity 13종 (10종은 GIWA Sepolia 배포·검증 완료 · 호패 GiwaIdentity · 장터 v4 묶음(GiwaMarketV4 · GiwaOffersV2)은 배포 대기 — 주소가 null 이면 화면은 지금 판으로 돈다)
 scripts/ 테스트·배포·봇·스모크
 sdk/     외부에서 프로필을 읽는 패키지
 guide/   사람이 읽는 문서 (놀기·이어붙이기·검증·이어만들기) — README는 색인이다
@@ -189,7 +189,7 @@ DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 �
 ```bash
 npm test                     # 로직 68건 + 원정 규칙 7건 + 크로스플레이 링크 5건 · 체인 없음 · 2초 미만 (저장할 때마다)
 npm run export-world         # 배치표를 client/public/world.json 으로 굽는다
-npm run test:local           # 컨트랙트 11종 E2E 63건 · 로컬 anvil · 가스 0
+npm run test:local           # 컨트랙트 13종 E2E 91건(봇 지갑이 있으면 흥정 봇까지) · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)
 npm run smoke:protocol       # PROTOCOL.md만 보고 짠 클라이언트로 룸에 입장 (서버 자동 기동)
 npm run smoke:realtime       # village_live · expedition 룸에 실제 소켓으로 들어가 본다 (격리된 로컬 서버 · 체인·키 없음)
@@ -229,8 +229,10 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
 - **Git Bash에서 `VITE_BASE=/x/` 금지** — MSYS가 경로로 바꿔 망가뜨린다.
   PowerShell에서: `$env:VITE_BASE="/giwa-village/"; npm run build -w client`
 - **`--omit=optional` 금지** — rolldown 네이티브 바인딩이 빠져 배포 빌드가 깨진다.
-- **solc-js + optimizer 조합이 WASM 크래시** — optimizer를 끄고 컴파일한다.
-  익스플로러 검증도 optimizer off 기준(standard-input, v0.8.36).
+- **solc-js + optimizer 조합이 WASM 크래시**(GiwaMarketV2 에서 겪음) — 기본은 optimizer를 끄고 컴파일한다.
+  24KB 한도를 넘는 계약만 목록(`scripts/lib/localchain.mjs` TARGETS · deploy-village · verify-contracts)에서
+  `optimize: true` 로 켠다(지금은 장터 v4 묶음 — 끄면 28KB). 설정은 `solcSettings` 한 곳이다.
+  익스플로러 검증도 배포와 같은 설정(standard-input, v0.8.36).
 - **공개 RPC는 리플리카 지연이 있다** — 전송 직후 상태 조회가 한 박자 늦는다.
   잔액 비교 대신 **영수증 status + 이벤트**로 검증하고, 조회는 재시도 루프로.
 - **공개 RPC 의 `eth_getLogs` 는 1만 블록까지만 받는다** — 배포 블록부터 훑는 조회는
@@ -252,9 +254,10 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
 - [ ] **계측 스키마를 모든 클라이언트에** — [guide/ANALYTICS.md](guide/ANALYTICS.md)가 한 벌이다. 웹은 `net/analytics.ts`
   (기본 꺼짐 · 주소/tx 해시 없음 · smoke 에서 꺼짐)로 주요 이벤트를 달았고, 남은 것(`raid_*` · `peers_seen` ·
   `wallet_panel_open` · `balance_first_positive`)과 Unity 는 같은 이름으로 단다. 새 이벤트는 문서에 먼저 적는다
-- [ ] **MarketV3 `buy()` 가격 우회** — 리스팅 없는 `buy`는 1 wei 로도 쿠폰을 준다. 임시 조치는
-  `scripts/list-brand-items.mjs`(브랜드 품목을 주인 주소로 `list` · 기본 예행 · `--yes` 로만 보냄 — 주인 키가 필요하다),
-  근본 수정은 [guide/V4.md](guide/V4.md)(설계만 · 재배포는 판정 뒤 한 번에)
+- [ ] **장터 v4 로 옮기기** — `GiwaMarketV4` · `GiwaOffersV2`(guide/V4.md §1~§5)는 짓고 로컬로 시험했다(리스팅 없는 buy 거부 ·
+  정산 때 쿠폰 · 환불은 쿠폰 없음 · 흥정도 에스크로 · 7일 만료 · 온체인 쿠폰 JSON · 페이지 목록). 남은 것: 배포
+  (`node scripts/deploy-village.mjs GiwaMarketV4 GiwaOffersV2` → `node scripts/list-brand-items.mjs --v4 --yes` → verify) ·
+  웹 · 봇 · mcp · Unity 를 새 ABI 로(`openStalls(offset, limit)` · 흥정 계약 분리 · `purchaseOf` 의 tokenId · 쿠폰은 확정 뒤 생김)
 - [ ] **일일 봇 실주행을 콘텐츠로** — 아래 §8 설계 참고 (로컬 무가스 주행)
 - [ ] **기록 카드 PNG** — 오늘 한 일·칭호·길드 층수를 캔버스로 그려 공유(구매 내역·가격은 싣지 않는다 — 카드가 남의 지갑을 엿보는 창이 되지 않게)
 - [ ] Dojang 어테스테이션 테스트넷 발급 협의
@@ -273,7 +276,7 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
 
 ```
 anvil --chain-id 91342          # 로컬 체인 (가스 0, 시간 여행 가능)
-  → 컨트랙트 11종 배포          # test-local.mjs가 이미 하는 일
+  → 컨트랙트 13종 배포          # test-local.mjs가 이미 하는 일
   → (선택) 로컬 Colyseus 서버   # 붐비는 장터를 흉내 낼 때만
   → 상인 봇 N명 + 손님 봇       # 하루치를 몇 초로 점프해 돌린다
   → client/public/chronicle/<KST 날짜>.json  로 커밋
