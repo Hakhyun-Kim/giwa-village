@@ -356,6 +356,16 @@ export default function Hud() {
               실제 테스트 방법 ↗
             </a>
             <a
+              href="?gaekju=1"
+              onClick={(e) => {
+                e.preventDefault();
+                useStore.getState().setGaekjuOpen(true);
+              }}
+              title="장터 전체의 에스크로 원장 — 보관 · 정산 · 환불 · 대사 (읽기 전용 · 지갑 없이 열린다)"
+            >
+              📜 객주 장부
+            </a>
+            <a
               href="https://github.com/Hakhyun-Kim/giwa-village/blob/main/guide/PRIVACY.md"
               target="_blank"
               rel="noreferrer"

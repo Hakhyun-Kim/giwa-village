@@ -1121,6 +1121,125 @@ it("주가 장날이 끝나는 순간(토 22:00 KST)에 넘어간다 — GiwaBos
   console.log(`     WEEK_OFFSET ${offset} · 1년 동안 주 경계 ${boundaries}번 모두 장날 끝(토 13:00 UTC)`);
 });
 
+// ── 객주 장부: 에스크로 원장 (client/src/ledger/escrowBook.ts) ─────────────────
+// 장부는 체인을 읽어 그리기만 한다. 그래서 틀리면 조용히 틀린다 — 상태 · 분개 · 대사 · 예외를
+// 손으로 짠 표본으로 묶는다.
+
+describe("객주 장부 — 상태 · 복식부기 · 대사 · 예외함");
+
+const gaekju = await import(pathToFileURL(path.join(ROOT, "client", "src", "ledger", "escrowBook.ts")).href);
+const G_NOW = 1_800_000_000;
+const W = (n) => BigInt(n) * 10n ** 15n; // 0.001 ETH 단위
+const gp = (over) => ({
+  id: 0, buyer: "0xB0", seller: "0x5E", itemId: "약과", tokenId: 7n, amount: W(1),
+  releaseAt: G_NOW + 3600, settled: false, disputed: false, refunded: false,
+  viaOffer: false, referencePrice: W(1), ...over,
+});
+const gSample = [
+  gp({ id: 0 }), // 보관 중
+  gp({ id: 1, disputed: true, releaseAt: G_NOW + 5 * 86400 }), // 분쟁 보류
+  gp({ id: 2, releaseAt: G_NOW - 7200 }), // 정산 가능(미수령)
+  gp({ id: 3, settled: true, amount: W(2), referencePrice: W(2) }), // 정산
+  gp({ id: 4, settled: true, refunded: true, amount: W(3) }), // 환불
+  gp({ id: 5, buyer: "0x0FFE", settled: true, viaOffer: true, referencePrice: null, amount: W(4) }), // 흥정 체결
+];
+const gInput = (over = {}) => ({
+  purchases: gSample,
+  offers: [{ id: 0, amount: W(5), active: true }, { id: 1, amount: W(9), active: false }],
+  marketBalance: W(3), // 미정산 = #0 · #1 · #2 = 3
+  offersBalance: W(5),
+  couponBalances: {},
+  now: G_NOW,
+  ...over,
+});
+
+it("상태 머신 — 체인의 settled 하나가 정산 · 환불 둘로 갈린다", () => {
+  const b = gaekju.buildBook(gInput());
+  eq(b.rows.map((r) => r.state).join(","), "escrow,disputed,releasable,settled,refunded,settled");
+  // 분쟁이어도 보류 기간이 지나면 정산 가능 칸으로 간다(체인의 release 와 같은 조건)
+  eq(gaekju.stateOf({ settled: false, disputed: true, refunded: false, releaseAt: G_NOW }, G_NOW), "releasable");
+});
+
+it("복식부기 — 구매자 지급 = 보관 + 정산 + 환불, 분개는 구매 6 · 정산 2 · 환불 1", () => {
+  const b = gaekju.buildBook(gInput());
+  const a = b.accounts;
+  eq(a.buyer, a.escrow + a.seller + a.refund, "항등식 ");
+  eq(a.escrow, W(3), "보관 ");
+  eq(a.seller, W(6), "정산 ");
+  eq(a.refund, W(3), "환불 ");
+  const k = (kind) => b.journal.filter((j) => j.kind === kind).length;
+  eq(`${k("purchase")}/${k("settle")}/${k("refund")}`, "6/2/1");
+});
+
+it("대사 — 맞으면 대사 예외 0, 모자라면 critical 이 맨 앞, 남으면 warn", () => {
+  const ok0 = gaekju.buildBook(gInput());
+  eq(ok0.exceptions.filter((x) => x.kind.startsWith("reconcile")).length, 0);
+  const short = gaekju.buildBook(gInput({ marketBalance: W(2) }));
+  eq(short.exceptions[0].kind, "reconcile-market");
+  eq(short.exceptions[0].severity, "critical");
+  eq(short.exceptions[0].amount, W(1));
+  const extra = gaekju.buildBook(gInput({ offersBalance: W(6) }));
+  const x = extra.exceptions.find((e) => e.kind === "reconcile-offers");
+  ok(x && x.severity === "warn" && x.amount === W(1), "공탁 초과는 warn 1");
+});
+
+it("예외함 — 미수령 · 분쟁이 그 건에 붙고, 흥정 체결은 가격 검사에서 빠진다", () => {
+  const b = gaekju.buildBook(gInput({
+    purchases: [...gSample, gp({ id: 6, referencePrice: null }), gp({ id: 7, referencePrice: W(2) })],
+    marketBalance: W(5),
+  }));
+  const of = (kind) => b.exceptions.filter((x) => x.kind === kind).map((x) => x.purchaseId).join(",");
+  eq(of("unclaimed"), "2");
+  eq(of("disputed"), "1");
+  eq(of("price-unbacked"), "6", "근거 없음 ");
+  eq(of("price-mismatch"), "7", "불일치 ");
+});
+
+it("근거 가격 없음 — 화면 가격대로면 info, 화면 가격과도 다르면 warn (체인은 어느 쪽도 막지 못한다)", () => {
+  const sev = (clientPrice) => gaekju.buildBook(gInput({
+    purchases: [gp({ id: 0, referencePrice: null, clientPrice })], marketBalance: W(1),
+  })).exceptions.find((x) => x.kind === "price-unbacked").severity;
+  eq(sev(W(1)), "info");
+  eq(sev(10n ** 12n), "warn");
+  eq(sev(null), "info");
+});
+
+it("환불 후 쿠폰 잔존 — 같은 품목의 정당한 구매분을 빼고 센다", () => {
+  const key = gaekju.couponKey("0xB0", 7n);
+  // 구매자 0xB0 는 약과를 정당하게 4장(#0 · #1 · #2 · #3) 샀고 #4 는 환불됐다
+  const held = (n) => gaekju.buildBook(gInput({ couponBalances: { [key]: BigInt(n) } }))
+    .exceptions.filter((x) => x.kind === "refund-coupon-kept").length;
+  eq(held(4), 0, "정당분만 가졌으면 ");
+  eq(held(5), 1, "한 장 더 가졌으면 ");
+  // 대소문자가 다른 주소도 같은 사람이다
+  eq(gaekju.couponKey("0xb0", 7n), key);
+});
+
+it("같은 입력이면 같은 장부 — 시각도 입력이다", () => {
+  const a = gaekju.buildBook(gInput());
+  const b = gaekju.buildBook(gInput());
+  eq(JSON.stringify(a, (_, v) => (typeof v === "bigint" ? v.toString() : v)),
+     JSON.stringify(b, (_, v) => (typeof v === "bigint" ? v.toString() : v)));
+  // 입력 배열을 건드리지 않는다
+  eq(gSample[0].id, 0);
+});
+
+it("예외 유형마다 결정 주체 · 사용자 안내 · 정책이 적혀 있다", () => {
+  const kinds = ["reconcile-market", "reconcile-offers", "unclaimed", "disputed", "refund-coupon-kept", "price-unbacked", "price-mismatch"];
+  for (const k of kinds) {
+    const p = gaekju.EXCEPTION_POLICY[k];
+    ok(p && p.title && p.owner && p.user && p.policy, `${k} 의 정책 칸이 비었습니다`);
+  }
+  eq(Object.keys(gaekju.EXCEPTION_POLICY).length, kinds.length, "정책 표의 유형 수 ");
+});
+
+it("객주 장부는 읽기만 한다 — 쓰기 경로(queueTx · writeContract · 지갑)를 부르지 않는다", () => {
+  for (const f of ["client/src/chain/gaekju.ts", "client/src/ui/GaekjuDialog.tsx", "client/src/ledger/escrowBook.ts"]) {
+    const src = fs.readFileSync(path.join(ROOT, f), "utf8");
+    ok(!/queueTx|writeContract|activeWalletClient|sendTransaction/.test(src), `${f} 에 쓰기 경로가 있습니다`);
+  }
+});
+
 // ── 결과 ──────────────────────────────────────────────────────────────────
 
 console.log(`\n${"─".repeat(50)}`);

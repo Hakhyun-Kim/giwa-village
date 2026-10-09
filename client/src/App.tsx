@@ -16,6 +16,7 @@ import GuildDialog from "./ui/GuildDialog";
 import DungeonDialog from "./ui/DungeonDialog";
 import HonorsDialog from "./ui/HonorsDialog";
 import SellerLedgerDialog from "./ui/SellerLedgerDialog";
+import GaekjuDialog from "./ui/GaekjuDialog";
 import WorkshopDialog from "./ui/WorkshopDialog";
 import QuestLog from "./ui/QuestLog";
 import Welcome from "./ui/Welcome";
@@ -112,6 +113,7 @@ export default function App() {
       <DungeonDialog />
       <HonorsDialog />
       <SellerLedgerDialog />
+      <GaekjuDialog />
       <WorkshopDialog />
       <QuestLog />
       <DailyRequest />

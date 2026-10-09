@@ -42,6 +42,7 @@
 |---|---|---|
 | 개인 상점 | **노점** (저잣거리에 편다) | GiwaMarketV3 |
 | 값 흥정 | **흥정** (에스크로로 즉시 체결) | GiwaOffers |
+| 장터 전체 에스크로 원장(읽기 전용) | **객주 장부** — [guide/GAEKJU.md](guide/GAEKJU.md) | GiwaMarketV3 · GiwaOffers (읽기만) |
 | 모임 | **길드**, 그 원정이 **던전** | GiwaGuilds |
 | 주간 보스 | **도깨비 토벌** | GiwaBoss |
 | 모닥불에 함께 앉기 | **온기** | GiwaHearth |

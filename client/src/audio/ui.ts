@@ -17,6 +17,7 @@ const PANELS: (keyof Store)[] = [
   "dungeonOpen",
   "honorsOpen",
   "ledgerOpen",
+  "gaekjuOpen",
   "workshopOpen",
   "giftTarget",
 ];

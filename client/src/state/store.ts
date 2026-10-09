@@ -45,6 +45,8 @@ interface VillageStore {
   dungeon: DungeonView | null;
   honorsOpen: boolean;
   ledgerOpen: boolean;
+  /** 객주 장부 — 장터 전체 에스크로 원장(읽기 전용). ?gaekju=1 로 열고 들어올 수 있다 */
+  gaekjuOpen: boolean;
   /** 내가 장착한 칭호 id (아바타 코스메틱) */
   selfHonor: number | null;
   /** 내가 장착한 장신구 id (복주머니) */
@@ -95,6 +97,7 @@ interface VillageStore {
   setDungeon: (d: DungeonView | null) => void;
   setHonorsOpen: (v: boolean) => void;
   setLedgerOpen: (v: boolean) => void;
+  setGaekjuOpen: (v: boolean) => void;
   setSelfHonor: (id: number | null) => void;
   setSelfTrinket: (id: number | null) => void;
   setSelfWear: (w: string | null) => void;
@@ -138,6 +141,7 @@ export const useStore = create<VillageStore>((set) => ({
   dungeon: null,
   honorsOpen: false,
   ledgerOpen: false,
+  gaekjuOpen: typeof location !== "undefined" && new URLSearchParams(location.search).get("gaekju") === "1",
   selfHonor: null,
   selfTrinket: null,
   selfWear: null,
@@ -207,6 +211,7 @@ export const useStore = create<VillageStore>((set) => ({
   setDungeon: (dungeon) => set({ dungeon }),
   setHonorsOpen: (honorsOpen) => set({ honorsOpen }),
   setLedgerOpen: (ledgerOpen) => set({ ledgerOpen }),
+  setGaekjuOpen: (gaekjuOpen) => set({ gaekjuOpen }),
   setSelfHonor: (selfHonor) => set({ selfHonor }),
   setSelfTrinket: (selfTrinket) => set({ selfTrinket }),
   setSelfWear: (selfWear) => set({ selfWear }),

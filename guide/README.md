@@ -26,6 +26,7 @@
 | 문서 | 여기에 있는 것 |
 |---|---|
 | [TESTING.md](TESTING.md) | 가스를 아끼는 순서로 쌓은 검증 5겹 · 온체인 기록 재현 · 자동화 훅 |
+| [GAEKJU.md](GAEKJU.md) | **객주 장부** — 장터 에스크로의 상태 머신 · 분개 · 대사 · 예외 정책과 결정 기록 |
 | [../contracts/README.md](../contracts/README.md) | 컨트랙트 10종 카탈로그 · 설계 원칙 · **메인넷 엔트로피의 알려진 한계** |
 | [AI Self-Audit](https://hakhyun-kim.github.io/giwa-village/audit.html) | 개발한 AI가 감사자로 전환해 찾은 결함·수정·미해결 한계 |
 | [기술 문서](https://hakhyun-kim.github.io/giwa-village/tech.html) | 아키텍처 다이어그램 · 스케일 로드맵(§7) |

@@ -57,7 +57,7 @@ function clearSession() {
 function resetVillageUI() {
   useStore.setState({ nearPortal:false,nearBoss:false,nearFire:false,selfSitting:false,
     stallView:null,stallOpenDialog:false,guildOpen:false,dungeonOpen:false,giftTarget:null,
-    socialTarget:null,couponsOpen:false,workshopOpen:false,honorsOpen:false,ledgerOpen:false });
+    socialTarget:null,couponsOpen:false,workshopOpen:false,honorsOpen:false,ledgerOpen:false,gaekjuOpen:false });
 }
 export function goField(notice = "교관 다솔을 따라 북쪽 산채 입구로 가세요.") {
   if (useWorld.getState().zone === "village") void sendBeacon(255,true);

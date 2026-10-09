@@ -38,7 +38,8 @@ export default function Welcome() {
   const params = new URLSearchParams(location.search);
   // ?showcase=1은 이미 자동 시연이고, ?slot=은 개발용 듀얼 테스트 창이다.
   // ?raid=는 원정 초대(RaidInvite)가 먼저 묻는다 — 안내를 겹치지 않는다. 답을 남기지 않으니 다음 방문에 다시 묻는다.
-  const suppressed = params.get("showcase") === "1" || !!params.get("slot") || !!params.get("raid");
+  // ?gaekju=1 은 객주 장부를 보러 온 링크다 — 장부 위에 환영 카드를 얹지 않는다.
+  const suppressed = params.get("showcase") === "1" || !!params.get("slot") || !!params.get("raid") || params.get("gaekju") === "1";
   const [asking, setAsking] = useState(() => !suppressed && !seenBefore());
   const status = useStore((s) => s.status);
   const [ready, setReady] = useState(false);

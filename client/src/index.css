@@ -1380,3 +1380,197 @@ body,
 @media (max-height: 520px) {
   .hud-demo { display: none; }
 }
+/* ── 객주 장부 (GaekjuDialog) — 장터 전체 에스크로 원장 · 읽기 전용 ───────────── */
+.gaekju-modal {
+  width: min(680px, 94vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  text-align: left;
+}
+.gaekju-modal .gift-emoji,
+.gaekju-modal .gift-title { text-align: center; }
+.gaekju-lede {
+  margin: 8px auto 4px;
+  max-width: 520px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #a9b6cc;
+  text-align: center;
+}
+.gaekju-h {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #8ea0bd;
+}
+.gaekju-h em {
+  font-style: normal;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 9px;
+  background: #3a2f17;
+  color: #ffd66b;
+}
+
+.gaekju-recon {
+  margin-top: 14px;
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid #2a3040;
+  background: #0f131c;
+}
+.gaekju-recon.ok { border-color: #2f6b4a; }
+.gaekju-recon.bad { border-color: #8a3a3a; background: #1d1214; }
+.gaekju-recon-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 700;
+  font-size: 15px;
+}
+.gaekju-recon.ok .gaekju-recon-head { color: #7fd6a4; }
+.gaekju-recon.bad .gaekju-recon-head { color: #ff9a9a; }
+.gaekju-recon-head span { font-size: 11px; font-weight: 400; color: #6b7688; font-family: ui-monospace, monospace; }
+.gaekju-recon-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: #a9b6cc;
+}
+.gaekju-recon-grid b,
+.gaekju-recon-grid a { text-align: right; font-family: ui-monospace, monospace; color: #eef2f8; text-decoration: none; }
+.gaekju-recon-grid a:hover { color: #ffd66b; }
+
+.gaekju-flow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gaekju-flow > i { font-style: normal; color: #4a556a; }
+.gaekju-col { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.gaekju-state {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #2a3040;
+  border-radius: 10px;
+  padding: 7px 8px;
+  background: #121722;
+  opacity: 0.45;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.gaekju-state.on,
+.gaekju-state-start { opacity: 1; }
+.gaekju-state b { font-size: 12.5px; }
+.gaekju-state span { font-size: 12px; color: #cfd6e2; }
+.gaekju-state em { font-style: normal; font-size: 10.5px; color: #8ea0bd; font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+.gaekju-state-escrow.on { border-color: #4d6fa8; }
+.gaekju-state-disputed.on { border-color: #b07a2a; }
+.gaekju-state-releasable.on { border-color: #ffd66b; }
+.gaekju-state-settled.on { border-color: #2f6b4a; }
+.gaekju-state-refunded.on { border-color: #6a5a8a; }
+
+.gaekju-accounts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.gaekju-acct {
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #121722;
+  border-top: 3px solid #2a3040;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gaekju-acct span { font-size: 11px; color: #8ea0bd; }
+.gaekju-acct b { font-size: 14px; font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
+.gaekju-acct-buyer { border-top-color: #4d6fa8; }
+.gaekju-acct-escrow { border-top-color: #ffd66b; }
+.gaekju-acct-seller { border-top-color: #2f6b4a; }
+.gaekju-acct-refund { border-top-color: #6a5a8a; }
+.gaekju-eq {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #6b7688;
+  font-family: ui-monospace, monospace;
+  text-align: center;
+}
+
+.gaekju-exc-list { display: flex; flex-direction: column; gap: 6px; }
+.gaekju-exc {
+  border: 1px solid #2a3040;
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: #121722;
+  padding: 7px 10px;
+  font-size: 12.5px;
+}
+.gaekju-exc.critical { border-left-color: #ff6b6b; }
+.gaekju-exc.warn { border-left-color: #ffb84d; }
+.gaekju-exc.info { border-left-color: #4d6fa8; }
+.gaekju-exc summary { cursor: pointer; display: flex; gap: 8px; align-items: baseline; list-style: none; }
+.gaekju-exc summary::-webkit-details-marker { display: none; }
+.gaekju-exc summary span { color: #8ea0bd; font-family: ui-monospace, monospace; font-size: 11.5px; }
+.gaekju-exc summary em { margin-left: auto; font-style: normal; font-family: ui-monospace, monospace; font-size: 11.5px; color: #cfd6e2; }
+.gaekju-exc p { margin: 6px 0 4px; color: #cfd6e2; }
+.gaekju-exc dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; font-size: 11.5px; }
+.gaekju-exc dt { color: #6b7688; }
+.gaekju-exc dd { margin: 0; color: #a9b6cc; }
+
+.gaekju-rows { display: flex; flex-direction: column; gap: 4px; }
+.gaekju-row {
+  display: grid;
+  grid-template-columns: 40px 1fr auto 74px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #121722;
+  font-size: 12.5px;
+}
+.gaekju-id { color: #6b7688; font-family: ui-monospace, monospace; font-size: 11px; }
+.gaekju-item { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gaekju-item em { font-style: normal; margin-left: 6px; color: #6b7688; font-size: 11px; font-family: ui-monospace, monospace; }
+.gaekju-amt { font-family: ui-monospace, monospace; font-size: 11.5px; color: #cfd6e2; }
+.gaekju-chip {
+  text-align: center;
+  font-size: 11px;
+  border-radius: 8px;
+  padding: 3px 0;
+  text-decoration: none;
+  color: #eef2f8;
+  background: #1c2331;
+}
+.gaekju-chip.escrow { background: #1d2a44; }
+.gaekju-chip.disputed { background: #3a2a12; color: #ffcf85; }
+.gaekju-chip.releasable { background: #3a2f17; color: #ffd66b; }
+.gaekju-chip.settled { background: #15301f; color: #8fe0b0; }
+.gaekju-chip.refunded { background: #261f36; color: #c7b6ee; }
+.gaekju-more {
+  margin-top: 6px;
+  width: 100%;
+  cursor: pointer;
+  border: 1px dashed #2a3040;
+  background: none;
+  color: #8ea0bd;
+  border-radius: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+}
+.gaekju-modal .gift-note a { color: #ffd66b; }
+
+@media (max-width: 560px) {
+  .gaekju-flow { flex-wrap: wrap; }
+  .gaekju-flow > i { display: none; }
+  .gaekju-flow > .gaekju-state,
+  .gaekju-flow > .gaekju-col { flex: 1 1 45%; }
+  .gaekju-accounts { grid-template-columns: repeat(2, 1fr); }
+  .gaekju-row { grid-template-columns: 34px 1fr 66px; }
+  .gaekju-amt { display: none; }
+}
