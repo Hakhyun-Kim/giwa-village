@@ -76,7 +76,6 @@ server/  Colyseus 룸 — 선택 사항이다. 서버 0으로도 마을이 돈�
          village_live(마을·들판·산채에서 서로를 그린다 · 30명) · expedition(1~4명 실시간 원정)
 shared/  서버 판정과 클라이언트 표시가 함께 읽는 실시간 원정 규칙(expedition.ts) — 세션 기록일 뿐 체인에 아무것도 쓰지 않는다.
          순수 모듈이라 npm test가 그대로 걸어 보고, 다른 클라이언트도 같은 규칙으로 혼자 하는 연습 원정을 돌릴 수 있다
-         + 크로스플레이 링크(crosslink.ts) — 웹의 원정을 Unity 앱 · PC 게임이 giwa://expedition 으로 이어받는다(PROTOCOL.md §3.8 · 지갑은 넘기지 않는다)
 contracts/ Solidity 13종 (10종은 GIWA Sepolia 배포·검증 완료 · 호패 GiwaIdentity · 장터 v4 묶음(GiwaMarketV4 · GiwaOffersV2)은 배포 대기 — 주소가 null 이면 화면은 지금 판으로 돈다
            · 복주머니 v2 · 모닥불 v2 · 도깨비 v3 · 프로필은 소스만 새 판이고 체인에는 앞 판이 떠 있다 — guide/V4.md §6~§8)
 scripts/ 테스트·배포·봇·스모크
@@ -188,7 +187,7 @@ DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 �
 ## 5. 검증 — 가스를 아끼는 순서
 
 ```bash
-npm test                     # 로직 69건 + 원정 규칙 7건 + 크로스플레이 링크 5건 · 체인 없음 · 2초 미만 (저장할 때마다)
+npm test                     # 로직 69건 + 원정 규칙 7건 + 룸 서버 주소 1건 · 체인 없음 · 2초 미만 (저장할 때마다)
 npm run export-world         # 배치표를 client/public/world.json 으로 굽는다
 npm run test:local           # 컨트랙트 13종 E2E 108건(봇 지갑이 있으면 흥정 봇까지) · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)
@@ -250,15 +249,15 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
 
 - [ ] **호패(UP.ID) — 증명 가능한 장터** (2026-10-05 소유자: 익명 지갑이 아니라 이름 있는 사람과 거래한다).
   웹 · 컨트랙트 · 로컬 시험은 됐다. 남은 것: GIWA Sepolia 배포(`node scripts/deploy-village.mjs GiwaIdentity` →
-  `node scripts/verify-contracts.mjs` → `npm run export-world`) · Unity 이식(이름표 · 노점이 `principalOf` 를 먼저 따라간다) ·
+  `node scripts/verify-contracts.mjs` → `npm run export-world`) ·
   노점 창에 체인 거래 이력(평판) · 흥정에 정해진 말 몇 마디
 - [ ] **계측 스키마를 모든 클라이언트에** — [guide/ANALYTICS.md](guide/ANALYTICS.md)가 한 벌이다. 웹은 `net/analytics.ts`
   (기본 꺼짐 · 주소/tx 해시 없음 · smoke 에서 꺼짐)로 주요 이벤트를 달았고, 남은 것(`raid_*` · `peers_seen` ·
-  `wallet_panel_open` · `balance_first_positive`)과 Unity 는 같은 이름으로 단다. 새 이벤트는 문서에 먼저 적는다
+  `wallet_panel_open` · `balance_first_positive`)도 같은 이름으로 단다. 새 이벤트는 문서에 먼저 적는다
 - [ ] **장터 v4 로 옮기기** — `GiwaMarketV4` · `GiwaOffersV2`(guide/V4.md §1~§5)는 짓고 로컬로 시험했다(리스팅 없는 buy 거부 ·
   정산 때 쿠폰 · 환불은 쿠폰 없음 · 흥정도 에스크로 · 7일 만료 · 온체인 쿠폰 JSON · 페이지 목록). 남은 것: 배포
   (`node scripts/deploy-village.mjs GiwaMarketV4 GiwaOffersV2` → `node scripts/list-brand-items.mjs --v4 --yes` → verify) ·
-  웹 · 봇 · mcp · Unity 를 새 ABI 로(`openStalls(offset, limit)` · 흥정 계약 분리 · `purchaseOf` 의 tokenId · 쿠폰은 확정 뒤 생김)
+  웹 · 봇 · mcp 를 새 ABI 로(`openStalls(offset, limit)` · 흥정 계약 분리 · `purchaseOf` 의 tokenId · 쿠폰은 확정 뒤 생김)
 - [ ] **복주머니 · 모닥불 · 도깨비 새 판 배포** — guide/V4.md §6~§8 을 소스 · 로컬 시험으로 끝냈다(256블록 지난 봉인은 결과 없이 무르고 다시 열기 ·
   모닥불은 지갑이 아니라 사람을 센다: 호패를 따라간 주인 단위 · Dojang 인증은 한 사람, 아니면 반 사람 · 도깨비의 주는 장날 끝(토 22시 KST)에 넘어간다).
   남은 것: `node scripts/deploy-village.mjs GiwaIdentity GiwaBoxes GiwaHearth GiwaBoss GiwaProfile`(앞 판의 장신구 · 온기 · 전리품은 legacy 로 잇는다 ·

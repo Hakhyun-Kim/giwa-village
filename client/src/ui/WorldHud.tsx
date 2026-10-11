@@ -4,7 +4,6 @@ import { localPos } from "../net/colyseus";
 import { combatAction, enterExpedition, goField, returnVillage } from "../net/expedition";
 import { useStore } from "../state/store";
 import { ATTACK_RANGE } from "../../../shared/expedition";
-import CrossPlay from "./CrossPlay";
 import "./world.css";
 
 export default function WorldHud() {
@@ -13,7 +12,6 @@ export default function WorldHud() {
   const showcasing=useStore(s=>s.showcasing);
   // 들판·산채의 거리 · 전투 스냅숏은 React 밖(20Hz)에 있다 — 그것을 읽는 때만 150ms 박자로 다시 그린다. 마을 줄은 useWorld 가 깨운다
   useEffect(()=>{if(world.zone==="village")return;const id=setInterval(()=>setTick(t=>t+1),150);return()=>clearInterval(id);},[world.zone]);
-  useEffect(()=>{if(world.inviteCode)setCode(world.inviteCode);},[world.inviteCode]);
   void tick;
   const snap=combatSnapshot;const me=snap?.players.find(p=>p.id===world.fighterId);
   const near=Math.hypot(localPos.x-CAVE_GATE.x,localPos.z-CAVE_GATE.z)<5;
@@ -46,13 +44,11 @@ export default function WorldHud() {
       <button disabled={!near||!code.trim()||offline||world.entering} onClick={()=>void enterExpedition(code)}>동료에게 합류</button></div>
       <p className="world-fine">{!near?"길을 따라 북쪽 산채 입구까지 이동하세요.":offline?"입구 도착 · F 키로도 혼자 연습을 시작할 수 있어요.":"입구 도착 · F 키로도 새 원정을 시작할 수 있어요."}{offline&&" 동료와 합류하려면 실시간 서버가 연결되어야 해요."}</p>
       <small>전투 체험은 가스 0 · 전투 점수와 체력은 이번 원정에서만 유지됩니다.</small>
-      <CrossPlay/>
     </section>:<>
       <aside className="world-party"><small>원정대 {snap?.players.length??1}/4</small>
         {snap?.players.map(p=><div className="party-member" key={p.id}><b>{p.name}{p.id===world.fighterId?" (나)":""}</b><progress value={p.hp} max={p.maxHp}/><span>{p.hp}/{p.maxHp}{p.hp<=0?" · 쓰러짐":""}</span></div>)}
         {world.instanceId?<div className="instance-code">입장 코드 <b>{world.instanceId}</b><button onClick={async()=>{try{await navigator.clipboard.writeText(world.instanceId);setCopied(true);}catch{setCopied(false);}}}>{copied?"복사됨":"복사"}</button></div>
           :<div className="instance-code">혼자 연습 · 이 기기에서 진행</div>}
-        {world.instanceId&&!finished&&<CrossPlay code={world.instanceId}/>}
         <small>교관 다솔 동행 · 온체인 보상 없음</small>
       </aside>
       {!finished&&<div className="combat-hotbar"><div className="player-health"><b>내 체력 {me?.hp??100} / 100</b><progress value={me?.hp??100} max={100}/><span>{me?.hp===0?"동료의 전투를 지켜보거나 귀환하세요":range?"공격 사거리 안":"적에게 가까이 다가가세요"}</span></div>

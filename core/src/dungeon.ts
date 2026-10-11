@@ -67,7 +67,7 @@ function outcomeOf(door: number, b: number): DoorOutcome {
  *  어느 기척이든 열에 여덟 이상 맞는다(돌문의 으르렁거림이 가장 낮아 83%) */
 export const OMEN_ACCURACY_LT = 205;
 
-/** 기척 문구 — 웹 · Unity 화면이 함께 읽는다(Unity 는 굽는다). "함정 "으로 시작하는 글자를 두지 않는다 */
+/** 기척 문구 — 화면이 읽는다. "함정 "으로 시작하는 글자를 두지 않는다 */
 export const OMEN_WORDS: Record<DoorOutcome, string> = {
   safe: "너머가 고요하다",
   bonus: "너머에 순풍이 분다",

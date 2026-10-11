@@ -1,5 +1,5 @@
 import { defineChain } from "viem";
-import { cleanServer } from "../../../shared/crosslink";
+import { cleanServer } from "../../../shared/wsurl";
 
 export const giwaSepolia = defineChain({
   id: 91342,

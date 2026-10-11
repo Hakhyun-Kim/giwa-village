@@ -368,7 +368,7 @@ it("기척은 결정론이고 명세대로 다시 계산한 값과 같다 — �
     eq(JSON.stringify(o), JSON.stringify({ door, shows }), `표본 ${i}: `);
     if (i % 100 === 0) eq(JSON.stringify(omenAt(...args)), JSON.stringify(o), "같은 입력 두 번: ");
   }
-  for (const k of OUTCOMES) ok(OMEN_WORDS[k] && !OMEN_WORDS[k].startsWith("함정 "), `기척 문구 ${k} — 비었거나 "함정 "으로 시작한다(Unity 굽기가 위험 안내로 센다)`);
+  for (const k of OUTCOMES) ok(OMEN_WORDS[k] && !OMEN_WORDS[k].startsWith("함정 "), `기척 문구 ${k} — 비었거나 "함정 "으로 시작한다`);
 });
 
 it("어느 기척이든 열에 여덟 이상 맞고, 문이 낼 수 없는 결과는 들리지 않으며, 세 문을 고루 가리킨다", () => {

@@ -14,7 +14,7 @@ function hover(on: boolean) {
 
 /** 좌판 노점: 평상 + 기둥 + 차양 + 상품 */
 function StallBooth({ stall }: { stall: Stall }) {
-  const awning = colorFromString(stall.ownerAddress.toLowerCase()); // 주인 지갑의 색 — 아바타 옷 색과 같다(Unity GiwaChain.Build 와 짝)
+  const awning = colorFromString(stall.ownerAddress.toLowerCase()); // 주인 지갑의 색 — 아바타 옷 색과 같다
   const tex = useSurfaces();
   // ✓ 는 업비트가 확인한 사람(직접 · 호패)의 노점에만 — 지갑만 있는 노점에 붙이면 '인증된 가게'로 읽힌다
   const owner = useIdentity(stall.ownerAddress);
