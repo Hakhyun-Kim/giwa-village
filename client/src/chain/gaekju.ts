@@ -1,5 +1,5 @@
 // 객주 장부의 체인 읽기 — 장터 전체의 구매 · 흥정 공탁 · 컨트랙트 잔액을 모아 ledger/escrowBook 에 넘긴다.
-// 읽기만 한다. 지갑이 없어도(첫 방문자 · 심사자) 열 수 있어야 하므로 publicClient 만 쓴다.
+// 읽기만 한다. 지갑이 없어도(첫 방문자처럼) 열 수 있어야 하므로 publicClient 만 쓴다.
 import { parseAbiItem, parseEther } from "viem";
 import { publicClient } from "../wallet/wallet";
 import { scanLogs } from "./logs";
