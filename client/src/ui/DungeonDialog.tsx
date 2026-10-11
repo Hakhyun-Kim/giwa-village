@@ -21,6 +21,7 @@ export default function DungeonDialog() {
   const guilds = useStore((s) => s.guilds);
   const walletAddress = useStore((s) => s.walletAddress);
   const error = useStore((s) => s.guildError);
+  const busy = useStore((s) => s.guildBusy);
   const [proof, setProof] = useState<Proof>(null);
 
   const myGuild = walletAddress
@@ -139,12 +140,13 @@ export default function DungeonDialog() {
                   </button>
                   <button
                     className="gift-btn primary"
+                    disabled={busy}
                     onClick={() => {
                       setProof(null);
                       dungeonEnter();
                     }}
                   >
-                    다시 입장
+                    {busy ? "입장 중…" : "다시 입장"}
                   </button>
                 </div>
               </>

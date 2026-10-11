@@ -10,6 +10,7 @@ export default function GuildDialog() {
   const guilds = useStore((s) => s.guilds);
   const walletAddress = useStore((s) => s.walletAddress);
   const error = useStore((s) => s.guildError);
+  const busy = useStore((s) => s.guildBusy);
   const [name, setName] = useState("");
   const [emblem, setEmblem] = useState(EMBLEMS[0]);
 
@@ -28,6 +29,7 @@ export default function GuildDialog() {
   }
 
   function onCreate() {
+    if (busy) return;
     if (!name.trim()) {
       useStore.getState().setGuildError("길드 이름을 입력하세요.");
       return;
@@ -66,8 +68,8 @@ export default function GuildDialog() {
               ))}
             </div>
             <div className="gift-actions">
-              <button className="gift-btn" onClick={() => leaveGuild()}>
-                탈퇴
+              <button className="gift-btn" onClick={() => leaveGuild()} disabled={busy}>
+                {busy ? "처리 중…" : "탈퇴"}
               </button>
               <button className="gift-btn primary" onClick={goDungeon}>
                 ⚔ 원정 떠나기
@@ -102,8 +104,8 @@ export default function GuildDialog() {
                 <button className="gift-btn" onClick={close}>
                   닫기
                 </button>
-                <button className="gift-btn primary" onClick={onCreate}>
-                  길드 창설
+                <button className="gift-btn primary" onClick={onCreate} disabled={busy}>
+                  {busy ? "창설 중…" : "길드 창설"}
                 </button>
               </div>
             </>
@@ -129,6 +131,7 @@ export default function GuildDialog() {
                 <button
                   className="gift-btn small"
                   onClick={() => joinGuild(g.id)}
+                  disabled={busy}
                 >
                   가입
                 </button>

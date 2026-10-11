@@ -72,6 +72,8 @@ async function guildWrite(functionName: string, args: unknown[]): Promise<boolea
     useStore.getState().setGuildError("지갑이 없습니다.");
     return false;
   }
+  if (useStore.getState().guildBusy) return false;
+  useStore.getState().setGuildBusy(true);
   try {
     const tx = await queueTx(() =>
       wc.writeContract({
@@ -89,6 +91,8 @@ async function guildWrite(functionName: string, args: unknown[]): Promise<boolea
   } catch (err) {
     guildError(err);
     return false;
+  } finally {
+    useStore.getState().setGuildBusy(false);
   }
 }
 
@@ -126,6 +130,9 @@ export async function chainDungeonEnter(): Promise<void> {
   }
   const wc = activeWalletClient;
   if (!wc?.account) return;
+  // 입장마다 시도 횟수가 하나씩 오른다 — 연타가 원정 두 번이 되지 않게 막는다
+  if (s.guildBusy) return;
+  s.setGuildBusy(true);
   try {
     const tx = await queueTx(() =>
       wc.writeContract({
@@ -199,6 +206,8 @@ export async function chainDungeonEnter(): Promise<void> {
     });
   } catch (err) {
     guildError(err);
+  } finally {
+    useStore.getState().setGuildBusy(false);
   }
 }
 
@@ -258,7 +267,7 @@ export function verifyLastRun():
 
 export async function chainDungeonBank(): Promise<void> {
   const s = useStore.getState();
-  if (!s.dungeon || run.picks.length === 0) return;
+  if (!s.dungeon || s.dungeon.busy || run.picks.length === 0) return;
 
   // 귀환 전 로컬 재계산 — 함정이 섞였으면 온체인 settleRun 이 되돌릴(revert) 것이므로
   // 가스를 버리기 전에 코어로 먼저 막는다 (클라이언트 예측 = 온체인 판정과 동일 로직).

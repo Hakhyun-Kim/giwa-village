@@ -41,6 +41,8 @@ interface VillageStore {
   guilds: Guild[];
   guildOpen: boolean;
   guildError: string | null;
+  /** 길드·원정 입장 전송이 나가 있는 동안 — 두 번 눌러 두 번 보내지 않도록 버튼을 막는다 */
+  guildBusy: boolean;
   dungeonOpen: boolean;
   dungeon: DungeonView | null;
   honorsOpen: boolean;
@@ -93,6 +95,7 @@ interface VillageStore {
   setGuilds: (g: Guild[]) => void;
   setGuildOpen: (v: boolean) => void;
   setGuildError: (msg: string | null) => void;
+  setGuildBusy: (v: boolean) => void;
   setDungeonOpen: (v: boolean) => void;
   setDungeon: (d: DungeonView | null) => void;
   setHonorsOpen: (v: boolean) => void;
@@ -137,6 +140,7 @@ export const useStore = create<VillageStore>((set) => ({
   guilds: [],
   guildOpen: false,
   guildError: null,
+  guildBusy: false,
   dungeonOpen: false,
   dungeon: null,
   honorsOpen: false,
@@ -207,6 +211,7 @@ export const useStore = create<VillageStore>((set) => ({
   setGuilds: (guilds) => set({ guilds }),
   setGuildOpen: (guildOpen) => set({ guildOpen, guildError: null }),
   setGuildError: (guildError) => set({ guildError }),
+  setGuildBusy: (guildBusy) => set({ guildBusy }),
   setDungeonOpen: (dungeonOpen) => set({ dungeonOpen }),
   setDungeon: (dungeon) => set({ dungeon }),
   setHonorsOpen: (honorsOpen) => set({ honorsOpen }),
