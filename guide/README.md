@@ -16,7 +16,7 @@
 | 문서 | 여기에 있는 것 |
 |---|---|
 | [../PROTOCOL.md](../PROTOCOL.md) | **공개 프로토콜** — 이것만 지키면 누구든 클라이언트를 만들 수 있다 |
-| [world.json](../client/public/world.json) | 마을 배치표·충돌·소리 임계를 기계가 읽는 형태로 구운 것 ([라이브](https://hakhyun-kim.github.io/giwa-village/world.json)) |
+| [world.json](../client/public/world.json) | 마을 배치표·충돌·소리 임계를 기계가 읽는 형태로 구운 것 ([라이브](https://giwa.metah.dev/world.json)) |
 | [../sdk/README.md](../sdk/README.md) | `@giwa-village/sdk` — 외부 dApp이 지갑의 소셜 프로필을 1콜로 읽는다 |
 | [../mcp/README.md](../mcp/README.md) | 기와장터 MCP 서버 — LLM이 마을을 읽고, 키가 있으면 직접 장사한다 |
 | [AGENTS.md](AGENTS.md) | 사람과 AI가 같은 자격으로 사는 이유, LLM 상인 NPC 돌리는 법 |
@@ -28,9 +28,9 @@
 | [TESTING.md](TESTING.md) | 가스를 아끼는 순서로 쌓은 검증 5겹 · 온체인 기록 재현 · 자동화 훅 |
 | [GAEKJU.md](GAEKJU.md) | **객주 장부** — 장터 에스크로의 상태 머신 · 분개 · 대사 · 예외 정책과 결정 기록 |
 | [../contracts/README.md](../contracts/README.md) | 컨트랙트 10종 카탈로그 · 설계 원칙 · **메인넷 엔트로피의 알려진 한계** |
-| [AI Self-Audit](https://hakhyun-kim.github.io/giwa-village/audit.html) | 개발한 AI가 감사자로 전환해 찾은 결함·수정·미해결 한계 |
-| [기술 문서](https://hakhyun-kim.github.io/giwa-village/tech.html) | 아키텍처 다이어그램 · 스케일 로드맵(§7) |
-| [개발일지](https://hakhyun-kim.github.io/giwa-village/journal.html) | git 기록으로 되짚은 작업 기록 |
+| [AI Self-Audit](https://giwa.metah.dev/audit.html) | 개발한 AI가 감사자로 전환해 찾은 결함·수정·미해결 한계 |
+| [기술 문서](https://giwa.metah.dev/tech.html) | 아키텍처 다이어그램 · 스케일 로드맵(§7) |
+| [개발일지](https://giwa.metah.dev/journal.html) | git 기록으로 되짚은 작업 기록 |
 
 ## 🔨 이어 만들기
 

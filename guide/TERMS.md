@@ -62,4 +62,4 @@
 ## 9. 바뀔 때 · 연락처
 
 이 약관이 바뀌면 이 파일의 판과 날짜를 올리고 저장소 기록에 남긴다.
-연락처: (미정 — 정식판 전에 채운다) · 그때까지는 [GitHub 이슈](https://github.com/Hakhyun-Kim/giwa-village/issues).
+연락처: (미정 — 정식판 전에 채운다) · 그때까지는 이메일 [harry@metah.dev](mailto:harry@metah.dev).

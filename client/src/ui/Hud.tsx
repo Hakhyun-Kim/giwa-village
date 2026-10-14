@@ -349,7 +349,7 @@ export default function Hud() {
               테스트 ETH 받기 ↗
             </a>
             <a
-              href="https://github.com/Hakhyun-Kim/giwa-village/blob/main/guide/PLAY.md"
+              href={`${import.meta.env.BASE_URL}guide/play.html`}
               target="_blank"
               rel="noreferrer"
             >
@@ -366,7 +366,7 @@ export default function Hud() {
               📜 객주 장부
             </a>
             <a
-              href="https://github.com/Hakhyun-Kim/giwa-village/blob/main/guide/PRIVACY.md"
+              href={`${import.meta.env.BASE_URL}guide/privacy.html`}
               target="_blank"
               rel="noreferrer"
               title="테스트넷 전용 · 금전 가치 없음 · 체인 기록은 지울 수 없음 (v0 초안)"

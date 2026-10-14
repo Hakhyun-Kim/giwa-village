@@ -10,7 +10,7 @@
 | | |
 |---|---|
 | 판(version) | **1** — `world.json`의 `version`과 같다 |
-| 마을 데이터 | [`world.json`](client/public/world.json) · 라이브: `https://hakhyun-kim.github.io/giwa-village/world.json` |
+| 마을 데이터 | [`world.json`](client/public/world.json) · 라이브: `https://giwa.metah.dev/world.json` |
 | 굽는 명령 | `npm run export-world` (원본은 TypeScript, 이 파일은 그 생성물) |
 | 검증 | `npm test` — 문서·데이터·서버가 어긋나면 빨간불 |
 | 라이선스 | 프로토콜과 `world.json`은 MIT. 마음대로 구현해도 된다 |
@@ -37,7 +37,7 @@
 없으면 없는 대로 돈다 — 룸이 죽어도 마을은 안 죽는다. **거꾸로도 참이다: 룸이
 말하는 것은 무엇도 돈이 아니다.** 잔액·소유권은 언제나 체인에서 다시 확인한다.
 
-> 공개 데모(`https://hakhyun-kim.github.io/giwa-village/`)는 **① 은 언제나, ② 는 시연 서버가 떠 있을 때만** 쓴다.
+> 공개 데모(`https://giwa.metah.dev/`)는 **① 은 언제나, ② 는 시연 서버가 떠 있을 때만** 쓴다.
 > 룸 서버는 상시 호스팅하지 않는다 — 사람이 모이는 창(예: 장날 플레이테스트)에만 0원으로 잠깐 띄운다
 > (`guide/DEPLOY.md` — `village_live` 정원은 방 하나에 30명). 켜 두는 동안은 공개 데모를 연 누구든 붙고, 잠든 무료 서버도
 > 그 첫 요청에 깬다 — 그래서 시연 사이에는 서비스를 멈춰 둔다. 서버 주소는 빌드가 정하고, 페이지는 먼저

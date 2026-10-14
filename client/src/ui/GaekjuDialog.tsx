@@ -222,7 +222,7 @@ export default function GaekjuDialog() {
         <div className="gift-note">
           읽기 전용 · 이 창은 체인에 아무것도 쓰지 않습니다 · GIWA Sepolia 테스트넷(금전 가치 없음) ·{" "}
           <a
-            href="https://github.com/Hakhyun-Kim/giwa-village/blob/main/guide/GAEKJU.md"
+            href={`${import.meta.env.BASE_URL}guide/gaekju.html`}
             target="_blank"
             rel="noreferrer"
           >

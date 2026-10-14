@@ -1,9 +1,9 @@
 # 기와장터 (GIWA Village)
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-풀온체인_서버리스-B8790E?style=for-the-badge)](https://hakhyun-kim.github.io/giwa-village/)
-[![Tech Docs](https://img.shields.io/badge/📄_기술_문서-아키텍처-3b4048?style=for-the-badge)](https://hakhyun-kim.github.io/giwa-village/tech.html)
-[![AI Audit](https://img.shields.io/badge/🔍_AI_Self--Audit-공개_감사_기록-3b4048?style=for-the-badge)](https://hakhyun-kim.github.io/giwa-village/audit.html)
-[![Dev Journal](https://img.shields.io/badge/📓_개발일지-git_기록으로_되짚은-3b4048?style=for-the-badge)](https://hakhyun-kim.github.io/giwa-village/journal.html)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-풀온체인_서버리스-B8790E?style=for-the-badge)](https://giwa.metah.dev/)
+[![Tech Docs](https://img.shields.io/badge/📄_기술_문서-아키텍처-3b4048?style=for-the-badge)](https://giwa.metah.dev/tech.html)
+[![AI Audit](https://img.shields.io/badge/🔍_AI_Self--Audit-공개_감사_기록-3b4048?style=for-the-badge)](https://giwa.metah.dev/audit.html)
+[![Dev Journal](https://img.shields.io/badge/📓_개발일지-git_기록으로_되짚은-3b4048?style=for-the-badge)](https://giwa.metah.dev/journal.html)
 
 GIWA 체인 위의 **한옥 저잣거리** — 지갑으로 접속해 아바타로 마을을 돌아다니고,
 노점을 열어 장사하고, 다른 주민에게 실제 ETH를 선물하고, 길드를 맺어 던전을 오르는
@@ -12,7 +12,7 @@ GIWA 체인 위의 **한옥 저잣거리** — 지갑으로 접속해 아바타�
 **지갑 전송을 선물로, P2P 거래를 노점으로, 신원 인증을 상인 뱃지로** —
 지갑의 기능을 공간의 문화로 번역한다.
 
-> 🌐 **[라이브 데모](https://hakhyun-kim.github.io/giwa-village/)는 풀온체인
+> 🌐 **[라이브 데모](https://giwa.metah.dev/)는 풀온체인
 > 서버리스입니다** — 게임 서버 없이도 GIWA 체인만으로 동작합니다. 다른 방문자의
 > 아바타(프레즌스 비컨)와 노점이 그대로 보이고, 테스트 ETH만 받으면 노점 개설 →
 > 구매 → 길드 던전까지 전부 실동작합니다. 사람이 모이는 때에만 시연 서버가 떠서
@@ -30,11 +30,11 @@ GIWA 체인 위의 **한옥 저잣거리** — 지갑으로 접속해 아바타�
 [▶ 원속도 mp4](media/demo.mp4) — `showcase.cmd` 실행을 그대로 녹화한 영상입니다.
 구매·에스크로 정산은 GIWA Sepolia **실제 온체인 트랜잭션**입니다.
 
-📓 **[개발일지](https://hakhyun-kim.github.io/giwa-village/journal.html)** — 주장이 아니라
-git 기록으로 되짚은 작업 기록. 🔍 **[AI Self-Audit](https://hakhyun-kim.github.io/giwa-village/audit.html)** —
+📓 **[개발일지](https://giwa.metah.dev/journal.html)** — 주장이 아니라
+git 기록으로 되짚은 작업 기록. 🔍 **[AI Self-Audit](https://giwa.metah.dev/audit.html)** —
 개발한 AI가 감사자로 전환해 찾은 결함·수정·**미해결 한계**를 전부 공개한 기록.
 
-[![기와장터 개발일지 미리보기](media/journal-preview.png)](https://hakhyun-kim.github.io/giwa-village/journal.html)
+[![기와장터 개발일지 미리보기](media/journal-preview.png)](https://giwa.metah.dev/journal.html)
 
 ## 마을에 무엇이 있나
 

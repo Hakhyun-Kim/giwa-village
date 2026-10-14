@@ -83,6 +83,6 @@ WalletConnect 로 **여러분의 진짜 지갑**을 이을 때(충전 한 번), 
 ## 8. 연락처
 
 개인정보 보호 책임자: (미정) · 연락처: (미정 — 정식판 전에 채운다) ·
-그때까지는 [GitHub 이슈](https://github.com/Hakhyun-Kim/giwa-village/issues)로.
+그때까지는 이메일 [harry@metah.dev](mailto:harry@metah.dev)로.
 
 이 방침이 바뀌면 이 파일의 판과 날짜를 올리고 저장소 기록에 남긴다.

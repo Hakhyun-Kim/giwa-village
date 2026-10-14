@@ -47,7 +47,8 @@ jobs:
         env:
           VITE_DEMO: "1"
           VITE_WS_URL: ${{ vars.DEMO_WS_URL }}
-          VITE_BASE: /${{ github.event.repository.name }}/
+          # 상대 경로 — https://giwa.metah.dev/ (Settings → Pages 의 Custom domain) 루트에서도, 옛 하위 경로에서도 돈다
+          VITE_BASE: ./
       - uses: actions/upload-pages-artifact@v5
         with:
           path: client/dist

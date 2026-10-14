@@ -28,7 +28,7 @@
    없다. 거래되는 것은 재화(코스메틱·쿠폰)뿐이고, 금융상품·오더북은 만들지 않는다.
    포지셔닝은 게임이 아니라 **아바타 소셜 플랫폼**이다.
 3. **스케일·성능 작업은 실서비스 전까지 미룬다.** 인덱서·읽기 캐시·구역 샤딩 같은
-   것은 [기술 문서 §7](https://hakhyun-kim.github.io/giwa-village/tech.html#scale)에
+   것은 [기술 문서 §7](https://giwa.metah.dev/tech.html#scale)에
    설계만 남기고 구현하지 않는다. 지금 병목은 트래픽이 아니라 아직 없는 사용자다.
    **유일한 예외: 그 변경이 코드를 줄일 때.** 제안이 들어오면 먼저 되묻는다 —
    *이걸로 코드가 줄어드는가?* 빨라지지만 복잡해지는 것은 미룬다.
@@ -228,7 +228,8 @@ npm run market-smoke         # 실거래 — 꼭 필요할 때만 (가스 든다
 ## 6. 환경 함정 (실제로 겪은 것)
 
 - **Git Bash에서 `VITE_BASE=/x/` 금지** — MSYS가 경로로 바꿔 망가뜨린다.
-  PowerShell에서: `$env:VITE_BASE="/giwa-village/"; npm run build -w client`
+  배포는 상대 경로(`VITE_BASE=./`)라 이 함정을 밟지 않는다 — 공개 데모 주소는 https://giwa.metah.dev/ 다
+  (저장소 Settings → Pages 의 Custom domain).
 - **`--omit=optional` 금지** — rolldown 네이티브 바인딩이 빠져 배포 빌드가 깨진다.
 - **solc-js + optimizer 조합이 WASM 크래시**(GiwaMarketV2 에서 겪음) — 기본은 optimizer를 끄고 컴파일한다.
   24KB 한도를 넘는 계약만 목록(`scripts/lib/localchain.mjs` TARGETS · deploy-village · verify-contracts)에서

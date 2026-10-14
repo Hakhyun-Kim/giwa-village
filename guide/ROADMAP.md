@@ -62,7 +62,7 @@
 - [ ] Dojang 어테스테이션 테스트넷 발급 협의
 - [ ] 실브랜드 기프티콘 API 연동 조사
 - [ ] RPC 읽기 캐시·인덱서·구역 샤딩 — **실사용자가 생긴 뒤에**
-      ([기술 문서 §7](https://hakhyun-kim.github.io/giwa-village/tech.html#scale)에 설계만)
+      ([기술 문서 §7](https://giwa.metah.dev/tech.html#scale)에 설계만)
 
 > 스케일·성능 작업을 미루는 이유는 하나다 — 지금 병목은 트래픽이 아니라 아직 없는
 > 사용자다. **유일한 예외는 그 변경이 코드를 줄일 때다.** 빨라지지만 복잡해지는 것은

@@ -20,7 +20,7 @@ export const WS_URL: string = cleanServer(
   import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? "ws://localhost:2567" : ""),
 );
 
-export const DUNGEON_URL = "https://hakhyun-kim.github.io/dungeon100/";
+export const DUNGEON_URL = "https://dungeon100.metah.dev/";
 
 /** 공개 정적 빌드(GitHub Pages) — ?slot 테스트 지갑을 끄고 시연 문구를 고른다. 룸 서버에 붙을지는 WS_URL 이 정한다 */
 export const DEMO: boolean = import.meta.env.VITE_DEMO === "1";
