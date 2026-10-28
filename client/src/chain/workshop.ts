@@ -4,25 +4,8 @@ import { formatEther, parseEther } from "viem";
 import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { WORKSHOP_ADDRESS, WORKSHOP_ABI } from "../config/workshop";
 
-/** 16색 프리셋 — 팔레트는 이 중 4색의 인덱스 */
-export const PRESET16 = [
-  "#00000000", // 0 = 투명
-  "#1c1c22",
-  "#ffffff",
-  "#b8433a",
-  "#e07b39",
-  "#ffd66b",
-  "#7de08a",
-  "#3f7d5a",
-  "#7db7ff",
-  "#3d5a8f",
-  "#b48cff",
-  "#ff9ec1",
-  "#c9a86a",
-  "#6b4a30",
-  "#8fe8e0",
-  "#9a958a",
-] as const;
+export { PRESET16, encodePixels, decodePixels, paletteSlot, encodePalette } from "./pattern";
+import { decodePixels, encodePalette, encodePixels, paletteSlot } from "./pattern";
 
 export interface WorkshopDesign {
   id: number;
@@ -32,41 +15,6 @@ export interface WorkshopDesign {
   mints: number;
   pixels: string; // 0x + 32 hex
   palette: number;
-}
-
-/** 픽셀 배열(64개, 0..3) → bytes16 hex */
-export function encodePixels(cells: number[]): `0x${string}` {
-  const bytes = new Uint8Array(16);
-  for (let i = 0; i < 64; i++) {
-    const v = (cells[i] ?? 0) & 3;
-    bytes[i >> 2] |= v << (6 - 2 * (i & 3));
-  }
-  return ("0x" +
-    [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("")) as `0x${string}`;
-}
-
-/** bytes16 hex → 픽셀 배열(64개, 0..3) */
-export function decodePixels(hex: string): number[] {
-  const cells = new Array<number>(64).fill(0);
-  const h = hex.replace(/^0x/, "");
-  for (let i = 0; i < 64; i++) {
-    const byte = parseInt(h.slice((i >> 2) * 2, (i >> 2) * 2 + 2) || "0", 16);
-    cells[i] = (byte >> (6 - 2 * (i & 3))) & 3;
-  }
-  return cells;
-}
-
-export function paletteSlot(palette: number, slot: number): string {
-  return PRESET16[(palette >> (12 - 4 * slot)) & 0xf];
-}
-
-export function encodePalette(slots: number[]): number {
-  return (
-    ((slots[0] & 0xf) << 12) |
-    ((slots[1] & 0xf) << 8) |
-    ((slots[2] & 0xf) << 4) |
-    (slots[3] & 0xf)
-  );
 }
 
 /** 문양 → 캔버스 (아바타 텍스처·미리보기 공용) */

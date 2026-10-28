@@ -1240,6 +1240,35 @@ it("객주 장부는 읽기만 한다 — 쓰기 경로(queueTx · writeContract
   }
 });
 
+// ── 문양 공방 — 따라 그리기 ───────────────────────────────────────────────
+// 장터의 문양을 그리기판으로 옮기는 것은 화면에서만 일어난다. 옮긴 그대로 다시
+// 인코딩하면 원본과 바이트까지 같아야 하고, 이름은 원본 번호를 남긴 채 한도 안이다.
+
+describe("문양 공방 — 따라 그리기는 원본을 그대로 옮기고 출처를 남긴다");
+
+const pattern = await import(pathToFileURL(path.join(ROOT, "client", "src", "chain", "pattern.ts")).href);
+
+it("옮긴 문양을 다시 인코딩하면 원본과 같다 (픽셀 · 팔레트)", () => {
+  const cells = Array.from({ length: 64 }, (_, i) => (i * 7 + (i >> 3)) % 4);
+  const hex = pattern.encodePixels(cells);
+  const palette = pattern.encodePalette([1, 3, 5, 8]);
+  const d = pattern.remixDraft(hex, palette, 42, "달무늬");
+  eq(pattern.encodePixels(d.cells), hex, "픽셀 ");
+  eq(pattern.encodePalette(d.slots), palette, "팔레트 ");
+  eq(d.name, "달무늬 변형 (#42)", "이름 ");
+});
+
+it("긴 이름도 한도(36자) 안에서 원본 번호를 잃지 않는다", () => {
+  const d = pattern.remixDraft("0x" + "00".repeat(16), 0, 12345, "가".repeat(40));
+  ok(d.name.length <= pattern.DESIGN_NAME_MAX, `이름이 ${d.name.length}자입니다`);
+  ok(d.name.endsWith("(#12345)"), `원본 번호가 빠졌습니다: ${d.name}`);
+});
+
+it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 경로가 없다", () => {
+  const src = fs.readFileSync(path.join(ROOT, "client/src/chain/pattern.ts"), "utf8");
+  ok(!/queueTx|writeContract|activeWalletClient|from "\.\.\/wallet/.test(src), "pattern.ts 에 쓰기 경로가 있습니다");
+});
+
 // ── 결과 ──────────────────────────────────────────────────────────────────
 
 console.log(`\n${"─".repeat(50)}`);

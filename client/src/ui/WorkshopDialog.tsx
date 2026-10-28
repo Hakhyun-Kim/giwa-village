@@ -13,6 +13,7 @@ import {
   type WorkshopDesign,
 } from "../chain/village";
 import { refreshSelfHonor } from "../chain/village";
+import { remixDraft } from "../chain/pattern";
 import { shortAddress } from "../wallet/wallet";
 import { recordDaily } from "../state/daily";
 
@@ -95,6 +96,18 @@ export default function WorkshopDialog() {
     } finally {
       setBusy(false);
     }
+  }
+
+  /** 따라 그리기 — 장터의 문양을 그리기판으로 옮긴다. 등록 전까지 체인에는 아무것도 가지 않는다 */
+  function onRemix(d: WorkshopDesign) {
+    if (cells.some((c) => c !== 0) && !window.confirm("그리던 문양을 이 문양으로 바꿀까요?")) return;
+    const draft = remixDraft(d.pixels, d.palette, d.id, d.name);
+    setCells(draft.cells);
+    setSlots(draft.slots);
+    setName(draft.name);
+    setPen(1);
+    setError(null);
+    setTab("make");
   }
 
   async function onTakeOff() {
@@ -206,7 +219,13 @@ export default function WorkshopDialog() {
               <div className="gift-note">아직 등록된 문양이 없습니다 — 첫 문양을 그려보세요.</div>
             )}
             {designs.map((d) => (
-              <DesignRow key={d.id} d={d} busy={busy} onBuyWear={() => onBuyWear(d)} />
+              <DesignRow
+                key={d.id}
+                d={d}
+                busy={busy}
+                onBuyWear={() => onBuyWear(d)}
+                onRemix={() => onRemix(d)}
+              />
             ))}
           </div>
         )}
@@ -234,10 +253,12 @@ function DesignRow({
   d,
   busy,
   onBuyWear,
+  onRemix,
 }: {
   d: WorkshopDesign;
   busy: boolean;
   onBuyWear: () => void;
+  onRemix: () => void;
 }) {
   const dataUrl = useMemo(
     () => patternCanvas(d.pixels, d.palette, 6).toDataURL(),
@@ -254,6 +275,9 @@ function DesignRow({
           {shortAddress(d.creator)} · {d.mints}회 판매
         </em>
       </span>
+      <button className="gift-btn small" onClick={onRemix} title="이 문양에서 시작해 내 문양을 그립니다">
+        ✏️ 따라 그리기
+      </button>
       <button className="gift-btn primary small" disabled={busy} onClick={onBuyWear}>
         {free ? "받기·착용" : `${d.priceEth} ETH`}
       </button>
