@@ -1,4 +1,4 @@
-// 문양의 순수 규칙 — 8x8 픽셀 · 4색 팔레트의 인코딩과 "따라 그리기".
+// 문양의 순수 규칙 — 8x8 픽셀 · 4색 팔레트의 인코딩과 "따라 그리기" · PNG 파일 이름.
 // 지갑도 DOM 도 모르는 모듈이라 npm test 가 그대로 걸어 본다.
 
 /** 16색 프리셋 — 팔레트는 이 중 4색의 인덱스 */
@@ -73,4 +73,19 @@ export function remixDraft(
   const suffix = ` 변형 (#${id})`;
   const base = name.trim().slice(0, Math.max(0, DESIGN_NAME_MAX - suffix.length));
   return { cells: decodePixels(pixelsHex), slots, name: (base + suffix).trim().slice(0, DESIGN_NAME_MAX) };
+}
+
+/**
+ * 문양을 PNG 로 받을 때의 파일 이름 — giwa-munyang-<번호>-<이름>.png.
+ * 글자 · 숫자(한글 포함)만 남기고 나머지는 '-' 하나로 접는다. 경로 문자는 남지 않는다.
+ */
+export function designFileName(id: number, name: string): string {
+  const slug = name
+    .normalize("NFC")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32)
+    .replace(/-+$/, "");
+  return `giwa-munyang-${id}${slug ? `-${slug}` : ""}.png`;
 }

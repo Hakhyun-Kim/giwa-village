@@ -13,7 +13,7 @@ import {
   type WorkshopDesign,
 } from "../chain/village";
 import { refreshSelfHonor } from "../chain/village";
-import { remixDraft } from "../chain/pattern";
+import { designFileName, remixDraft } from "../chain/pattern";
 import { shortAddress } from "../wallet/wallet";
 import { recordDaily } from "../state/daily";
 
@@ -265,6 +265,18 @@ function DesignRow({
     [d.pixels, d.palette],
   );
   const free = Number(d.priceEth) === 0;
+  /** 내가 간직하는 사본 — 같은 온체인 픽셀을 칸당 32px(256×256)로 그려 내려받는다. 체인에는 쓰지 않는다 */
+  function savePng() {
+    patternCanvas(d.pixels, d.palette, 32).toBlob((b) => {
+      if (!b) return;
+      const a = Object.assign(document.createElement("a"), {
+        href: URL.createObjectURL(b),
+        download: designFileName(d.id, d.name),
+      });
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }, "image/png");
+  }
   return (
     <div className="guild-row">
       <img className="ws-thumb" src={dataUrl} alt={d.name} />
@@ -277,6 +289,9 @@ function DesignRow({
       </span>
       <button className="gift-btn small" onClick={onRemix} title="이 문양에서 시작해 내 문양을 그립니다">
         ✏️ 따라 그리기
+      </button>
+      <button className="gift-btn small" onClick={savePng} title="이 문양을 그림 파일(PNG)로 간직합니다">
+        🖼 PNG
       </button>
       <button className="gift-btn primary small" disabled={busy} onClick={onBuyWear}>
         {free ? "받기·착용" : `${d.priceEth} ETH`}
