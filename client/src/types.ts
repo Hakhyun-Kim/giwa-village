@@ -87,6 +87,8 @@ export interface DungeonView {
   lastDoor?: number;
   /** 다음 걸음의 기척 — 문 하나에서 들리는 것(core omenAt · 열에 여덟은 맞는다) */
   omen?: { door: number; shows: "safe" | "bonus" | "trap" };
+  /** 방금 연 문 앞에서 들었던 기척 — 결과 아래에 되짚어 보인다(core omenRecap) */
+  heard?: { door: number; shows: "safe" | "bonus" | "trap" };
   ended?: boolean;
   banked?: number;
   busy?: boolean;

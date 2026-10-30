@@ -3,7 +3,7 @@ import { useStore } from "../state/store";
 import { chainDungeonEnter as dungeonEnter, chainDungeonPick as dungeonPick, chainDungeonBank as dungeonBank } from "../chain/village";
 import { verifyLastRun } from "../chain/guilds";
 import { giwaSepolia, DUNGEON_URL } from "../config/giwa";
-import { DOOR_PROFILES, OMEN_NOTE, OMEN_WORDS } from "@giwa-village/core";
+import { DOOR_PROFILES, OMEN_NOTE, OMEN_WORDS, omenRecap } from "@giwa-village/core";
 import { goField } from "../net/expedition";
 import { fieldWalk } from "../state/world";
 
@@ -14,6 +14,12 @@ const OUTCOME_TEXT = {
   bonus: "🌬️ 순풍이 분다 — +2층!",
   trap: "💥 함정! 이번 원정의 수확을 잃었다…",
 } as const;
+
+/** 방금 연 문 앞에서 들었던 기척을 되짚는다 — 기척을 읽는 법은 결과와 나란히 볼 때 배운다 */
+function Recap({ heard, door, outcome }: { heard?: { door: number; shows: "safe" | "bonus" | "trap" }; door?: number; outcome?: "safe" | "bonus" | "trap" }) {
+  if (!heard || door === undefined || !outcome) return null;
+  return <div className="gift-note dungeon-recap">{omenRecap(heard, door, outcome)}</div>;
+}
 
 export default function DungeonDialog() {
   const open = useStore((s) => s.dungeonOpen);
@@ -103,6 +109,9 @@ export default function DungeonDialog() {
                     ? `🏮 +${dungeon.banked}층 확정! 길드가 ${dungeon.floor}층에 도달했다`
                     : (OUTCOME_TEXT[dungeon.lastOutcome ?? "trap"] ?? "")}
                 </div>
+                {!dungeon.banked && (
+                  <Recap heard={dungeon.heard} door={dungeon.lastDoor} outcome={dungeon.lastOutcome} />
+                )}
                 {dungeon.banked ? (
                   <div className="gift-note">
                     {proof ? (
@@ -157,6 +166,7 @@ export default function DungeonDialog() {
                     ? OUTCOME_TEXT[dungeon.lastOutcome]
                     : "문을 골라 오르세요 — 욕심은 함정을 부른다"}
                 </div>
+                <Recap heard={dungeon.heard} door={dungeon.lastDoor} outcome={dungeon.lastOutcome} />
                 {dungeon.omen && (
                   <div className="dungeon-omen">
                     👂 {DOOR_PROFILES[dungeon.omen.door].emoji} {DOOR_PROFILES[dungeon.omen.door].name}{" "}

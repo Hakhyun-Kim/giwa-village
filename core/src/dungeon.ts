@@ -107,6 +107,22 @@ export function omenAt(
   return { door, shows: d[2] < OMEN_ACCURACY_LT ? doorRoll(seed, guildId, attempt, step, door) : outcomeOf(door, d[3]) };
 }
 
+/**
+ * 문을 연 뒤 들었던 기척을 되짚는 한 줄 — 맞았는지, 빗나갔는지, 다른 문의 기척이었는지.
+ * 기척을 읽는 법은 결과와 나란히 볼 때 배운다. 판정에는 아무 영향이 없는 화면 글자다.
+ */
+export function omenRecap(heard: Omen, door: number, outcome: DoorOutcome): string {
+  const heardDoor = DOOR_PROFILES[heard.door] ?? DOOR_PROFILES[2];
+  const said = `${heardDoor.emoji} ${heardDoor.name}의 기척 "${OMEN_WORDS[heard.shows]}"`;
+  if (heard.door !== door) {
+    const picked = DOOR_PROFILES[door] ?? DOOR_PROFILES[2];
+    return `👂 ${said} — 연 문은 ${picked.emoji} ${picked.name}이라 기척과 상관없는 걸음이었다`;
+  }
+  return heard.shows === outcome
+    ? `👂 ${said} — 들은 그대로였다`
+    : `👂 ${said} — 이번엔 빗나갔다 (${OMEN_NOTE})`;
+}
+
 export interface RunResult {
   /** 함정 없이 완주했는가 — settleRun 이 통과시키는 조건 그대로 */
   ok: boolean;

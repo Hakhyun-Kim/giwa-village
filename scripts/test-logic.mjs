@@ -1277,6 +1277,37 @@ it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 �
   ok(!/queueTx|writeContract|activeWalletClient|from "\.\.\/wallet/.test(src), "pattern.ts 에 쓰기 경로가 있습니다");
 });
 
+// ── 던전 — 기척 되짚기 ───────────────────────────────────────────────────
+// 문을 연 뒤 화면이 "들었던 기척이 맞았나"를 되짚는다. 진짜 시드 표본 위에서
+// 되짚는 말이 실제 결과와 어긋나지 않는지 본다 — 맞았는데 빗나갔다고 하면 안 된다.
+
+describe("던전 — 문을 연 뒤 기척을 되짚는 말은 실제 결과와 같다");
+
+const coreRecap = await import(pathToFileURL(path.join(ROOT, "core", "src", "index.ts")).href);
+
+it("표본 600걸음: 같은 문이면 맞음 · 빗나감을 결과대로, 다른 문이면 상관없다고 말한다", () => {
+  let same = 0, hit = 0, miss = 0, other = 0;
+  for (let k = 0; k < 600; k++) {
+    const seed = keccak256(stringToBytes(`recap-${k}`));
+    const step = k % 7;
+    const heard = coreRecap.omenAt(seed, 3n, 1, step);
+    const door = k % 3;
+    const outcome = coreRecap.doorRoll(seed, 3n, 1, step, door);
+    const line = coreRecap.omenRecap(heard, door, outcome);
+    ok(line.includes(coreRecap.OMEN_WORDS[heard.shows]), `들은 기척이 빠졌습니다: ${line}`);
+    if (heard.door !== door) {
+      other++;
+      ok(line.includes("상관없는"), `다른 문인데 맞고 틀림을 말합니다: ${line}`);
+      continue;
+    }
+    same++;
+    if (heard.shows === outcome) { hit++; ok(line.includes("그대로"), `맞았는데: ${line}`); }
+    else { miss++; ok(line.includes("빗나갔다"), `빗나갔는데: ${line}`); }
+  }
+  ok(same > 0 && other > 0 && miss > 0, `표본이 한쪽으로 쏠렸습니다 (같은 문 ${same} · 다른 문 ${other} · 빗나감 ${miss})`);
+  ok(hit / same >= 0.75, `같은 문에서 기척이 맞은 비율이 ${(hit / same).toFixed(2)} 입니다`);
+});
+
 // ── 결과 ──────────────────────────────────────────────────────────────────
 
 console.log(`\n${"─".repeat(50)}`);

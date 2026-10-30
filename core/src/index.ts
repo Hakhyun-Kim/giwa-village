@@ -15,6 +15,7 @@ export {
   OMEN_ACCURACY_LT,
   OMEN_WORDS,
   OMEN_NOTE,
+  omenRecap,
   type DoorOutcome,
   type Omen,
   type RunResult,

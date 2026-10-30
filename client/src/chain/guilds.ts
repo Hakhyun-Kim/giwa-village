@@ -218,13 +218,14 @@ export function chainDungeonPick(door: number): void {
   const outcome = doorRoll(run.seed, BigInt(run.guildId), run.attempt, run.picks.length, door);
   if (outcome === "trap") {
     run.picks = [];
-    s.patchDungeon({ lastOutcome: "trap", lastDoor: door, tentative: 0, ended: true, busy: false });
+    s.patchDungeon({ lastOutcome: "trap", lastDoor: door, heard: d.omen, tentative: 0, ended: true, busy: false });
     return;
   }
   run.picks.push(door);
   s.patchDungeon({
     lastOutcome: outcome,
     lastDoor: door,
+    heard: d.omen,
     omen: omenAt(run.seed, BigInt(run.guildId), run.attempt, run.picks.length),
     tentative: d.tentative + (outcome === "safe" ? 1 : 2),
     busy: false,
