@@ -3,7 +3,15 @@ import { useStore } from "../state/store";
 import { chainDungeonEnter as dungeonEnter, chainDungeonPick as dungeonPick, chainDungeonBank as dungeonBank } from "../chain/village";
 import { verifyLastRun } from "../chain/guilds";
 import { giwaSepolia, DUNGEON_URL } from "../config/giwa";
-import { DOOR_PROFILES, OMEN_NOTE, OMEN_WORDS, omenRecap } from "@giwa-village/core";
+import {
+  DOOR_PROFILES,
+  OMEN_NOTE,
+  OMEN_WORDS,
+  omenRecap,
+  practicePick,
+  startPractice,
+  type PracticeRun,
+} from "@giwa-village/core";
 import { goField } from "../net/expedition";
 import { fieldWalk } from "../state/world";
 
@@ -21,6 +29,74 @@ function Recap({ heard, door, outcome }: { heard?: { door: number; shows: "safe"
   return <div className="gift-note dungeon-recap">{omenRecap(heard, door, outcome)}</div>;
 }
 
+const DOOR_ODDS = ["함정 15%", "함정 25% · 순풍 20%", "함정 40% · 순풍 35%"];
+
+/** 연습 원정의 시드 — 이 브라우저가 뽑는다. 체인 블록이 아니므로 기록 · 검증 대상이 아니다 */
+function practiceSeed(): `0x${string}` {
+  const b = new Uint8Array(32);
+  crypto.getRandomValues(b);
+  return `0x${[...b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+}
+
+/** 기척 읽기 연습 — 길드 · 지갑 · 가스 없이 같은 문 규칙으로 몇 걸음 올라 본다 */
+function Practice({ onExit }: { onExit: () => void }) {
+  const [run, setRun] = useState<PracticeRun>(() => startPractice(practiceSeed()));
+  return (
+    <>
+      <div className="gift-sub">
+        👂 기척 읽기 연습 · <b>{run.climbed}층</b> — 가스 0 · 체인에 남지 않는 연습 판
+      </div>
+      <div className="dungeon-result">
+        {run.lastOutcome ? OUTCOME_TEXT[run.lastOutcome] : "문 앞의 기척을 듣고 골라 보세요"}
+      </div>
+      <Recap heard={run.heard} door={run.lastDoor} outcome={run.lastOutcome} />
+      {run.ended ? (
+        <div className="gift-actions">
+          <button className="gift-btn" onClick={onExit}>
+            그만하기
+          </button>
+          <button className="gift-btn primary" onClick={() => setRun(startPractice(practiceSeed()))}>
+            한 판 더
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="dungeon-omen">
+            👂 {DOOR_PROFILES[run.omen.door].emoji} {DOOR_PROFILES[run.omen.door].name} {OMEN_WORDS[run.omen.shows]}
+            <small>{OMEN_NOTE}</small>
+          </div>
+          <div className="dungeon-doors">
+            {DOOR_PROFILES.map((door) => (
+              <button
+                key={door.id}
+                className={run.omen.door === door.id ? "dungeon-door omen" : "dungeon-door"}
+                onClick={() => setRun((r) => practicePick(r, door.id))}
+                title={`${door.name} · ${door.style}`}
+              >
+                <span>{door.emoji}</span>
+                <b>{door.name}</b>
+                <em>{DOOR_ODDS[door.id]}</em>
+              </button>
+            ))}
+          </div>
+          <div className="gift-actions">
+            <button className="gift-btn" onClick={onExit}>
+              그만하기
+            </button>
+            <button
+              className="gift-btn primary"
+              disabled={run.climbed === 0}
+              onClick={() => setRun((r) => ({ ...r, ended: true, lastOutcome: undefined, heard: undefined }))}
+            >
+              귀환 — {run.climbed}층에서 멈추기
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
 export default function DungeonDialog() {
   const open = useStore((s) => s.dungeonOpen);
   const dungeon = useStore((s) => s.dungeon);
@@ -29,6 +105,7 @@ export default function DungeonDialog() {
   const error = useStore((s) => s.guildError);
   const busy = useStore((s) => s.guildBusy);
   const [proof, setProof] = useState<Proof>(null);
+  const [practicing, setPracticing] = useState(false);
 
   const myGuild = walletAddress
     ? guilds.find((g) =>
@@ -47,6 +124,7 @@ export default function DungeonDialog() {
   if (!open) return null;
 
   function close() {
+    setPracticing(false);
     useStore.getState().setDungeonOpen(false);
     useStore.getState().setDungeon(null);
   }
@@ -64,7 +142,9 @@ export default function DungeonDialog() {
         <div className="gift-emoji">⚔</div>
         <div className="gift-title">백층 던전</div>
 
-        {!myGuild ? (
+        {!myGuild && practicing ? (
+          <Practice onExit={() => setPracticing(false)} />
+        ) : !myGuild ? (
           <>
             <div className="gift-sub">
               던전은 <b>길드 원정</b>입니다 — 길드원들이 각자의 시간에
@@ -84,6 +164,9 @@ export default function DungeonDialog() {
                 }}
               >
                 🌲 산채 혼자 연습
+              </button>
+              <button className="gift-btn" onClick={() => setPracticing(true)}>
+                👂 기척 읽기 연습
               </button>
               <button className="gift-btn primary" onClick={goGuild}>
                 🏯 길드 보러가기
@@ -185,13 +268,7 @@ export default function DungeonDialog() {
                     >
                       <span>{door.emoji}</span>
                       <b>{door.name}</b>
-                      <em>
-                        {door.id === 0
-                          ? "함정 15%"
-                          : door.id === 1
-                            ? "함정 25% · 순풍 20%"
-                            : "함정 40% · 순풍 35%"}
-                      </em>
+                      <em>{DOOR_ODDS[door.id]}</em>
                     </button>
                   ))}
                 </div>

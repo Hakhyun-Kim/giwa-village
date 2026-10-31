@@ -123,6 +123,36 @@ export function omenRecap(heard: Omen, door: number, outcome: DoorOutcome): stri
     : `👂 ${said} — 이번엔 빗나갔다 (${OMEN_NOTE})`;
 }
 
+/**
+ * 연습 원정 — 길드도 지갑도 없이 기척을 읽어 보는 판. 같은 doorRoll · omenAt 을 그대로 쓰되
+ * 길드 0 · 원정 0 에 브라우저가 뽑은 시드로 돈다. 체인에는 아무것도 쓰지 않고 기록되지도 않는다.
+ */
+export interface PracticeRun {
+  seed: `0x${string}`;
+  picks: number[];
+  climbed: number;
+  omen: Omen;
+  heard?: Omen;
+  lastDoor?: number;
+  lastOutcome?: DoorOutcome;
+  ended: boolean;
+}
+
+export function startPractice(seed: `0x${string}`): PracticeRun {
+  return { seed, picks: [], climbed: 0, omen: omenAt(seed, 0n, 0, 0), ended: false };
+}
+
+/** 연습 원정의 한 걸음 — 끝난 판은 그대로 돌려준다 */
+export function practicePick(run: PracticeRun, door: number): PracticeRun {
+  if (run.ended) return run;
+  const step = run.picks.length;
+  const outcome = doorRoll(run.seed, 0n, 0, step, door);
+  const picks = [...run.picks, door];
+  const base = { ...run, picks, heard: run.omen, lastDoor: door, lastOutcome: outcome };
+  if (outcome === "trap") return { ...base, climbed: 0, ended: true };
+  return { ...base, climbed: run.climbed + OUTCOME_CLIMB[outcome], omen: omenAt(run.seed, 0n, 0, picks.length) };
+}
+
 export interface RunResult {
   /** 함정 없이 완주했는가 — settleRun 이 통과시키는 조건 그대로 */
   ok: boolean;

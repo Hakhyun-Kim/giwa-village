@@ -1281,7 +1281,7 @@ it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 �
 // 문을 연 뒤 화면이 "들었던 기척이 맞았나"를 되짚는다. 진짜 시드 표본 위에서
 // 되짚는 말이 실제 결과와 어긋나지 않는지 본다 — 맞았는데 빗나갔다고 하면 안 된다.
 
-describe("던전 — 문을 연 뒤 기척을 되짚는 말은 실제 결과와 같다");
+describe("던전 — 문을 연 뒤 기척을 되짚는 말은 실제 결과와 같다 · 연습 판은 진짜 규칙 그대로");
 
 const coreRecap = await import(pathToFileURL(path.join(ROOT, "core", "src", "index.ts")).href);
 
@@ -1306,6 +1306,31 @@ it("표본 600걸음: 같은 문이면 맞음 · 빗나감을 결과대로, 다�
   }
   ok(same > 0 && other > 0 && miss > 0, `표본이 한쪽으로 쏠렸습니다 (같은 문 ${same} · 다른 문 ${other} · 빗나감 ${miss})`);
   ok(hit / same >= 0.75, `같은 문에서 기척이 맞은 비율이 ${(hit / same).toFixed(2)} 입니다`);
+});
+
+it("기척 읽기 연습은 길드 0 · 원정 0 의 진짜 판정 그대로다 — 표본 300판이 resolveRun 과 같다", () => {
+  for (let k = 0; k < 300; k++) {
+    const seed = keccak256(stringToBytes(`practice-${k}`));
+    let run = coreRecap.startPractice(seed);
+    for (let step = 0; step < 12 && !run.ended; step++) {
+      const door = run.omen.shows === "trap" && run.omen.door === k % 3 ? (k + 1) % 3 : k % 3;
+      const heard = run.omen;
+      run = coreRecap.practicePick(run, door);
+      eq(run.heard, heard, "되짚을 기척 ");
+    }
+    const ref = coreRecap.resolveRun(seed, 0n, 0, run.picks);
+    eq(run.ended && run.lastOutcome === "trap", !ref.ok, `판 ${k} 의 함정 여부 `);
+    eq(run.climbed, ref.ok ? ref.climbed : 0, `판 ${k} 의 층수 `);
+    const after = coreRecap.practicePick(run, 0);
+    ok(!run.ended || after === run, "끝난 판에서 한 걸음 더 갈 수 있습니다");
+  }
+});
+
+it("연습 판은 체인에 쓰지 않는다 — 던전 창의 연습 부분에 쓰기 경로가 없다", () => {
+  const src = fs.readFileSync(path.join(ROOT, "client/src/ui/DungeonDialog.tsx"), "utf8");
+  const practice = src.slice(src.indexOf("function Practice("), src.indexOf("export default function DungeonDialog"));
+  ok(practice.length > 100, "Practice 컴포넌트를 찾지 못했습니다");
+  ok(!/queueTx|writeContract|chainDungeon|dungeonPick|dungeonEnter|dungeonBank/.test(practice), "연습 판이 체인 경로를 부릅니다");
 });
 
 // ── 결과 ──────────────────────────────────────────────────────────────────
