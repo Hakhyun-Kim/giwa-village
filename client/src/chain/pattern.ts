@@ -89,3 +89,14 @@ export function designFileName(id: number, name: string): string {
     .replace(/-+$/, "");
   return `giwa-munyang-${id}${slug ? `-${slug}` : ""}.png`;
 }
+
+/**
+ * 따라 그린 문양의 원본 번호 — 이름이 remixDraft 가 채운 꼴 "… 변형 (#번호)" 로 끝날 때만.
+ * 이름만 읽으므로 체인에는 아무것도 없고, 이름을 바꾼 문양은 원본 줄이 뜨지 않는다.
+ */
+export function remixSourceOf(name: string, selfId?: number): number | null {
+  const m = /변형 \(#(\d{1,9})\)$/.exec(name.trim());
+  if (!m) return null;
+  const id = Number(m[1]);
+  return id === selfId ? null : id;
+}

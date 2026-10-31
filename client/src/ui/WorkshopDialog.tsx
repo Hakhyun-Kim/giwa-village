@@ -13,7 +13,7 @@ import {
   type WorkshopDesign,
 } from "../chain/village";
 import { refreshSelfHonor } from "../chain/village";
-import { designFileName, remixDraft } from "../chain/pattern";
+import { designFileName, remixDraft, remixSourceOf } from "../chain/pattern";
 import { shortAddress } from "../wallet/wallet";
 import { recordDaily } from "../state/daily";
 
@@ -32,6 +32,7 @@ export default function WorkshopDialog() {
   const [designs, setDesigns] = useState<WorkshopDesign[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lit, setLit] = useState<number | null>(null); // 원본으로 찾아가 잠깐 밝힌 줄
 
   useEffect(() => {
     if (!open || tab !== "market") return;
@@ -108,6 +109,15 @@ export default function WorkshopDialog() {
     setPen(1);
     setError(null);
     setTab("make");
+  }
+
+  /** 따라 그린 문양에서 원본 줄로 — 장터에 보이면 그 줄로 내려가 잠깐 밝힌다 */
+  function goSource(id: number) {
+    const row = document.getElementById(`ws-design-${id}`);
+    if (!row) return;
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    setLit(id);
+    window.setTimeout(() => setLit((v) => (v === id ? null : v)), 1600);
   }
 
   async function onTakeOff() {
@@ -225,6 +235,10 @@ export default function WorkshopDialog() {
                 busy={busy}
                 onBuyWear={() => onBuyWear(d)}
                 onRemix={() => onRemix(d)}
+                lit={lit === d.id}
+                source={remixSourceOf(d.name, d.id)}
+                sourceShown={(id) => designs.some((x) => x.id === id)}
+                onSource={goSource}
               />
             ))}
           </div>
@@ -254,11 +268,19 @@ function DesignRow({
   busy,
   onBuyWear,
   onRemix,
+  lit,
+  source,
+  sourceShown,
+  onSource,
 }: {
   d: WorkshopDesign;
   busy: boolean;
   onBuyWear: () => void;
   onRemix: () => void;
+  lit: boolean;
+  source: number | null;
+  sourceShown: (id: number) => boolean;
+  onSource: (id: number) => void;
 }) {
   const dataUrl = useMemo(
     () => patternCanvas(d.pixels, d.palette, 6).toDataURL(),
@@ -278,24 +300,46 @@ function DesignRow({
     }, "image/png");
   }
   return (
-    <div className="guild-row">
+    <div
+      className="guild-row ws-row"
+      id={`ws-design-${d.id}`}
+      style={lit ? { outline: "1px solid #ffd66b", borderRadius: 6 } : undefined}
+    >
       <img className="ws-thumb" src={dataUrl} alt={d.name} />
       <span className="guild-name">
         {d.name}
         <em className="honor-desc">
           {" "}
           {shortAddress(d.creator)} · {d.mints}회 판매
+          {source !== null &&
+            (sourceShown(source) ? (
+              <>
+                {" · "}
+                <button
+                  className="gift-txlink"
+                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit" }}
+                  onClick={() => onSource(source)}
+                  title="이 문양이 시작된 원본으로"
+                >
+                  ↩ #{source} 에서 따라 그림
+                </button>
+              </>
+            ) : (
+              ` · #${source} 에서 따라 그림`
+            ))}
         </em>
       </span>
-      <button className="gift-btn small" onClick={onRemix} title="이 문양에서 시작해 내 문양을 그립니다">
-        ✏️ 따라 그리기
-      </button>
-      <button className="gift-btn small" onClick={savePng} title="이 문양을 그림 파일(PNG)로 간직합니다">
-        🖼 PNG
-      </button>
-      <button className="gift-btn primary small" disabled={busy} onClick={onBuyWear}>
-        {free ? "받기·착용" : `${d.priceEth} ETH`}
-      </button>
+      <div className="ws-actions">
+        <button className="gift-btn small" onClick={onRemix} title="이 문양에서 시작해 내 문양을 그립니다">
+          ✏️ 따라 그리기
+        </button>
+        <button className="gift-btn small" onClick={savePng} title="이 문양을 그림 파일(PNG)로 간직합니다">
+          🖼 PNG
+        </button>
+        <button className="gift-btn primary small" disabled={busy} onClick={onBuyWear}>
+          {free ? "받기·착용" : `${d.priceEth} ETH`}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1032,6 +1032,11 @@ body,
 .ws-pen.on { border-color: #ffd66b; }
 .ws-swatches { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
 .ws-swatch { width: 100%; aspect-ratio: 1; border: 1px solid #2a3040; border-radius: 4px; cursor: pointer; }
+/* 문양 장터 한 줄 — 이름이 한 줄을 쓰고, 단추 셋은 그 아래 줄로 내려 창 밖으로 넘치지 않는다 */
+.ws-row { flex-wrap: wrap; }
+.ws-row .guild-name { min-width: 0; flex: 1 1 60%; }
+.ws-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; width: 100%; }
+
 .ws-thumb {
   width: 32px; height: 32px; border-radius: 6px; image-rendering: pixelated;
   border: 1px solid #2a3040; background: #0f131c;

@@ -1272,6 +1272,16 @@ it("PNG 로 받는 문양의 파일 이름은 안전하고 비지 않는다", ()
   ok(pattern.designFileName(9, "가".repeat(80)).length <= 60, "파일 이름이 너무 깁니다");
 });
 
+it("따라 그린 문양은 이름으로 원본을 가리킨다 — remixDraft 가 채운 이름만", () => {
+  const d = pattern.remixDraft("0x" + "00".repeat(16), 0, 42, "달무늬");
+  eq(pattern.remixSourceOf(d.name, 50), 42, "따라 그린 이름 ");
+  eq(pattern.remixSourceOf(pattern.remixDraft("0x" + "00".repeat(16), 0, 12345, "가".repeat(40)).name), 12345, "잘린 긴 이름 ");
+  eq(pattern.remixSourceOf("달무늬"), null, "평범한 이름 ");
+  eq(pattern.remixSourceOf("변형 (#7) 이라는 이름"), null, "끝이 아닌 자리 ");
+  eq(pattern.remixSourceOf("내 문양 변형 (#3)", 3), null, "자기 자신 ");
+  eq(pattern.remixSourceOf("x 변형 (#99999999999)"), null, "터무니없는 번호 ");
+});
+
 it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 경로가 없다", () => {
   const src = fs.readFileSync(path.join(ROOT, "client/src/chain/pattern.ts"), "utf8");
   ok(!/queueTx|writeContract|activeWalletClient|from "\.\.\/wallet/.test(src), "pattern.ts 에 쓰기 경로가 있습니다");
