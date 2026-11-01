@@ -13,9 +13,9 @@ import {
   type WorkshopDesign,
 } from "../chain/village";
 import { refreshSelfHonor } from "../chain/village";
-import { designFileName, remixDraft, remixSourceOf } from "../chain/pattern";
+import { designFileName, designOfDay, remixDraft, remixSourceOf } from "../chain/pattern";
 import { shortAddress } from "../wallet/wallet";
-import { recordDaily } from "../state/daily";
+import { kstDate, recordDaily } from "../state/daily";
 
 const DEFAULT_PALETTE = [1, 3, 5, 8]; // 검정·홍·금·하늘
 
@@ -228,6 +228,27 @@ export default function WorkshopDialog() {
             {designs.length === 0 && (
               <div className="gift-note">아직 등록된 문양이 없습니다 — 첫 문양을 그려보세요.</div>
             )}
+            {(() => {
+              const pickId = designOfDay(designs.map((x) => x.id), kstDate());
+              const pick = designs.find((x) => x.id === pickId);
+              if (!pick) return null;
+              return (
+                <div className="ws-pick">
+                  <div className="gift-note">⭐ 오늘의 문양 — 새 문양에 밀려난 문양 하나를 오늘(KST) 맨 위에</div>
+                  <DesignRow
+                    d={pick}
+                    anchor={false}
+                    busy={busy}
+                    onBuyWear={() => onBuyWear(pick)}
+                    onRemix={() => onRemix(pick)}
+                    lit={false}
+                    source={remixSourceOf(pick.name, pick.id)}
+                    sourceShown={(id) => designs.some((x) => x.id === id)}
+                    onSource={goSource}
+                  />
+                </div>
+              );
+            })()}
             {designs.map((d) => (
               <DesignRow
                 key={d.id}
@@ -272,8 +293,11 @@ function DesignRow({
   source,
   sourceShown,
   onSource,
+  anchor = true,
 }: {
   d: WorkshopDesign;
+  /** 원본 찾아가기가 내려가는 자리 — 맨 위에 한 번 더 보인 줄은 자리가 아니다 */
+  anchor?: boolean;
   busy: boolean;
   onBuyWear: () => void;
   onRemix: () => void;
@@ -302,7 +326,7 @@ function DesignRow({
   return (
     <div
       className="guild-row ws-row"
-      id={`ws-design-${d.id}`}
+      id={anchor ? `ws-design-${d.id}` : undefined}
       style={lit ? { outline: "1px solid #ffd66b", borderRadius: 6 } : undefined}
     >
       <img className="ws-thumb" src={dataUrl} alt={d.name} />

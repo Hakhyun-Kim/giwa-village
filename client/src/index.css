@@ -1035,6 +1035,7 @@ body,
 /* 문양 장터 한 줄 — 이름이 한 줄을 쓰고, 단추 셋은 그 아래 줄로 내려 창 밖으로 넘치지 않는다 */
 .ws-row { flex-wrap: wrap; }
 .ws-row .guild-name { min-width: 0; flex: 1 1 60%; }
+.ws-pick { margin-bottom: 6px; padding: 4px 6px; border: 1px dashed #c9a86a; border-radius: 8px; }
 .ws-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; width: 100%; }
 
 .ws-thumb {

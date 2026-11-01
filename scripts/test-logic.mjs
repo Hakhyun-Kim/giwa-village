@@ -1282,6 +1282,22 @@ it("따라 그린 문양은 이름으로 원본을 가리킨다 — remixDraft �
   eq(pattern.remixSourceOf("x 변형 (#99999999999)"), null, "터무니없는 번호 ");
 });
 
+it("오늘의 문양 — 하루 안에서는 같고, 새 문양 셋은 고르지 않으며, 한 주에 바뀐다", () => {
+  const ids = Array.from({ length: 24 }, (_, i) => 100 - i); // 장터 순서: 새것 먼저
+  const day = pattern.designOfDay(ids, "2026-11-02");
+  eq(pattern.designOfDay(ids, "2026-11-02"), day, "같은 날 ");
+  ok(ids.slice(pattern.PICK_SKIP_NEWEST).includes(day), `새 문양을 골랐거나 목록 밖입니다: ${day}`);
+  const week = new Set(["01", "02", "03", "04", "05", "06", "07"].map((d) => pattern.designOfDay(ids, `2026-11-${d}`)));
+  ok(week.size >= 3, `한 주 동안 ${week.size}가지뿐입니다`);
+  eq(pattern.designOfDay([3, 2, 1], "2026-11-02"), null, "새 문양뿐일 때 ");
+  eq(pattern.designOfDay([4, 3, 2, 1], "2026-11-02"), 1, "남은 것이 하나일 때 ");
+});
+
+it("오늘의 문양은 KST 날짜로 고른다 — UTC 로 슬쩍 바꾸지 않는다", () => {
+  const src = fs.readFileSync(path.join(ROOT, "client/src/ui/WorkshopDialog.tsx"), "utf8");
+  ok(/designOfDay\([^;]*?,\s*kstDate\(\)\)/.test(src), "공방 창이 kstDate() 로 오늘의 문양을 고르지 않습니다");
+});
+
 it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 경로가 없다", () => {
   const src = fs.readFileSync(path.join(ROOT, "client/src/chain/pattern.ts"), "utf8");
   ok(!/queueTx|writeContract|activeWalletClient|from "\.\.\/wallet/.test(src), "pattern.ts 에 쓰기 경로가 있습니다");

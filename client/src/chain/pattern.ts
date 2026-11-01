@@ -100,3 +100,22 @@ export function remixSourceOf(name: string, selfId?: number): number | null {
   const id = Number(m[1]);
   return id === selfId ? null : id;
 }
+
+/** 장터 맨 위 '오늘의 문양'이 고르지 않는 가장 새 문양 수 — 새 문양은 이미 위에 있다 */
+export const PICK_SKIP_NEWEST = 3;
+
+/**
+ * 오늘의 문양 — 새 문양에 밀려 내려간 문양 하나를 KST 하루 동안 장터 맨 위에 올린다.
+ * ids 는 장터 순서(새것 먼저). 같은 날이면 누구에게나 같은 것, 다음 날이면 다시 고른다.
+ * 새 문양 몇 개를 빼고 남는 것이 없으면 고르지 않는다(null). 체인에는 아무것도 쓰지 않는다.
+ */
+export function designOfDay(ids: readonly number[], kstDay: string): number | null {
+  const older = ids.slice(PICK_SKIP_NEWEST);
+  if (older.length === 0) return null;
+  let h = 0x811c9dc5; // FNV-1a — 날짜 글자만으로 정해지는 작은 해시
+  for (let i = 0; i < kstDay.length; i++) {
+    h ^= kstDay.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return older[h % older.length];
+}
