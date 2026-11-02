@@ -1298,6 +1298,16 @@ it("오늘의 문양은 KST 날짜로 고른다 — UTC 로 슬쩍 바꾸지 않
   ok(/designOfDay\([^;]*?,\s*kstDate\(\)\)/.test(src), "공방 창이 kstDate() 로 오늘의 문양을 고르지 않습니다");
 });
 
+it("문양이 체인에 오른 날은 KST 날짜다 — 숫자 · bigint 모두, 모르면 지어내지 않는다", () => {
+  // 2026-11-01 15:30 UTC = 2026-11-02 00:30 KST — UTC 로 셈하면 하루 어긋난다
+  const t = Date.UTC(2026, 10, 1, 15, 30) / 1000;
+  eq(pattern.onChainSince(t), "2026-11-02", "숫자 ");
+  eq(pattern.onChainSince(BigInt(t)), "2026-11-02", "bigint ");
+  eq(pattern.onChainSince(undefined), null, "없음 ");
+  eq(pattern.onChainSince(0), null, "0 ");
+  eq(pattern.onChainSince(Number.NaN), null, "NaN ");
+});
+
 it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 경로가 없다", () => {
   const src = fs.readFileSync(path.join(ROOT, "client/src/chain/pattern.ts"), "utf8");
   ok(!/queueTx|writeContract|activeWalletClient|from "\.\.\/wallet/.test(src), "pattern.ts 에 쓰기 경로가 있습니다");

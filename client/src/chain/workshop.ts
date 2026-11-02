@@ -15,6 +15,8 @@ export interface WorkshopDesign {
   mints: number;
   pixels: string; // 0x + 32 hex
   palette: number;
+  /** 체인에 오른 시각(초) — 컨트랙트가 문양과 함께 적어 둔 값 */
+  createdAt?: number;
 }
 
 /** 문양 → 캔버스 (아바타 텍스처·미리보기 공용) */
@@ -58,6 +60,7 @@ export async function fetchDesigns(limit = 24): Promise<WorkshopDesign[]> {
     mints: list[i].mints,
     pixels: list[i].pixels,
     palette: list[i].palette,
+    createdAt: Number(list[i].createdAt),
   }));
 }
 

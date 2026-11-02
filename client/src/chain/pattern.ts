@@ -119,3 +119,19 @@ export function designOfDay(ids: readonly number[], kstDay: string): number | nu
   }
   return older[h % older.length];
 }
+
+/**
+ * 문양이 체인에 오른 날 — 컨트랙트가 문양과 함께 적어 둔 createdAt(초)을 KST 날짜로.
+ * 마을 시각은 KST 다(장날과 같은 기준). 알 수 없으면 null — 지어내지 않는다.
+ */
+export function onChainSince(createdAt: number | bigint | undefined | null): string | null {
+  if (createdAt === undefined || createdAt === null) return null;
+  const sec = Number(createdAt);
+  if (!Number.isFinite(sec) || sec <= 0) return null;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(sec * 1000));
+}

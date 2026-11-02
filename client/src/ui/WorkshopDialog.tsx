@@ -13,7 +13,7 @@ import {
   type WorkshopDesign,
 } from "../chain/village";
 import { refreshSelfHonor } from "../chain/village";
-import { designFileName, designOfDay, remixDraft, remixSourceOf } from "../chain/pattern";
+import { designFileName, designOfDay, onChainSince, remixDraft, remixSourceOf } from "../chain/pattern";
 import { shortAddress } from "../wallet/wallet";
 import { kstDate, recordDaily } from "../state/daily";
 
@@ -335,6 +335,7 @@ function DesignRow({
         <em className="honor-desc">
           {" "}
           {shortAddress(d.creator)} · {d.mints}회 판매
+          {onChainSince(d.createdAt) && ` · ${onChainSince(d.createdAt)} 부터 온체인`}
           {source !== null &&
             (sourceShown(source) ? (
               <>
