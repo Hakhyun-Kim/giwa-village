@@ -1308,6 +1308,19 @@ it("문양이 체인에 오른 날은 KST 날짜다 — 숫자 · bigint 모두,
   eq(pattern.onChainSince(Number.NaN), null, "NaN ");
 });
 
+const chatter = await import(pathToFileURL(path.join(ROOT, "client", "src", "demo", "chatter.ts")).href);
+
+it("주민 혼잣말은 실제로 읽어 온 오늘의 문양만 말한다 — 몫은 넷에 하나", () => {
+  eq(chatter.idleLine("장 서는 날이 좋지", null, 0), "장 서는 날이 좋지", "이름을 못 읽었으면 ");
+  eq(chatter.idleLine("장 서는 날이 좋지", "  ", 0), "장 서는 날이 좋지", "빈 이름 ");
+  ok(chatter.idleLine("x", "격자", 0.1).includes("“격자”"), "몫 안이면 이름을 말한다");
+  eq(chatter.idleLine("x", "격자", chatter.PICK_LINE_SHARE), "x", "몫 밖 ");
+  ok(!chatter.pickLine("가".repeat(40)).includes("가".repeat(17)), "긴 이름을 줄이지 않았습니다");
+  let said = 0;
+  for (let i = 0; i < 1000; i++) if (chatter.idleLine("x", "격자", i / 1000) !== "x") said++;
+  eq(said, 250, "1000번 중 ");
+});
+
 it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 경로가 없다", () => {
   const src = fs.readFileSync(path.join(ROOT, "client/src/chain/pattern.ts"), "utf8");
   ok(!/queueTx|writeContract|activeWalletClient|from "\.\.\/wallet/.test(src), "pattern.ts 에 쓰기 경로가 있습니다");

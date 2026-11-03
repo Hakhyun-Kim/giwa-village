@@ -8,6 +8,10 @@ import { DEMO_STALLS } from "./demoData";
 import { PERSONAS as DEMO_NPCS, randomLine } from "./personas";
 import { startOnchainVillage } from "../chain/village";
 import { makeWanderer, tickWander, NPC_TICK_MS } from "./wander";
+import { idleLine } from "./chatter";
+import { fetchDesigns } from "../chain/workshop";
+import { designOfDay } from "../chain/pattern";
+import { kstDate } from "../state/daily";
 import type { PlayerInfo } from "../types";
 
 interface LocalPos {
@@ -27,6 +31,28 @@ function timedEmote(id: string, icon: string, ms = 2200) {
   s.setEmote(id, icon);
   const at = useStore.getState().emotes[id]?.at;
   if (at) setTimeout(() => useStore.getState().clearEmote(id, at), ms);
+}
+
+/** 오늘의 문양 이름 — KST 하루에 한 번만 읽는다(공방 창과 같은 designOfDay · 실패하면 null) */
+const pickOfDay: { day: string; name: string | null; loading: boolean } = { day: "", name: null, loading: false };
+function todaysPickName(): string | null {
+  const day = kstDate();
+  if (pickOfDay.day !== day && !pickOfDay.loading) {
+    pickOfDay.loading = true;
+    void fetchDesigns()
+      .then((list) => {
+        const id = designOfDay(list.map((d) => d.id), day);
+        pickOfDay.name = list.find((d) => d.id === id)?.name ?? null;
+      })
+      .catch(() => {
+        pickOfDay.name = null;
+      })
+      .finally(() => {
+        pickOfDay.day = day;
+        pickOfDay.loading = false;
+      });
+  }
+  return pickOfDay.day === day ? pickOfDay.name : null;
 }
 
 /** 페르소나 한마디 — 읽을 시간이 있어야 하므로 이모트보다 오래 띄운다 */
@@ -102,7 +128,7 @@ export async function startDemo(localPos: LocalPos): Promise<void> {
   // 페르소나 한마디 — 이모트와 어긋나게 돌려 광장이 시끄러워지지 않게 한다
   setInterval(() => {
     const i = Math.floor(Math.random() * npcs.length);
-    timedSay(npcs[i].id, randomLine(DEMO_NPCS[i]));
+    timedSay(npcs[i].id, idleLine(randomLine(DEMO_NPCS[i]), todaysPickName(), Math.random()));
   }, 13000);
 
   // 풀온체인 레이어: 노점·길드·던전·프레즌스를 체인에서 직접 읽고 쓴다
