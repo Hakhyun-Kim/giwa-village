@@ -149,7 +149,8 @@ export const useStore = create<VillageStore>((set) => ({
   selfHonor: null,
   selfTrinket: null,
   selfWear: null,
-  workshopOpen: false,
+  // ?munyang=<번호> 링크로 들어오면 공방이 열린 채로 시작한다 (객주 장부의 ?gaekju=1 과 같은 길)
+  workshopOpen: typeof location !== "undefined" && /^\d{1,9}$/.test(new URLSearchParams(location.search).get("munyang") ?? ""),
   boss: null,
   nearBoss: false,
   pendingTx: 0,

@@ -1321,6 +1321,17 @@ it("주민 혼잣말은 실제로 읽어 온 오늘의 문양만 말한다 — �
   eq(said, 250, "1000번 중 ");
 });
 
+it("문양 링크 — 다른 쿼리는 걷고 번호 하나만 싣는다 · 들어온 번호는 정수만 믿는다", () => {
+  eq(pattern.designLink("https://giwa.metah.dev/?debug&slot=A#x", 7), "https://giwa.metah.dev/?munyang=7", "링크 ");
+  eq(pattern.designLink("http://localhost:4173/sub/index.html?munyang=3", 12), "http://localhost:4173/sub/index.html?munyang=12", "하위 경로 ");
+  eq(pattern.linkedDesignId("?munyang=7"), 7, "읽기 ");
+  eq(pattern.linkedDesignId(new URL(pattern.designLink("https://giwa.metah.dev/", 42)).search), 42, "되읽기 ");
+  for (const bad of ["", "?munyang=", "?munyang=-1", "?munyang=1.5", "?munyang=abc", "?munyang=1e3", "?munyang=9999999999"])
+    eq(pattern.linkedDesignId(bad), null, `${bad} `);
+  const store = fs.readFileSync(path.join(ROOT, "client/src/state/store.ts"), "utf8");
+  ok(store.includes(`get("${pattern.DESIGN_PARAM}")`), "store 가 같은 쿼리 이름으로 공방을 열지 않습니다");
+});
+
 it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 경로가 없다", () => {
   const src = fs.readFileSync(path.join(ROOT, "client/src/chain/pattern.ts"), "utf8");
   ok(!/queueTx|writeContract|activeWalletClient|from "\.\.\/wallet/.test(src), "pattern.ts 에 쓰기 경로가 있습니다");

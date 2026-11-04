@@ -13,7 +13,16 @@ import {
   type WorkshopDesign,
 } from "../chain/village";
 import { refreshSelfHonor } from "../chain/village";
-import { designFileName, designOfDay, onChainSince, remixDraft, remixSourceOf } from "../chain/pattern";
+import {
+  designFileName,
+  designLink,
+  designOfDay,
+  linkedDesignId,
+  onChainSince,
+  remixDraft,
+  remixSourceOf,
+} from "../chain/pattern";
+import { fetchDesign } from "../chain/workshop";
 import { shortAddress } from "../wallet/wallet";
 import { kstDate, recordDaily } from "../state/daily";
 
@@ -23,7 +32,10 @@ const DEFAULT_PALETTE = [1, 3, 5, 8]; // 검정·홍·금·하늘
 export default function WorkshopDialog() {
   const open = useStore((s) => s.workshopOpen);
   const walletAddress = useStore((s) => s.walletAddress);
-  const [tab, setTab] = useState<"make" | "market">("make");
+  // 링크(?munyang=)로 들어온 문양 — 주소에서 한 번만 읽는다
+  const [linkedId] = useState(() => (typeof location === "undefined" ? null : linkedDesignId(location.search)));
+  const [linked, setLinked] = useState<WorkshopDesign | null>(null);
+  const [tab, setTab] = useState<"make" | "market">(linkedId !== null ? "market" : "make");
   const [cells, setCells] = useState<number[]>(() => new Array(64).fill(0));
   const [slots, setSlots] = useState<number[]>(DEFAULT_PALETTE);
   const [pen, setPen] = useState(1); // 팔레트 슬롯 0..3
@@ -38,6 +50,11 @@ export default function WorkshopDialog() {
     if (!open || tab !== "market") return;
     void fetchDesigns().then(setDesigns).catch(() => {});
   }, [open, tab]);
+
+  useEffect(() => {
+    if (!open || linkedId === null || linked) return;
+    void fetchDesign(linkedId).then((d) => d && setLinked(d));
+  }, [open, linkedId, linked]);
 
   if (!open) return null;
 
@@ -228,6 +245,22 @@ export default function WorkshopDialog() {
             {designs.length === 0 && (
               <div className="gift-note">아직 등록된 문양이 없습니다 — 첫 문양을 그려보세요.</div>
             )}
+            {linked && (
+              <div className="ws-pick">
+                <div className="gift-note">🔗 받은 링크의 문양 #{linked.id}</div>
+                <DesignRow
+                  d={linked}
+                  anchor={false}
+                  busy={busy}
+                  onBuyWear={() => onBuyWear(linked)}
+                  onRemix={() => onRemix(linked)}
+                  lit={false}
+                  source={remixSourceOf(linked.name, linked.id)}
+                  sourceShown={(id) => designs.some((x) => x.id === id)}
+                  onSource={goSource}
+                />
+              </div>
+            )}
             {(() => {
               const pickId = designOfDay(designs.map((x) => x.id), kstDate());
               const pick = designs.find((x) => x.id === pickId);
@@ -311,6 +344,22 @@ function DesignRow({
     [d.pixels, d.palette],
   );
   const free = Number(d.priceEth) === 0;
+  const [shared, setShared] = useState(false);
+  /** 문양 하나를 가리키는 링크 — 휴대폰은 공유 시트, 아니면 복사 */
+  async function share() {
+    const url = designLink(location.href, d.id);
+    const text = `기와장터 문양 공방의 “${d.name}” (#${d.id})`;
+    try {
+      if (navigator.share) await navigator.share({ title: "기와장터 문양", text, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        setShared(true);
+        window.setTimeout(() => setShared(false), 1600);
+      }
+    } catch {
+      /* 공유를 닫았거나 복사가 막혔다 — 조용히 둔다 */
+    }
+  }
   /** 내가 간직하는 사본 — 같은 온체인 픽셀을 칸당 32px(256×256)로 그려 내려받는다. 체인에는 쓰지 않는다 */
   function savePng() {
     patternCanvas(d.pixels, d.palette, 32).toBlob((b) => {
@@ -360,6 +409,9 @@ function DesignRow({
         </button>
         <button className="gift-btn small" onClick={savePng} title="이 문양을 그림 파일(PNG)로 간직합니다">
           🖼 PNG
+        </button>
+        <button className="gift-btn small" onClick={share} title="이 문양을 가리키는 링크를 보냅니다">
+          {shared ? "복사됨" : "🔗 링크"}
         </button>
         <button className="gift-btn primary small" disabled={busy} onClick={onBuyWear}>
           {free ? "받기·착용" : `${d.priceEth} ETH`}

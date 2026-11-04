@@ -64,6 +64,30 @@ export async function fetchDesigns(limit = 24): Promise<WorkshopDesign[]> {
   }));
 }
 
+/** 번호 하나로 문양 하나 — 링크로 들어온 문양이 최근 목록 밖이어도 보이게. 없거나 못 읽으면 null */
+export async function fetchDesign(id: number): Promise<WorkshopDesign | null> {
+  try {
+    const d = (await publicClient.readContract({
+      address: WORKSHOP_ADDRESS,
+      abi: WORKSHOP_ABI,
+      functionName: "designAt",
+      args: [BigInt(id)],
+    })) as ChainDesign;
+    return {
+      id,
+      creator: d.creator,
+      name: d.name,
+      priceEth: formatEther(d.price),
+      mints: d.mints,
+      pixels: d.pixels,
+      palette: d.palette,
+      createdAt: Number(d.createdAt),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function ownedDesign(who: string, id: number): Promise<boolean> {
   return (await publicClient.readContract({
     address: WORKSHOP_ADDRESS,

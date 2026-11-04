@@ -135,3 +135,22 @@ export function onChainSince(createdAt: number | bigint | undefined | null): str
     day: "2-digit",
   }).format(new Date(sec * 1000));
 }
+
+/** 문양 하나를 가리키는 링크의 쿼리 이름 — ?munyang=<번호> 로 열면 공방이 그 문양을 앞에 띄운다 */
+export const DESIGN_PARAM = "munyang";
+
+/** 지금 주소에서 다른 쿼리 · 조각을 걷어 내고 문양 번호 하나만 실은 링크 */
+export function designLink(href: string, id: number): string {
+  const u = new URL(href);
+  u.search = "";
+  u.hash = "";
+  u.searchParams.set(DESIGN_PARAM, String(id));
+  return u.toString();
+}
+
+/** 주소의 ?munyang= — 0 이상의 정수가 아니면 null (링크로 들어온 글자는 믿지 않는다) */
+export function linkedDesignId(search: string): number | null {
+  const v = new URLSearchParams(search).get(DESIGN_PARAM);
+  if (v === null || !/^\d{1,9}$/.test(v)) return null;
+  return Number(v);
+}
