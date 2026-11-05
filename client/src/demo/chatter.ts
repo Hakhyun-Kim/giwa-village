@@ -22,3 +22,12 @@ export function idleLine(personaLine: string, pickName: string | null, roll: num
   if (pickName && pickName.trim() && roll < PICK_LINE_SHARE) return pickLine(pickName);
   return personaLine;
 }
+
+/**
+ * 주민을 눌렀을 때 그 주민이 건네는 다음 한 걸음 — 촌장의 부탁이 지금 가리키는 것 그대로.
+ * 부탁이 없거나(끝냈다 · 접었다 · 시연 중) 길을 고르는 중이면 null — 주민은 늘 하던 대로다.
+ */
+export function nextStepLine(step: { title: string; hint: string } | null): string | null {
+  if (!step || !step.title.trim()) return null;
+  return step.hint.trim() ? `다음은 ‘${step.title}’ 차례요 — ${step.hint}` : `다음은 ‘${step.title}’ 차례요`;
+}

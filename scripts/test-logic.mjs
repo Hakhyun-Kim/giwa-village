@@ -1332,6 +1332,17 @@ it("문양 링크 — 다른 쿼리는 걷고 번호 하나만 싣는다 · 들�
   ok(store.includes(`get("${pattern.DESIGN_PARAM}")`), "store 가 같은 쿼리 이름으로 공방을 열지 않습니다");
 });
 
+it("주민이 건네는 다음 한 걸음 — 부탁이 가리키는 것 그대로, 없으면 아무 말도 없다", () => {
+  eq(chatter.nextStepLine(null), null, "부탁 없음 ");
+  eq(chatter.nextStepLine({ title: " ", hint: "x" }), null, "빈 제목 ");
+  eq(chatter.nextStepLine({ title: "모닥불의 온기", hint: "🔥 모닥불 근처에서 X 키" }), "다음은 ‘모닥불의 온기’ 차례요 — 🔥 모닥불 근처에서 X 키");
+  eq(chatter.nextStepLine({ title: "첫 거래", hint: "" }), "다음은 ‘첫 거래’ 차례요");
+  const social = fs.readFileSync(path.join(ROOT, "client/src/ui/SocialDialog.tsx"), "utf8");
+  ok(/startsWith\("npc-"\)/.test(social), "주민이 아닌 사람에게도 한 걸음을 건넵니다");
+  const quest = fs.readFileSync(path.join(ROOT, "client/src/ui/QuestLog.tsx"), "utf8");
+  ok(/setQuestNow\(visible && !choosing && !finished/.test(quest), "부탁이 숨었을 때(시연 · 접음)도 한 걸음이 남습니다");
+});
+
 it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 경로가 없다", () => {
   const src = fs.readFileSync(path.join(ROOT, "client/src/chain/pattern.ts"), "utf8");
   ok(!/queueTx|writeContract|activeWalletClient|from "\.\.\/wallet/.test(src), "pattern.ts 에 쓰기 경로가 있습니다");

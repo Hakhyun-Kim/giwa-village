@@ -4,6 +4,7 @@ import { loadCoupons } from "../state/coupons";
 import { localPos } from "../net/colyseus";
 import { track } from "../net/analytics";
 import { TOUCH } from "../game/touch";
+import { setQuestNow } from "../state/questNow";
 
 const STORAGE_KEY = "giwa-quest-step";
 const PATH_KEY = "giwa-quest-path";
@@ -225,6 +226,13 @@ export default function QuestLog() {
   useEffect(() => {
     if (visible && choosing) track("paths_shown");
   }, [visible, choosing]);
+  // 주민을 누르면 이 한 걸음을 건넨다(SocialDialog) — 부탁이 보이지 않으면 건넬 것도 없다
+  const questTitle = quest?.title;
+  const questHint = quest?.hint;
+  useEffect(() => {
+    setQuestNow(visible && !choosing && !finished && questTitle ? { title: questTitle, hint: questHint ?? "" } : null);
+    return () => setQuestNow(null);
+  }, [visible, choosing, finished, questTitle, questHint]);
 
   useEffect(() => {
     const paint = () => ctx.current.painted++;
