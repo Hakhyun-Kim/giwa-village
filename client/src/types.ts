@@ -10,6 +10,8 @@ export interface PlayerInfo {
   sitting?: boolean;
   /** 착용 중인 공방 문양 — "pixelsHex:palette" */
   wear?: string;
+  /** 그 문양의 공방 번호 — 누르면 공방이 이 문양을 앞에 띄운다 */
+  wearId?: number;
 }
 
 export interface EmoteEvent {

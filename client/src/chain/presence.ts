@@ -138,7 +138,8 @@ async function decoratePeer(addr: string): Promise<void> {
       (p.name !== name ||
         p.honor !== equipped ||
         p.trinket !== trinket ||
-        p.wear !== (wear ?? undefined))
+        p.wear !== (wear?.code ?? undefined) ||
+        p.wearId !== (wear?.id ?? undefined))
     ) {
       s.setPlayers({
         ...s.players,
@@ -147,7 +148,8 @@ async function decoratePeer(addr: string): Promise<void> {
           name,
           honor: equipped || undefined,
           trinket: trinket || undefined,
-          wear: wear ?? undefined,
+          wear: wear?.code ?? undefined,
+          wearId: wear?.id ?? undefined,
         },
       });
     }

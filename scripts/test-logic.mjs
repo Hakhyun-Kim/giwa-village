@@ -1343,6 +1343,18 @@ it("주민이 건네는 다음 한 걸음 — 부탁이 가리키는 것 그대�
   ok(/setQuestNow\(visible && !choosing && !finished/.test(quest), "부탁이 숨었을 때(시연 · 접음)도 한 걸음이 남습니다");
 });
 
+it("누군가 단 문양 — 무늬는 그대로 입고, 공방에서 찾아갈 번호만 따로 든다", () => {
+  eq(pattern.wornFrom(false, 3n, "0xab", 4), null, "안 입음 ");
+  eq(JSON.stringify(pattern.wornFrom(true, 3n, "0xab", 4)), JSON.stringify({ code: "0xab:4", id: 3 }), "입음 ");
+  eq(pattern.wornFrom(true, 0n, "0xab", 4)?.id, null, "번호 0 ");
+  eq(pattern.wornFrom(true, 10n ** 12n, "0xab", 4)?.id, null, "큰 번호 ");
+  eq(pattern.wornFrom(true, 0n, "0xab", 4)?.code, "0xab:4", "번호가 없어도 무늬는 입는다 ");
+  const social = fs.readFileSync(path.join(ROOT, "client/src/ui/SocialDialog.tsx"), "utf8");
+  ok(/openWorkshopAt\(wearId, target\.name\)/.test(social), "놀기 창이 단 문양으로 공방을 열지 않습니다");
+  const store = fs.readFileSync(path.join(ROOT, "client/src/state/store.ts"), "utf8");
+  ok(/workshopOpen, workshopFocus: null/.test(store), "공방을 닫아도 보러 온 문양이 남습니다");
+});
+
 it("따라 그리기는 체인에 쓰지 않는다 — 순수 모듈에 지갑 경로가 없다", () => {
   const src = fs.readFileSync(path.join(ROOT, "client/src/chain/pattern.ts"), "utf8");
   ok(!/queueTx|writeContract|activeWalletClient|from "\.\.\/wallet/.test(src), "pattern.ts 에 쓰기 경로가 있습니다");

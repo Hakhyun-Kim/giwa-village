@@ -56,6 +56,8 @@ interface VillageStore {
   /** 내가 착용한 공방 문양 ("pixelsHex:palette") */
   selfWear: string | null;
   workshopOpen: boolean;
+  /** 누군가 단 문양을 보러 공방을 열었을 때 — 그 번호와 단 사람 이름 */
+  workshopFocus: { id: number; who: string } | null;
   /** 도깨비 상태 (주간 보스) */
   boss: { remaining: number; slain: boolean; myContrib: number; nextStrikeAt: number; trophies: number } | null;
   nearBoss: boolean;
@@ -105,6 +107,7 @@ interface VillageStore {
   setSelfTrinket: (id: number | null) => void;
   setSelfWear: (w: string | null) => void;
   setWorkshopOpen: (v: boolean) => void;
+  openWorkshopAt: (id: number, who: string) => void;
   setBoss: (b: { remaining: number; slain: boolean; myContrib: number; nextStrikeAt: number; trophies: number } | null) => void;
   setNearBoss: (v: boolean) => void;
   bumpPendingTx: (delta: number) => void;
@@ -151,6 +154,7 @@ export const useStore = create<VillageStore>((set) => ({
   selfWear: null,
   // ?munyang=<번호> 링크로 들어오면 공방이 열린 채로 시작한다 (객주 장부의 ?gaekju=1 과 같은 길)
   workshopOpen: typeof location !== "undefined" && /^\d{1,9}$/.test(new URLSearchParams(location.search).get("munyang") ?? ""),
+  workshopFocus: null,
   boss: null,
   nearBoss: false,
   pendingTx: 0,
@@ -221,7 +225,8 @@ export const useStore = create<VillageStore>((set) => ({
   setSelfHonor: (selfHonor) => set({ selfHonor }),
   setSelfTrinket: (selfTrinket) => set({ selfTrinket }),
   setSelfWear: (selfWear) => set({ selfWear }),
-  setWorkshopOpen: (workshopOpen) => set({ workshopOpen }),
+  setWorkshopOpen: (workshopOpen) => set(workshopOpen ? { workshopOpen } : { workshopOpen, workshopFocus: null }),
+  openWorkshopAt: (id, who) => set({ workshopOpen: true, workshopFocus: { id, who } }),
   setBoss: (boss) => set({ boss }),
   setNearBoss: (nearBoss) => set({ nearBoss }),
   bumpPendingTx: (delta) => set((s) => ({ pendingTx: Math.max(0, s.pendingTx + delta) })),

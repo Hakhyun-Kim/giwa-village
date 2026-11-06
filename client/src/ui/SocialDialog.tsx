@@ -15,6 +15,13 @@ export default function SocialDialog() {
     useStore.getState().setSocialTarget(null);
   }
 
+  const wearId = target.wearId;
+  function seeWear() {
+    if (!wearId || !target) return;
+    close();
+    useStore.getState().openWorkshopAt(wearId, target.name);
+  }
+
   function gift() {
     if (!targetId || !targetAddress) return;
     close();
@@ -49,6 +56,11 @@ export default function SocialDialog() {
             </button>
           ))}
         </div>
+        {wearId && (
+          <button className="gift-btn social-wear" onClick={seeWear}>
+            🎨 단 문양 보기 (#{wearId})
+          </button>
+        )}
         <div className="gift-actions">
           <button className="gift-btn" onClick={close}>닫기</button>
           {targetAddress && (

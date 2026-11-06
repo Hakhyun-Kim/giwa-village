@@ -390,6 +390,7 @@ body,
 }
 
 .social-modal { width: min(390px, 88vw); }
+.social-wear { width: 100%; margin-top: 8px; }
 .social-emotes {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

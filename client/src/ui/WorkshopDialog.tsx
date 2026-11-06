@@ -33,7 +33,10 @@ export default function WorkshopDialog() {
   const open = useStore((s) => s.workshopOpen);
   const walletAddress = useStore((s) => s.walletAddress);
   // 링크(?munyang=)로 들어온 문양 — 주소에서 한 번만 읽는다
-  const [linkedId] = useState(() => (typeof location === "undefined" ? null : linkedDesignId(location.search)));
+  const [urlId] = useState(() => (typeof location === "undefined" ? null : linkedDesignId(location.search)));
+  // 마을에서 누군가 단 문양을 보러 왔으면 그 문양이 링크보다 앞선다
+  const focus = useStore((s) => s.workshopFocus);
+  const linkedId = focus?.id ?? urlId;
   const [linked, setLinked] = useState<WorkshopDesign | null>(null);
   const [tab, setTab] = useState<"make" | "market">(linkedId !== null ? "market" : "make");
   const [cells, setCells] = useState<number[]>(() => new Array(64).fill(0));
@@ -52,8 +55,16 @@ export default function WorkshopDialog() {
   }, [open, tab]);
 
   useEffect(() => {
-    if (!open || linkedId === null || linked) return;
-    void fetchDesign(linkedId).then((d) => d && setLinked(d));
+    if (focus) setTab("market");
+  }, [focus]);
+
+  useEffect(() => {
+    if (!open || linkedId === null || linked?.id === linkedId) return;
+    let live = true;
+    void fetchDesign(linkedId).then((d) => live && d && setLinked(d));
+    return () => {
+      live = false;
+    };
   }, [open, linkedId, linked]);
 
   if (!open) return null;
@@ -106,7 +117,7 @@ export default function WorkshopDialog() {
       const owned = await ownedDesign(walletAddress, d.id);
       if (!owned) await buyDesignOnChain(d.id, d.priceEth);
       await wearDesign(d.id + 1);
-      useStore.getState().setSelfWear(await wornPatternOf(walletAddress));
+      useStore.getState().setSelfWear((await wornPatternOf(walletAddress))?.code ?? null);
       void refreshSelfHonor();
     } catch (err) {
       const m = err instanceof Error ? err.message : String(err);
@@ -245,9 +256,11 @@ export default function WorkshopDialog() {
             {designs.length === 0 && (
               <div className="gift-note">아직 등록된 문양이 없습니다 — 첫 문양을 그려보세요.</div>
             )}
-            {linked && (
+            {linked && linked.id === linkedId && (
               <div className="ws-pick">
-                <div className="gift-note">🔗 받은 링크의 문양 #{linked.id}</div>
+                <div className="gift-note">
+                  {focus?.id === linked.id ? `👀 ${focus.who} 님이 단 문양 #${linked.id}` : `🔗 받은 링크의 문양 #${linked.id}`}
+                </div>
                 <DesignRow
                   d={linked}
                   anchor={false}

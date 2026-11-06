@@ -154,3 +154,18 @@ export function linkedDesignId(search: string): number | null {
   if (v === null || !/^\d{1,9}$/.test(v)) return null;
   return Number(v);
 }
+
+/**
+ * wornOf 의 답 → 아바타가 입는 무늬("pixels:palette")와 그 문양 번호.
+ * 번호가 0 이거나 9자리를 넘으면 공방에서 찾아갈 수 없으므로 id 는 null 이다(무늬는 그대로 입는다).
+ */
+export function wornFrom(
+  exists: boolean,
+  id: bigint | number,
+  pixels: string,
+  palette: number,
+): { code: string; id: number | null } | null {
+  if (!exists) return null;
+  const n = Number(id);
+  return { code: `${pixels}:${palette}`, id: Number.isInteger(n) && n > 0 && n < 1e9 ? n : null };
+}

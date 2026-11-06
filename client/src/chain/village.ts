@@ -111,7 +111,7 @@ export async function refreshSelfHonor(): Promise<void> {
   }
   try {
     const w = await wornPatternOf(my);
-    useStore.getState().setSelfWear(w);
+    useStore.getState().setSelfWear(w?.code ?? null);
   } catch {
     /* 다음 기회에 */
   }

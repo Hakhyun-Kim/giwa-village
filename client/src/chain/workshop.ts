@@ -5,7 +5,7 @@ import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { WORKSHOP_ADDRESS, WORKSHOP_ABI } from "../config/workshop";
 
 export { PRESET16, encodePixels, decodePixels, paletteSlot, encodePalette } from "./pattern";
-import { decodePixels, encodePalette, encodePixels, paletteSlot } from "./pattern";
+import { decodePixels, encodePalette, encodePixels, paletteSlot, wornFrom } from "./pattern";
 
 export interface WorkshopDesign {
   id: number;
@@ -98,14 +98,14 @@ export async function ownedDesign(who: string, id: number): Promise<boolean> {
 }
 
 /** 착용 중 문양 — "pixelsHex:palette" 문자열 (없으면 null) */
-export async function wornPatternOf(addr: string): Promise<string | null> {
-  const [exists, , pixels, palette] = (await publicClient.readContract({
+export async function wornPatternOf(addr: string): Promise<{ code: string; id: number | null } | null> {
+  const [exists, id, pixels, palette] = (await publicClient.readContract({
     address: WORKSHOP_ADDRESS,
     abi: WORKSHOP_ABI,
     functionName: "wornOf",
     args: [addr as `0x${string}`],
   })) as [boolean, bigint, `0x${string}`, number];
-  return exists ? `${pixels}:${palette}` : null;
+  return wornFrom(exists, id, pixels, palette);
 }
 
 export async function registerDesign(
