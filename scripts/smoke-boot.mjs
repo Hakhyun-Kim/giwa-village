@@ -434,6 +434,14 @@ try {
   const artisan = await page.locator(".quest-title").textContent();
   must(artisan?.includes("문양 공방") === true, "고른 길의 첫 부탁으로 이어진다 (장인의 길)");
 
+  // 열린 창은 ESC 로 닫힌다 — 바깥을 누르는 것과 같은 길
+  await page.locator(".hud-bag > button").click();
+  await page.locator(".hud-bag-menu button").first().click();
+  const opened = await page.waitForSelector(".gift-overlay", { timeout: 5000 }).then(() => true).catch(() => false);
+  await page.keyboard.press("Escape");
+  const closed = await page.waitForSelector(".gift-overlay", { state: "detached", timeout: 3000 }).then(() => true).catch(() => false);
+  must(opened && closed, `가방의 창이 ESC 로 닫힌다 (열림 ${opened} · 닫힘 ${closed})`);
+
   // 온보딩 뒤 오늘의 부탁 — KST 날짜마다 세 무료 행동 중 하나만 고른다.
   await page.evaluate(() => {
     localStorage.setItem("giwa-quest-step", "900");

@@ -87,6 +87,18 @@ export default function App() {
     };
   }, []);
 
+  // ESC 로 맨 위 창을 닫는다 — 창마다 바깥(.gift-overlay)을 누르면 닫히는 길이 이미 있으니
+  // 그 바깥을 대신 눌러 준다. 창 열한 개에 같은 코드를 열한 번 쓰지 않으려는 것이다.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Escape" || e.repeat) return;
+      const overlays = document.querySelectorAll<HTMLElement>(".gift-overlay");
+      overlays[overlays.length - 1]?.click();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div className="app">
       {/* 화소 밀도 상한 — 휴대폰은 1.5 에서 자른다(2 의 절반 남짓의 픽셀). 렌더 전용이라 판정과 무관하다.

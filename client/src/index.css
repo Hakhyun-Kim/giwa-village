@@ -1065,6 +1065,8 @@ body,
   gap: 4px;
   z-index: 40;
   min-width: 160px;
+  /* .hud가 none이라 메뉴의 클래스 없는 버튼은 여기서 되살린다 */
+  pointer-events: auto;
 }
 .hud-bag-menu button {
   background: none;

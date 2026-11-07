@@ -655,6 +655,12 @@ function buttonClasses(src) {
       if (cls.startsWith("hud-")) out.add(cls);
     }
   }
+  // 클래스 없는 <button>(가방 메뉴처럼)은 감싼 요소의 클래스가 auto 를 줘야 한다 —
+  // 이 구멍으로 가방의 쿠폰함 · 칭호 · 공방이 마우스로 안 눌렸다(2026-11-08)
+  for (const m of src.matchAll(/<button(?![^>]*className)[\s>]/g)) {
+    const before = [...src.slice(0, m.index).matchAll(/className="(hud-[\w-]+)/g)].pop();
+    if (before) out.add(before[1]);
+  }
   return [...out];
 }
 
