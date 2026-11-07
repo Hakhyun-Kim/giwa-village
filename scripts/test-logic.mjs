@@ -1416,6 +1416,31 @@ it("연습 판은 체인에 쓰지 않는다 — 던전 창의 연습 부분에 
   ok(!/queueTx|writeContract|chainDungeon|dungeonPick|dungeonEnter|dungeonBank/.test(practice), "연습 판이 체인 경로를 부릅니다");
 });
 
+// ── 문서에 적힌 건수 ─────────────────────────────────────────────────────
+// 시험을 더하고 문서의 숫자를 잊으면 "npm test 가 무엇을 보는가"가 조용히 틀려진다.
+// 이 검사 자체는 it() 이 아니다 — 세는 쪽이 자기를 세면 숫자가 한 박자씩 밀린다.
+{
+  const nodeTests = (f) => (fs.readFileSync(path.join(ROOT, f), "utf8").match(/^test\(/gm) ?? []).length;
+  const want = { logic: pass + fail, exp: nodeTests("scripts/test-expedition.mjs"), ws: nodeTests("scripts/test-wsurl.mjs") };
+  const docs = [
+    ["README.md", /npm test\s+# 로직 (\d+)건/, ["logic"]],
+    ["CLAUDE.md", /npm test\s+# 로직 (\d+)건 \+ 원정 규칙 (\d+)건 \+ 룸 서버 주소 (\d+)건/, ["logic", "exp", "ws"]],
+    ["AGENTS.md", /npm test\s+# 로직 (\d+)건 \+ 원정 규칙 (\d+)건 \+ 룸 서버 주소 (\d+)건/, ["logic", "exp", "ws"]],
+    ["guide/TESTING.md", /\((\d+)건\) \+ 실시간 원정 규칙 \((\d+)건\) \+ 룸 서버 주소 \((\d+)건\)/, ["logic", "exp", "ws"]],
+    ["guide/TESTING.md", /(\d+)건과 원정 규칙 (\d+)건 · 룸 서버 주소 (\d+)건/, ["logic", "exp", "ws"]],
+  ];
+  const wrong = [];
+  for (const [file, re, keys] of docs) {
+    const m = fs.readFileSync(path.join(ROOT, file), "utf8").match(re);
+    if (!m) { wrong.push(`${file}: 건수 줄을 찾지 못함`); continue; }
+    keys.forEach((k, i) => { if (Number(m[i + 1]) !== want[k]) wrong.push(`${file}: ${m[i + 1]} → ${want[k]}`); });
+  }
+  if (wrong.length) {
+    fail++;
+    console.log(`  ❌ 문서의 npm test 건수가 실제와 다릅니다\n     ${wrong.join("\n     ")}`);
+  } else console.log(`  ✅ 문서의 npm test 건수 = 실제 (로직 ${want.logic} · 원정 ${want.exp} · 룸 서버 주소 ${want.ws})`);
+}
+
 // ── 결과 ──────────────────────────────────────────────────────────────────
 
 console.log(`\n${"─".repeat(50)}`);
