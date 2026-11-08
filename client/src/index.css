@@ -1389,6 +1389,15 @@ body,
 @media (max-height: 520px) {
   .hud-demo { display: none; }
 }
+/* 가로 휴대폰에서는 조이스틱(왼쪽 아래 120px)이 촌장의 부탁 · 오늘의 부탁 카드(top 190px)를 덮어
+   손가락이 카드 대신 조이스틱을 잡았다 — 카드를 조이스틱 오른쪽 아래로 비켜 세운다.
+   둘이 함께 뜨면(부탁 완료 띠 + 오늘의 부탁) 짧은 완료 띠는 왼쪽 위 상태 카드 밑으로 올린다 */
+@media (pointer: coarse) and (max-height: 520px) {
+  .quest-card,
+  .daily-card,
+  .quest-card + .daily-card { top: auto; bottom: 8px; left: 156px; }
+  .quest-card:has(+ .daily-card) { bottom: auto; top: 136px; left: 14px; }
+}
 /* ── 객주 장부 (GaekjuDialog) — 장터 전체 에스크로 원장 · 읽기 전용 ───────────── */
 .gaekju-modal {
   width: min(680px, 94vw);

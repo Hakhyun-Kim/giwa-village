@@ -491,6 +491,36 @@ try {
   errors.forEach((e) => console.log("   " + e));
 
   await ctx.close();
+
+  // 가로 휴대폰(844×390 · 터치) — 왼쪽 아래 조이스틱이 부탁 카드를 덮으면 손가락이 카드 대신
+  // 조이스틱을 잡는다. 카드의 버튼마다 한가운데를 실제로 누를 수 있는지(맨 위가 그 버튼인지) 본다.
+  const phone = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  await phone.addInitScript(() => {
+    if (sessionStorage.getItem("smoke-seeded")) return;
+    sessionStorage.setItem("smoke-seeded", "1");
+    localStorage.setItem("giwa-welcome", "self");
+    localStorage.setItem("giwa-quest-version", "2");
+    localStorage.setItem("giwa-quest-step", "1");
+  });
+  const pp = await phone.newPage();
+  const covered = async () => {
+    await pp.waitForFunction(() => window.__giwa?.ready?.() === true, undefined, { timeout: 60000 });
+    await pp.waitForSelector(".quest-card, .daily-card", { timeout: 10000 });
+    return pp.evaluate(() => [...document.querySelectorAll(".quest-card button, .daily-card button")].flatMap((b) => {
+      const r = b.getBoundingClientRect();
+      if (!r.width) return [];
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return b === hit || b.contains(hit) ? [] : [`${b.textContent.trim().slice(0, 12)} → ${hit?.className}`];
+    }));
+  };
+  await pp.goto(`http://localhost:${PORT}/?rafshim&debug`, { waitUntil: "domcontentloaded" });
+  const questHid = await covered();
+  must(questHid.length === 0, `가로 휴대폰에서 촌장의 부탁 카드가 조이스틱에 가리지 않는다 (${questHid.join(" · ") || "0개"})`);
+  await pp.evaluate(() => { localStorage.setItem("giwa-quest-step", "900"); localStorage.setItem("giwa-quest-complete", "1"); });
+  await pp.reload({ waitUntil: "domcontentloaded" });
+  const dailyHid = await covered();
+  must(dailyHid.length === 0, `가로 휴대폰에서 오늘의 부탁 선택지가 조이스틱에 가리지 않는다 (${dailyHid.join(" · ") || "0개"})`);
+  await phone.close();
 } finally {
   await browser.close();
   if (!server.killed) server.kill();
