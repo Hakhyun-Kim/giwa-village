@@ -520,6 +520,22 @@ try {
   await pp.reload({ waitUntil: "domcontentloaded" });
   const dailyHid = await covered();
   must(dailyHid.length === 0, `가로 휴대폰에서 오늘의 부탁 선택지가 조이스틱에 가리지 않는다 (${dailyHid.join(" · ") || "0개"})`);
+
+  // 같은 화면에서 창(노점 · 노점 열기 · 쿠폰함 · 선물)이 위아래로 잘리지 않고, 넘치면 창 안에서 굴러간다
+  const clipped = [];
+  for (const open of ["s.setStallView(s.stalls[0]?.id ?? null)", "s.setStallOpenDialog(true)", "s.setCouponsOpen(true)"]) {
+    await pp.evaluate((code) => new Function("s", code)(window.__giwa.state()), open);
+    const m = await pp.waitForSelector(".gift-modal", { timeout: 5000 }).then(() => pp.evaluate(() => {
+      const el = document.querySelector(".gift-modal");
+      const r = el.getBoundingClientRect();
+      const scrolls = el.scrollHeight <= el.clientHeight || getComputedStyle(el).overflowY === "auto";
+      return { top: Math.round(r.top), bottom: Math.round(r.bottom), ok: r.top >= 0 && r.bottom <= innerHeight && scrolls };
+    })).catch(() => ({ top: NaN, bottom: NaN, ok: false }));
+    if (!m.ok) clipped.push(`${open.match(/set(\w+)/)[1]} ${m.top}~${m.bottom}`);
+    await pp.keyboard.press("Escape");
+    await pp.waitForSelector(".gift-modal", { state: "detached", timeout: 3000 }).catch(() => {});
+  }
+  must(clipped.length === 0, `가로 휴대폰에서 창이 화면 밖으로 잘리지 않는다 (${clipped.join(" · ") || "노점 · 노점 열기 · 쿠폰함"})`);
   await phone.close();
 } finally {
   await browser.close();
