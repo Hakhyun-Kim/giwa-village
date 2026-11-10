@@ -442,6 +442,21 @@ try {
   const closed = await page.waitForSelector(".gift-overlay", { state: "detached", timeout: 3000 }).then(() => true).catch(() => false);
   must(opened && closed, `가방의 창이 ESC 로 닫힌다 (열림 ${opened} · 닫힘 ${closed})`);
 
+  // 창이 떠 있는 동안 E(인사)는 마을에 닿지 않고, 창을 닫으면 다시 닿는다
+  const emoteAt = () => page.evaluate(() => { const s = window.__giwa.state(); return s.emotes[s.selfId]?.at ?? 0; });
+  await page.evaluate(() => window.__giwa.state().setCouponsOpen(true));
+  await page.waitForSelector(".gift-overlay", { timeout: 5000 });
+  const emoteBefore = await emoteAt();
+  await page.keyboard.press("KeyE");
+  await wait(300);
+  const behind = await emoteAt();
+  await page.keyboard.press("Escape");
+  await page.waitForSelector(".gift-overlay", { state: "detached", timeout: 3000 }).catch(() => {});
+  await page.keyboard.press("KeyE");
+  await wait(300);
+  const emoteAfter = await emoteAt();
+  must(behind === emoteBefore && emoteAfter > emoteBefore, `창이 떠 있으면 E 가 창 뒤로 새지 않고, 닫으면 다시 인사한다 (창 뒤 ${behind !== emoteBefore ? "샘" : "막힘"} · 닫은 뒤 ${emoteAfter > emoteBefore ? "인사" : "없음"})`);
+
   // 온보딩 뒤 오늘의 부탁 — KST 날짜마다 세 무료 행동 중 하나만 고른다.
   await page.evaluate(() => {
     localStorage.setItem("giwa-quest-step", "900");

@@ -51,10 +51,14 @@ export default function Player() {
       const el = document.activeElement;
       return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA");
     };
+    // 창(노점 · 쿠폰함 · 공방 …)이 떠 있는 동안 E · F · R · X 는 마을에 닿지 않는다 —
+    // 창 뒤에서 인사가 나가고, 도깨비 타격 전송(가스)이 나가고, 던전 창이 겹쳐 뜨던 것을 막는다.
+    // 걷기는 그대로 둔다(창을 띄운 채 비켜 서는 것은 해가 없다)
+    const dialogOpen = () => !!document.querySelector(".gift-overlay");
     const down = (e: KeyboardEvent) => {
       if (isTyping()) return;
       keys.current.add(e.code);
-      if (e.repeat) return;
+      if (e.repeat || dialogOpen()) return;
       if (e.code === "KeyF" && interactWorld()) return;
       if (useWorld.getState().zone === "dungeon") {
         if (e.code === "KeyR") combatAction("attack");
