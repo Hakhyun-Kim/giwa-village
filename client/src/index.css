@@ -1589,6 +1589,16 @@ body,
 }
 .gaekju-modal .gift-note a { color: #ffd66b; }
 
+/* 세로 휴대폰(폭 390px 남짓): 오른쪽 위 지갑 줄이 폭을 다 써서 왼쪽 위 '기와장터' 카드를 덮고,
+   그 카드의 링크 묶음이 오늘의 부탁 카드 머리를 덮었다 — 링크는 접고(가로 휴대폰과 같다),
+   지갑 줄은 상태 카드 밑으로, 부탁 카드는 그 밑으로 차례로 내려 세운다 */
+@media (max-width: 560px) {
+  .hud-demo { display: none; }
+  .hud-topright { top: 128px; }
+  .quest-card,
+  .daily-card { top: 282px; }
+  .quest-card + .daily-card { top: 402px; }
+}
 @media (max-width: 560px) {
   .gaekju-flow { flex-wrap: wrap; }
   .gaekju-flow > i { display: none; }

@@ -551,6 +551,22 @@ try {
     await pp.waitForSelector(".gift-modal", { state: "detached", timeout: 3000 }).catch(() => {});
   }
   must(clipped.length === 0, `가로 휴대폰에서 창이 화면 밖으로 잘리지 않는다 (${clipped.join(" · ") || "노점 · 노점 열기 · 쿠폰함"})`);
+
+  // 세로 휴대폰(390×844) — 왼쪽 위 상태 카드 · 오른쪽 위 지갑 줄 · 오늘의 부탁 카드가 서로 덮지 않는다
+  await pp.setViewportSize({ width: 390, height: 844 });
+  await wait(500);
+  const overlaps = await pp.evaluate(() => {
+    const boxes = [".hud-topleft", ".hud-topright", ".daily-card", ".quest-card"]
+      .map((sel) => [sel, document.querySelector(sel)?.getBoundingClientRect()])
+      .filter(([, r]) => r && r.width && r.height);
+    const out = [];
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      const [a, ra] = boxes[i], [b, rb] = boxes[j];
+      if (ra.left < rb.right && rb.left < ra.right && ra.top < rb.bottom && rb.top < ra.bottom) out.push(`${a}×${b}`);
+    }
+    return { out, n: boxes.length };
+  });
+  must(overlaps.n >= 3 && overlaps.out.length === 0, `세로 휴대폰에서 상태 카드 · 지갑 줄 · 부탁 카드가 서로 덮지 않는다 (${overlaps.out.join(" · ") || `${overlaps.n}개 따로`})`);
   await phone.close();
 } finally {
   await browser.close();
