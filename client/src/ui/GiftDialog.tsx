@@ -53,7 +53,7 @@ export default function GiftDialog() {
 
   return (
     <div className="gift-overlay" onClick={close}>
-      <div className="gift-modal" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" className="gift-modal" onClick={(e) => e.stopPropagation()}>
         {done ? (
           <>
             <div className="gift-emoji">🎁</div>

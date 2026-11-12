@@ -81,7 +81,7 @@ export default function StallOpenDialog() {
 
   return (
     <div className="gift-overlay" onClick={close}>
-      <div className="gift-modal" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" className="gift-modal" onClick={(e) => e.stopPropagation()}>
         <div className="gift-emoji">🧺</div>
         <div className="gift-title">{busy ? "체인에 노점 기록 중…" : "노점 열기"}</div>
         <div className="gift-sub">지금 서 있는 자리에 노점이 펼쳐집니다</div>

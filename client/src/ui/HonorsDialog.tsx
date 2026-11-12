@@ -124,7 +124,7 @@ export default function HonorsDialog() {
 
   return (
     <div className="gift-overlay" onClick={close}>
-      <div className="gift-modal guild-modal" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" className="gift-modal guild-modal" onClick={(e) => e.stopPropagation()}>
         <div className="gift-emoji">🎖</div>
         <div className="gift-title">칭호 · 장신구</div>
         <div className="gift-sub">

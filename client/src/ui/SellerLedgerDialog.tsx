@@ -89,7 +89,7 @@ export default function SellerLedgerDialog() {
 
   return (
     <div className="gift-overlay" onClick={close}>
-      <div className="gift-modal guild-modal" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" className="gift-modal guild-modal" onClick={(e) => e.stopPropagation()}>
         <div className="gift-emoji">📒</div>
         <div className="gift-title">판매 장부</div>
         <div className="gift-sub">내 노점의 온체인 판매·흥정 · 분쟁은 환불로 해결</div>

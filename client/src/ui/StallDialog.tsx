@@ -149,7 +149,7 @@ export default function StallDialog() {
 
   return (
     <div className="gift-overlay" onClick={close}>
-      <div className="gift-modal" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" className="gift-modal" onClick={(e) => e.stopPropagation()}>
         <div className="gift-emoji">{icon}</div>
         <div className="gift-title">
           {stall.title}

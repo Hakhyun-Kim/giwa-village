@@ -45,7 +45,7 @@ export default function GuildDialog() {
 
   return (
     <div className="gift-overlay" onClick={close}>
-      <div className="gift-modal guild-modal" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" className="gift-modal guild-modal" onClick={(e) => e.stopPropagation()}>
         <div className="gift-emoji">{myGuild?.emblem ?? "🏯"}</div>
         <div className="gift-title">{myGuild ? myGuild.name : "길드"}</div>
 
@@ -94,6 +94,8 @@ export default function GuildDialog() {
                   <button
                     key={em}
                     className={`guild-emblem ${em === emblem ? "on" : ""}`}
+                    aria-label={`문장 ${em}`}
+                    aria-pressed={em === emblem}
                     onClick={() => setEmblem(em)}
                   >
                     {em}

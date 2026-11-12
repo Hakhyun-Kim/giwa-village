@@ -163,7 +163,7 @@ export default function WorkshopDialog() {
 
   return (
     <div className="gift-overlay" onClick={close}>
-      <div className="gift-modal guild-modal" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" className="gift-modal guild-modal" onClick={(e) => e.stopPropagation()}>
         <div className="gift-emoji">🎨</div>
         <div className="gift-title">문양 공방</div>
         <div className="gift-sub">
@@ -192,8 +192,11 @@ export default function WorkshopDialog() {
                   <button
                     key={i}
                     className="ws-cell"
+                    aria-label={`칸 ${Math.floor(i / 8) + 1}-${(i % 8) + 1}`}
                     style={{ background: c === 0 ? "#0f131c" : paletteSlot(encode(slots), c) }}
                     onMouseDown={() => paint(i)}
+                    // 키보드(Tab → Enter/Space)로도 칠한다 — 마우스 클릭은 detail ≥ 1 이라 mousedown 과 두 번 칠하지 않는다
+                    onClick={(e) => e.detail === 0 && paint(i)}
                     onMouseEnter={(e) => e.buttons === 1 && paint(i)}
                   />
                 ))}
@@ -207,6 +210,8 @@ export default function WorkshopDialog() {
                       style={{ background: sl === 0 ? "#0f131c" : PRESET16[slots[sl]] }}
                       onClick={() => setPen(sl)}
                       title={sl === 0 ? "지우개(투명)" : `색 ${sl}`}
+                      aria-label={sl === 0 ? "지우개(투명)" : `색 ${sl}`}
+                      aria-pressed={pen === sl}
                     />
                   ))}
                 </div>
@@ -216,6 +221,7 @@ export default function WorkshopDialog() {
                       <button
                         key={idx}
                         className="ws-swatch"
+                        aria-label={`팔레트 ${hex}`}
                         style={{ background: hex }}
                         onClick={() =>
                           setSlots((s) => s.map((v, i) => (i === pen && pen !== 0 ? idx : v)))

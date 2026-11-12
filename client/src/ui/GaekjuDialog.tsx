@@ -93,7 +93,7 @@ export default function GaekjuDialog() {
 
   return (
     <div className="gift-overlay" onClick={close}>
-      <div className="gift-modal gaekju-modal" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" className="gift-modal gaekju-modal" onClick={(e) => e.stopPropagation()}>
         <div className="gift-emoji">📜</div>
         <div className="gift-title">객주 장부</div>
         <div className="gaekju-lede">

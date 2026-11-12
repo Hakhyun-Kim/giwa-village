@@ -680,6 +680,20 @@ it("HUD의 <button>에 붙은 클래스가 pointer-events:auto 를 가진다", (
   console.log(`     검사한 버튼 클래스: ${classes.join(", ")}`);
 });
 
+it("창(.gift-modal)은 dialog 로 읽히고, 글자 없는 버튼은 이름(aria-label)을 가진다", () => {
+  const uiDir = path.join(ROOT, "client", "src", "ui");
+  const misses = [];
+  for (const f of fs.readdirSync(uiDir).filter((n) => n.endsWith(".tsx"))) {
+    const src = fs.readFileSync(path.join(uiDir, f), "utf8");
+    for (const m of src.matchAll(/<div\b[^>]*className="gift-modal\b[^>]*>/g))
+      if (!/role="dialog"/.test(m[0]) || !/aria-modal="true"/.test(m[0])) misses.push(`${f}: gift-modal 에 role="dialog" aria-modal 없음`);
+    // 스스로 닫히는 <button … /> 은 글자가 없다 — 화면 낭독기 · 키보드 사용자에게 이름이 필요하다
+    for (const m of src.matchAll(/<button\b(?:[^>]|=>)*?\/>/gs))
+      if (!/aria-label=/.test(m[0])) misses.push(`${f}: 글자 없는 <button/> 에 aria-label 없음 (${(m[0].match(/className=\S+/) ?? ["?"])[0]})`);
+  }
+  ok(misses.length === 0, misses.join("\n     "));
+});
+
 // ── 첫 짐 — 서버 없는 공개 데모가 받지 않아도 되는 것 ──────────────────────
 describe("첫 짐 — 룸 서버 클라이언트(colyseus.js)는 서버에 붙을 때만 받는다");
 

@@ -442,6 +442,19 @@ try {
   const closed = await page.waitForSelector(".gift-overlay", { state: "detached", timeout: 3000 }).then(() => true).catch(() => false);
   must(opened && closed, `가방의 창이 ESC 로 닫힌다 (열림 ${opened} · 닫힘 ${closed})`);
 
+  // 문양 공방은 dialog 로 읽히고, 칸은 키보드(Tab → Enter)로도 칠해진다
+  await page.evaluate(() => window.__giwa.state().setWorkshopOpen(true));
+  const wsDialog = await page.getByRole("dialog").count();
+  const cell = page.getByRole("button", { name: "칸 1-1" });
+  const bgBefore = await cell.evaluate((el) => getComputedStyle(el).backgroundColor);
+  await cell.focus();
+  await page.keyboard.press("Enter");
+  await wait(200);
+  const bgAfter = await cell.evaluate((el) => getComputedStyle(el).backgroundColor);
+  must(wsDialog === 1 && bgAfter !== bgBefore, `문양 공방이 dialog 로 읽히고 키보드로 칸을 칠한다 (dialog ${wsDialog} · ${bgBefore} → ${bgAfter})`);
+  await page.keyboard.press("Escape");
+  await page.waitForSelector(".gift-overlay", { state: "detached", timeout: 3000 }).catch(() => {});
+
   // 창이 떠 있는 동안 E(인사)는 마을에 닿지 않고, 창을 닫으면 다시 닿는다
   const emoteAt = () => page.evaluate(() => { const s = window.__giwa.state(); return s.emotes[s.selfId]?.at ?? 0; });
   await page.evaluate(() => window.__giwa.state().setCouponsOpen(true));
