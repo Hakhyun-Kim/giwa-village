@@ -457,7 +457,7 @@ try {
   // 컨트랙트(Solidity)와 클라이언트(TS)의 장날 판정이 일치해야 한다.
   // 어긋나면 HUD는 "장날!"인데 실제로는 2배가 아닌 상태가 된다.
   const hearthTs = fs.readFileSync(
-    path.join(ROOT, "client", "src", "chain", "hearth.ts"), "utf8",
+    path.join(ROOT, "client", "src", "chain", "marketDay.ts"), "utf8",
   );
   const clientIsMarketDay = (ts) => {
     const day = Math.floor(ts / 86400);

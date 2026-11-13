@@ -45,7 +45,7 @@ const BOSS_ABI = parseAbi([
   "function statusOf(address who) view returns (uint256 w, uint128 remaining, bool slain, uint128 myContrib, uint64 nextStrikeAt, bool prevClaimable, uint32 trophies)",
 ]);
 
-/** 클라이언트(client/src/chain/hearth.ts)와 같은 규칙 */
+/** 클라이언트(client/src/chain/marketDay.ts)와 같은 규칙 */
 function clientIsMarketDay(tsSeconds) {
   const day = Math.floor(tsSeconds / 86400);
   const sec = tsSeconds % 86400;

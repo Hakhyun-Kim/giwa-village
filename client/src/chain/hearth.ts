@@ -62,34 +62,5 @@ export async function claimHearth(window: number): Promise<void> {
   sfxWarm();
 }
 
-// ---------- 장날 (토요일 21:00 KST = 12:00 UTC, 1시간) ----------
-
-export function isMarketDayNow(now = Date.now()): boolean {
-  const ts = Math.floor(now / 1000);
-  const day = Math.floor(ts / 86400);
-  const sec = ts % 86400;
-  return day % 7 === 2 && sec >= 12 * 3600 && sec < 13 * 3600;
-}
-
-/** 다음 장날 시작까지 남은 ms (장날 중이면 0) */
-export function msToMarketDay(now = Date.now()): number {
-  if (isMarketDayNow(now)) return 0;
-  const ts = Math.floor(now / 1000);
-  const day = Math.floor(ts / 86400);
-  for (let d = 0; d < 8; d++) {
-    if ((day + d) % 7 === 2) {
-      const start = (day + d) * 86400 + 12 * 3600;
-      if (start * 1000 > now) return start * 1000 - now;
-    }
-  }
-  return 0;
-}
-
-export function marketDayLabel(now = Date.now()): string {
-  if (isMarketDayNow(now)) return "🏮 장날이 열렸습니다! (온기 2배)";
-  const ms = msToMarketDay(now);
-  const h = Math.floor(ms / 3600000);
-  if (h >= 24) return `🏮 장날까지 ${Math.floor(h / 24)}일 ${h % 24}시간`;
-  const m = Math.floor((ms % 3600000) / 60000);
-  return `🏮 장날까지 ${h}시간 ${m}분`;
-}
+// 장날 판정 · 남은 시간 · 문구는 순수 모듈(marketDay.ts)에 있다 — npm test 가 그 함수를 그대로 불러 본다
+export * from "./marketDay";

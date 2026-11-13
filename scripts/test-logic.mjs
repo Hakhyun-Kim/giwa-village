@@ -1115,6 +1115,38 @@ it("문서가 가리키는 월드 상수가 world.json 과 같다", () => {
   );
 });
 
+const marketDay = await import(pathToFileURL(path.join(ROOT, "client", "src", "chain", "marketDay.ts")).href);
+
+describe("장날 문구 — 언제 열리고 언제 닫히는지 (KST 토 21:00~22:00)");
+
+it("장날 앞뒤의 경계 시각에서 HUD 문구가 맞다 (열린 동안은 남은 분 · 한 시간 안쪽은 분만 · 0분은 없다)", () => {
+  const at = (iso) => marketDay.marketDayLabel(Date.parse(iso));
+  const cases = [
+    ["2026-11-14T21:00:00+09:00", "🏮 장날이 열렸습니다! (온기 2배 · 60분 남음)"],
+    ["2026-11-14T21:59:30+09:00", "🏮 장날이 열렸습니다! (온기 2배 · 1분 남음)"],
+    ["2026-11-14T22:00:00+09:00", "🏮 장날까지 6일 23시간"],
+    ["2026-11-14T20:59:30+09:00", "🏮 장날까지 1분"],
+    ["2026-11-14T20:00:00+09:00", "🏮 장날까지 1시간 0분"],
+    ["2026-11-14T20:00:01+09:00", "🏮 장날까지 60분"],
+    ["2026-11-14T19:30:00+09:00", "🏮 장날까지 1시간 30분"],
+    ["2026-11-14T06:00:00+09:00", "🏮 장날까지 15시간 0분"],
+    ["2026-11-09T21:00:00+09:00", "🏮 장날까지 5일 0시간"],
+  ];
+  const bad = cases.filter(([iso, want]) => at(iso) !== want).map(([iso, want]) => `${iso}: "${at(iso)}" ≠ "${want}"`);
+  ok(bad.length === 0, bad.join("\n     "));
+  // 한 해 동안 매분: 열린 시각은 1~60분 남음, 닫힌 시각은 다음 장날까지 1분 이상 7일 이하
+  const start = Date.UTC(2026, 9, 1);
+  for (let t = start; t < start + 365 * 86400000; t += 60000) {
+    if (marketDay.isMarketDayNow(t)) {
+      const left = marketDay.msToMarketDayEnd(t);
+      ok(left > 0 && left <= 3600000, `${new Date(t).toISOString()} 장날 남은 시간 ${left}ms`);
+    } else {
+      const wait = marketDay.msToMarketDay(t);
+      ok(wait > 0 && wait <= 7 * 86400000, `${new Date(t).toISOString()} 다음 장날까지 ${wait}ms`);
+    }
+  }
+});
+
 describe("도깨비 주 경계 — 장날이 그 주의 마지막 한 시간");
 
 it("주가 장날이 끝나는 순간(토 22:00 KST)에 넘어간다 — GiwaBoss.WEEK_OFFSET ↔ 장날 판정", () => {
@@ -1122,10 +1154,9 @@ it("주가 장날이 끝나는 순간(토 22:00 KST)에 넘어간다 — GiwaBos
   const offset = Number(boss.match(/WEEK_OFFSET\s*=\s*(\d+)/)?.[1]);
   ok(/EPOCH\s*=\s*7 days/.test(boss), "GiwaBoss.EPOCH 가 7일이 아닙니다");
   ok(/\(block\.timestamp \+ WEEK_OFFSET\) \/ EPOCH/.test(boss), "week() 가 WEEK_OFFSET 을 쓰지 않습니다");
-  // 장날 판정은 컨트랙트(GiwaHearth.isMarketDay) · 클라이언트(hearth.ts)가 같은 식이다 — test:local 이 표본으로 대조한다
-  const hearth = fs.readFileSync(path.join(ROOT, "client", "src", "chain", "hearth.ts"), "utf8");
-  ok(/day % 7 === 2 && sec >= 12 \* 3600 && sec < 13 \* 3600/.test(hearth), "hearth.ts 의 장날 식이 바뀌었습니다");
-  const isMarketDay = (ts) => Math.floor(ts / 86400) % 7 === 2 && ts % 86400 >= 12 * 3600 && ts % 86400 < 13 * 3600;
+  // 장날 판정은 컨트랙트(GiwaHearth.isMarketDay) · 클라이언트(marketDay.ts)가 같은 식이다 — test:local 이 표본으로 대조한다.
+  // 여기서는 식을 옮겨 적지 않고 클라이언트 함수를 그대로 부른다
+  const isMarketDay = (ts) => marketDay.isMarketDayNow(ts * 1000);
   const week = (ts) => Math.floor((ts + offset) / (7 * 86400));
   // 2026-10-01 부터 1년 — 주가 바뀌는 순간마다 바로 앞 1초가 장날이어야 한다
   const start = Date.UTC(2026, 9, 1) / 1000;

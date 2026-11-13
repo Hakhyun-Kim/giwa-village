@@ -173,7 +173,7 @@ DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 �
 | 던전 문 확률 (safe/bonus/trap) | `contracts/GiwaGuilds.sol` · `core/src/dungeon.ts` (클라이언트는 core 를 임포트한다) | `npm test` — 두 곳의 경계값 일치 + 손익분기가 2~8층 안에 있을 것 |
 | 문 앞 기척의 정확도 (열에 여덟) | `core/src/dungeon.ts` 의 `OMEN_ACCURACY_LT` **한 곳** (화면 힌트 · 체인에는 없다) | `npm test` — 표본 1,500 이 명세와 바이트까지 같다 + 어느 기척이든 80% 이상 맞고 문이 낼 수 없는 결과는 들리지 않는다 + 기척을 따르는 최선의 수(DP)에서 세 문이 모두 10% 이상 |
 | 흥정 하한선 판단 | `scripts/lib/haggle.mjs` **한 곳** (봇과 테스트가 공유) | `npm test` |
-| 장날 판정 | `contracts/GiwaHearth.sol` · `client/src/chain/hearth.ts` | `npm run test:local` — 표본 64개 대조 |
+| 장날 판정 | `contracts/GiwaHearth.sol` · `client/src/chain/marketDay.ts` | `npm run test:local` — 표본 64개 대조 · `npm test` — 경계 시각의 HUD 문구 · 한 해 매분 |
 | 주야 사이클 밝기 | `client/src/game/daylight.ts` | `npm test` — 밤에도 읽을 수 있는 하한 |
 | 마을 배치·충돌 크기 | `client/src/game/collide.ts` **한 곳** (Village.tsx가 이 표를 그린다) | `npm test` — 벽 통과 금지 + 모닥불·도깨비·포털 도달 가능 · `npm run smoke:boot` — 실프레임 |
 | 주민 걸음 (속도·몸 크기·배회 반경) | `client/src/demo/wander.ts` **한 곳** | `npm test` — 진짜 노점 배치 위에서 1분 산책: 한 틱에 한 걸음 넘지 않기 · 벽 안에서 끝나는 틱 0 · `npm run smoke:boot` — 실브라우저 속도 표본 |
@@ -188,7 +188,7 @@ DEPLOY). 새 내용은 해당 주제 파일에 넣고, README에는 링크 한 �
 ## 5. 검증 — 가스를 아끼는 순서
 
 ```bash
-npm test                     # 로직 94건 + 원정 규칙 7건 + 룸 서버 주소 1건 · 체인 없음 · 2초 미만 (저장할 때마다)
+npm test                     # 로직 95건 + 원정 규칙 7건 + 룸 서버 주소 1건 · 체인 없음 · 2초 미만 (저장할 때마다)
 npm run export-world         # 배치표를 client/public/world.json 으로 굽는다
 npm run test:local           # 컨트랙트 13종 E2E 108건(봇 지갑이 있으면 흥정 봇까지) · 로컬 anvil · 가스 0
 npm run smoke:boot           # 실브라우저 부팅 게이트 (배포 전, CI에서도 돎)
