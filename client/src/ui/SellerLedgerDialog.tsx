@@ -12,6 +12,7 @@ import {
 } from "../chain/village";
 import { shortAddress } from "../wallet/wallet";
 import { giwaSepolia } from "../config/giwa";
+import { txErrorText } from "../net/txError";
 
 /** 판매자 장부 — 내 노점의 온체인 판매·분쟁 목록 + 환불 */
 export default function SellerLedgerDialog() {
@@ -49,8 +50,7 @@ export default function SellerLedgerDialog() {
       await refundSale(purchaseId);
       setSales(await fetchMySales(walletAddress));
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+      setError(txErrorText(err));
     } finally {
       setBusy(null);
     }
@@ -64,8 +64,7 @@ export default function SellerLedgerDialog() {
       await releaseSale(purchaseId);
       setSales(await fetchMySales(walletAddress));
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+      setError(txErrorText(err));
     } finally {
       setBusy(null);
     }
@@ -80,8 +79,7 @@ export default function SellerLedgerDialog() {
       setOffers(await fetchOffersFor(walletAddress));
       setSales(await fetchMySales(walletAddress));
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+      setError(txErrorText(err));
     } finally {
       setBusy(null);
     }

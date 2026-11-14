@@ -25,6 +25,7 @@ import {
 import { fetchDesign } from "../chain/workshop";
 import { shortAddress } from "../wallet/wallet";
 import { kstDate, recordDaily } from "../state/daily";
+import { txErrorText } from "../net/txError";
 
 const DEFAULT_PALETTE = [1, 3, 5, 8]; // 검정·홍·금·하늘
 
@@ -102,8 +103,7 @@ export default function WorkshopDialog() {
       setTab("market");
       void fetchDesigns().then(setDesigns).catch(() => {});
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+      setError(txErrorText(err));
     } finally {
       setBusy(false);
     }
@@ -120,8 +120,7 @@ export default function WorkshopDialog() {
       useStore.getState().setSelfWear((await wornPatternOf(walletAddress))?.code ?? null);
       void refreshSelfHonor();
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+      setError(txErrorText(err));
     } finally {
       setBusy(false);
     }

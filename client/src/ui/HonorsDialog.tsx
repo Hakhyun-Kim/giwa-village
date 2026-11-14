@@ -13,6 +13,7 @@ import {
   type HonorProfile,
   type BoxProfile,
 } from "../chain/village";
+import { txErrorText } from "../net/txError";
 
 /** 소울바운드 칭호 — 온체인 조건 검증 클레임 + 이름표 배지 장착 */
 export default function HonorsDialog() {
@@ -69,8 +70,7 @@ export default function HonorsDialog() {
         useStore.getState().setSelfHonor(id === 0 ? null : id);
       }
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+      setError(txErrorText(err));
     } finally {
       setBusy(null);
     }
@@ -93,8 +93,7 @@ export default function HonorsDialog() {
       if (kind === 0) setError("봉인이 오래돼 결과 없이 풀렸습니다. 기다리지 않고 바로 다시 열 수 있어요.");
       setBox(await fetchBoxProfile(walletAddress));
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+      setError(txErrorText(err));
       void fetchBoxProfile(walletAddress).then(setBox).catch(() => {});
     } finally {
       setBoxBusy(false);
@@ -110,8 +109,7 @@ export default function HonorsDialog() {
       setBox(await fetchBoxProfile(walletAddress));
       useStore.getState().setSelfTrinket(kind === 0 ? null : kind);
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setError(m.length > 100 ? m.slice(0, 100) + "…" : m);
+      setError(txErrorText(err));
     } finally {
       setBoxBusy(false);
     }

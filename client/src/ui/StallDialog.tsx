@@ -14,6 +14,7 @@ import { demoBuy } from "../demo/demo";
 import { addCoupon } from "../state/coupons";
 import { giwaSepolia } from "../config/giwa";
 import { MARKET_ADDRESS } from "../config/market";
+import { txErrorText } from "../net/txError";
 
 const THEME_EMOJI: Record<string, string> = {
   pizza: "🍕",
@@ -107,8 +108,7 @@ export default function StallDialog() {
       setBoughtItem(itemId);
       setTimeout(() => setBoughtItem(null), 2500);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.length > 120 ? msg.slice(0, 120) + "…" : msg);
+      setError(txErrorText(err, 120));
     } finally {
       setBusyItem(null);
     }
@@ -123,8 +123,7 @@ export default function StallDialog() {
       setOfferFor(null);
       setOfferEth("");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.length > 120 ? msg.slice(0, 120) + "…" : msg);
+      setError(txErrorText(err, 120));
     } finally {
       setBusyItem(null);
     }
@@ -137,8 +136,7 @@ export default function StallDialog() {
     try {
       await cancelOfferOnChain(id);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.length > 120 ? msg.slice(0, 120) + "…" : msg);
+      setError(txErrorText(err, 120));
     } finally {
       setBusyItem(null);
     }

@@ -8,6 +8,7 @@ import { publicClient, activeWalletClient, queueTx } from "../wallet/wallet";
 import { GUILDS_ADDRESS, GUILDS_ABI } from "../config/guilds";
 import { useStore } from "../state/store";
 import type { Guild } from "../types";
+import { txErrorText } from "../net/txError";
 
 interface ChainGuild {
   name: string;
@@ -63,7 +64,7 @@ function guildError(err: unknown): void {
   const short = Object.keys(REVERT_KO).find(
     (k) => msg.includes(`"${k}"`) || msg.includes(`reverted: ${k}`),
   );
-  useStore.getState().setGuildError(short ? REVERT_KO[short] : msg.slice(0, 120));
+  useStore.getState().setGuildError(short ? REVERT_KO[short] : txErrorText(err, 120));
 }
 
 async function guildWrite(functionName: string, args: unknown[]): Promise<boolean> {

@@ -3,6 +3,7 @@ import { useStore } from "../state/store";
 import { openStallOnChain } from "../chain/village";
 import { sfxStallOpen } from "../audio/sfx";
 import { track } from "../net/analytics";
+import { txErrorText } from "../net/txError";
 
 const PRESET_GOODS = [
   { name: "할인쿠폰", emoji: "🎫" },
@@ -75,7 +76,7 @@ export default function StallOpenDialog() {
       useStore.getState().setStallOpenDialog(false);
       setTitle(""); setItems([]); setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(txErrorText(err, 120));
     } finally { setBusy(false); }
   }
 

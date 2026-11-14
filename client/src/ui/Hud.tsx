@@ -20,6 +20,7 @@ import {
 } from "../wallet/identity";
 import { currentDaylight } from "../game/daylight";
 import { ambiencePreference, setAmbience } from "../audio/ambience";
+import { txErrorText } from "../net/txError";
 
 function StallButtons({ walletAddress }: { walletAddress: string }) {
   const myStall = useStore((s) =>
@@ -106,8 +107,7 @@ function FundButton() {
       setMsg("충전 완료! 이제 거래·비컨이 활성화됩니다");
       setTimeout(() => setMsg(null), 5000);
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setMsg(m.length > 90 ? m.slice(0, 90) + "…" : m);
+      setMsg(txErrorText(err, 90));
     } finally {
       setBusy(false);
     }
@@ -145,8 +145,7 @@ function HopaeButton({ identity }: { identity: Identity | null }) {
       setMsg(await fn());
       setTimeout(() => setMsg(null), 5000);
     } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      setMsg(m.length > 90 ? m.slice(0, 90) + "…" : m);
+      setMsg(txErrorText(err, 90));
     } finally {
       setBusy(false);
     }

@@ -126,16 +126,8 @@ export function sinceBoot(): number {
   return Math.round(performance.now() - bootAt);
 }
 
-/** tx 실패 사유를 몇 갈래로 — 원문(주소 · 해시가 섞인다)은 보내지 않는다 */
-export function txReason(err: unknown): string {
-  const m = (err instanceof Error ? err.message : String(err)).toLowerCase();
-  if (/user rejected|denied|rejected the request/.test(m)) return "rejected";
-  if (/insufficient|잔액/.test(m)) return "insufficient";
-  if (/revert|execution reverted/.test(m)) return "reverted";
-  if (/nonce|underpriced/.test(m)) return "nonce";
-  if (/timeout|timed out|network|fetch/.test(m)) return "network";
-  return "other";
-}
+// tx 실패 갈래는 화면 문구와 함께 순수 모듈(txError.ts)에 있다
+export { txReason } from "./txError";
 
 /** main.tsx 에서 한 번 — 세션 · 생존 · 첫 입력 · 크래시 · 성능 등급 · 포셋 링크를 건다 */
 export function installAnalytics(): void {

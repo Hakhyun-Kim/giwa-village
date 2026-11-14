@@ -3,6 +3,7 @@ import { useStore } from "../state/store";
 import { sendGiftTx, shortAddress } from "../wallet/wallet";
 import { demoGift } from "../demo/demo";
 import { giwaSepolia } from "../config/giwa";
+import { txErrorText } from "../net/txError";
 
 const PRESETS = ["0.001", "0.005", "0.01"];
 
@@ -42,8 +43,7 @@ export default function GiftDialog() {
       });
       setDone({ tx });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.length > 120 ? msg.slice(0, 120) + "…" : msg);
+      setError(txErrorText(err, 120));
     } finally {
       setBusy(false);
     }

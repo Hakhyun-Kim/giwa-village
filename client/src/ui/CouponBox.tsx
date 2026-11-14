@@ -8,6 +8,7 @@ import {
   type ReceivedCoupon,
 } from "../chain/village";
 import { giwaSepolia } from "../config/giwa";
+import { txErrorText } from "../net/txError";
 
 export default function CouponBox() {
   const open = useStore((s) => s.couponsOpen);
@@ -46,8 +47,7 @@ export default function CouponBox() {
       updateCoupon(walletAddress, tx, { disputed: true });
       useStore.getState().bumpCoupons();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.length > 100 ? msg.slice(0, 100) + "…" : msg);
+      setError(txErrorText(err));
     } finally {
       setBusyTx(null);
     }
@@ -63,8 +63,7 @@ export default function CouponBox() {
       updateCoupon(walletAddress, tx, { usedTx });
       useStore.getState().bumpCoupons();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.length > 100 ? msg.slice(0, 100) + "…" : msg);
+      setError(txErrorText(err));
     } finally {
       setBusyTx(null);
     }
@@ -82,8 +81,7 @@ export default function CouponBox() {
       setGiftAddr("");
       useStore.getState().bumpCoupons();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.length > 100 ? msg.slice(0, 100) + "…" : msg);
+      setError(txErrorText(err));
     } finally {
       setBusyTx(null);
     }
@@ -98,8 +96,7 @@ export default function CouponBox() {
       await redeemCoupon(tokenId);
       setReceived(await fetchReceivedCoupons(walletAddress));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.length > 100 ? msg.slice(0, 100) + "…" : msg);
+      setError(txErrorText(err));
     } finally {
       setBusyTx(null);
     }
@@ -114,8 +111,7 @@ export default function CouponBox() {
       updateCoupon(walletAddress, tx, { settled: true });
       useStore.getState().bumpCoupons();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg.length > 100 ? msg.slice(0, 100) + "…" : msg);
+      setError(txErrorText(err));
     } finally {
       setBusyTx(null);
     }

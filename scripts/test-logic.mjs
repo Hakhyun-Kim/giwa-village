@@ -1115,6 +1115,30 @@ it("문서가 가리키는 월드 상수가 world.json 과 같다", () => {
   );
 });
 
+const txError = await import(pathToFileURL(path.join(ROOT, "client", "src", "net", "txError.ts")).href);
+
+describe("전송 실패 문구 — 창에는 viem 영어 원문 대신 사람 말");
+
+it("흔한 실패(취소 · 잔액 · 거절 사유 · nonce · 네트워크)를 우리 말로, 모르는 것은 원문 첫 줄만", () => {
+  const E = (m) => new Error(m);
+  const cases = [
+    [E("User rejected the request.\n\nRequest Arguments:\n  from: 0xabc"), "지갑에서 취소했습니다."],
+    [E("The total cost (gas * gas fee + value) of executing this transaction exceeds the balance of the account.\n\nThis error could arise when..."), "잔액이 모자랍니다 — 가스비를 낼 테스트 ETH 를 먼저 받아 오세요."],
+    [E("잔액이 부족합니다."), "잔액이 모자랍니다 — 가스비를 낼 테스트 ETH 를 먼저 받아 오세요."],
+    [E('The contract function "buy" reverted with the following reason:\nprice\n\nContract Call:\n  address: 0x1f34'), "체인이 거절했습니다: price"],
+    [E("execution reverted: cooldown"), "체인이 거절했습니다: cooldown"],
+    [E('The contract function "claim" reverted.\n\nContract Call:'), "체인이 거절했습니다."],
+    [E("replacement transaction underpriced"), "앞선 전송이 아직 처리 중입니다 — 잠시 뒤 다시 눌러 주세요."],
+    [E("HTTP request failed.\n\nURL: https://sepolia-rpc.giwa.io\nDetails: fetch failed"), "체인에 닿지 못했습니다 — 잠시 뒤 다시 시도해 주세요."],
+    [E("호패를 먼저 거세요.\n둘째 줄"), "호패를 먼저 거세요."],
+    ["x".repeat(150), "x".repeat(100) + "…"],
+  ];
+  const bad = cases.filter(([e, want]) => txError.txErrorText(e) !== want).map(([e, want]) => `"${txError.txErrorText(e)}" ≠ "${want}"`);
+  ok(bad.length === 0, bad.join("\n     "));
+  // 어떤 문구에도 주소 · 해시가 실려 나가지 않는다(갈래 문구) — 계측의 갈래와 같은 표를 쓴다
+  ok(txError.txReason(cases[1][0]) === "insufficient", "계측 갈래와 화면 문구가 어긋났습니다");
+});
+
 const marketDay = await import(pathToFileURL(path.join(ROOT, "client", "src", "chain", "marketDay.ts")).href);
 
 describe("장날 문구 — 언제 열리고 언제 닫히는지 (KST 토 21:00~22:00)");
