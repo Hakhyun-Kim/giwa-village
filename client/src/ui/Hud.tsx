@@ -290,6 +290,7 @@ export default function Hud() {
     if (busy) return;
     setBusy(true);
     const store = useStore.getState();
+    store.setWalletError(null); // 다시 누르면 지난 실패 문구부터 지운다
     try {
       const address = await connectWallet();
       const name = shortAddress(address);
@@ -298,7 +299,7 @@ export default function Hud() {
       store.setSelfIdentity(name, color);
       await joinVillage();
     } catch (err) {
-      store.setWalletError(err instanceof Error ? err.message : String(err));
+      store.setWalletError(txErrorText(err, 120));
     } finally {
       setBusy(false);
     }
@@ -413,7 +414,13 @@ export default function Hud() {
             {busy ? "연결 중…" : "지갑 연결"}
           </button>
         )}
-        {walletError && <div className="hud-error">{walletError}</div>}
+        {walletError && (
+          <div className="hud-error" role="alert">
+            {walletError}
+            {/* 한 번 뜬 실패 문구가 HUD 에 영영 남지 않게 — 닫을 수 있다 */}
+            <button className="hud-error-close" aria-label="오류 닫기" onClick={() => useStore.getState().setWalletError(null)}>✕</button>
+          </div>
+        )}
         {walletAddress && <StallButtons walletAddress={walletAddress} />}
         {walletAddress && walletKind === "burner" && <FundButton />}
         {walletAddress && walletKind === "burner" && <HopaeButton identity={myIdentity} />}

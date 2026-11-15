@@ -442,6 +442,13 @@ try {
   const closed = await page.waitForSelector(".gift-overlay", { state: "detached", timeout: 3000 }).then(() => true).catch(() => false);
   must(opened && closed, `가방의 창이 ESC 로 닫힌다 (열림 ${opened} · 닫힘 ${closed})`);
 
+  // 지갑 실패 문구는 HUD 에 영영 남지 않는다 — ✕ 로 닫힌다
+  await page.evaluate(() => window.__giwa.state().setWalletError("스모크 시험 문구"));
+  const errShown = await page.waitForSelector(".hud-error", { timeout: 3000 }).then(() => true).catch(() => false);
+  await page.getByRole("button", { name: "오류 닫기" }).click();
+  const errGone = await page.waitForSelector(".hud-error", { state: "detached", timeout: 3000 }).then(() => true).catch(() => false);
+  must(errShown && errGone, `지갑 실패 문구가 ✕ 로 닫힌다 (뜸 ${errShown} · 닫힘 ${errGone})`);
+
   // 문양 공방은 dialog 로 읽히고, 칸은 키보드(Tab → Enter)로도 칠해진다
   await page.evaluate(() => window.__giwa.state().setWorkshopOpen(true));
   const wsDialog = await page.getByRole("dialog").count();

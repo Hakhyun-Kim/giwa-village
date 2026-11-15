@@ -193,7 +193,21 @@ body,
   color: #ffdcdc;
   font-size: 12px;
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 8px 28px 8px 10px;
+  position: relative;
+}
+.hud-error-close {
+  /* .hud 는 none — 닫기 단추만 클릭을 받는다 */
+  pointer-events: auto;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  border: none;
+  background: none;
+  color: #ffdcdc;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
 }
 
 .hud-bottom {

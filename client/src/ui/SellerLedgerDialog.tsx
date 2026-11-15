@@ -176,7 +176,7 @@ export default function SellerLedgerDialog() {
             className="gift-btn"
             onClick={() => {
               // 노점 상품은 openStall 이 체인에 값을 박는다(buyStall) — 따로 list/unlist 할 것이 없다
-              void closeStallOnChain().catch((e) => useStore.getState().setWalletError(String(e)));
+              void closeStallOnChain().catch((e) => useStore.getState().setWalletError(txErrorText(e, 120)));
               close();
             }}
           >

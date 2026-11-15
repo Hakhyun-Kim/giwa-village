@@ -33,6 +33,7 @@ import WorldHud from "./ui/WorldHud";
 import { returnVillage } from "./net/expedition";
 import { maybeStartShowcase } from "./demo/showcase";
 import { TOUCH } from "./game/touch";
+import { txErrorText } from "./net/txError";
 
 export default function App() {
   const zone = useWorld(s => s.zone);
@@ -68,9 +69,7 @@ export default function App() {
           return;
         } catch (err) {
           console.warn("[wallet] burner load failed, joining as guest:", err);
-          store.setWalletError(
-            err instanceof Error ? err.message : String(err),
-          );
+          store.setWalletError(txErrorText(err, 120));
         }
       }
       if (cancelled) return;
