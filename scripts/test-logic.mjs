@@ -1115,6 +1115,20 @@ it("문서가 가리키는 월드 상수가 world.json 과 같다", () => {
   );
 });
 
+describe("공유 미리보기 — 탭 제목 · 링크 카드가 기와장터의 공개 주소 하나를 가리킨다");
+
+it("index.html 의 제목 · og · canonical 이 기와장터 · giwa.metah.dev 이고 github 주소가 없다", () => {
+  const html = fs.readFileSync(path.join(ROOT, "client", "index.html"), "utf8");
+  const meta = (attr, key) => html.match(new RegExp(`<meta ${attr}="${key}" content="([^"]*)"`))?.[1];
+  const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
+  ok(title.startsWith("기와장터"), `탭 제목이 '기와장터'로 시작하지 않습니다: ${title}`);
+  ok(meta("property", "og:title")?.startsWith("기와장터"), "og:title 이 '기와장터'로 시작하지 않습니다");
+  for (const [k, v] of [["og:url", meta("property", "og:url")], ["canonical", html.match(/<link rel="canonical" href="([^"]*)"/)?.[1]]])
+    ok(v === "https://giwa.metah.dev/", `${k} 가 공개 주소(https://giwa.metah.dev/)가 아닙니다: ${v}`);
+  ok(!/github\.(io|com)/i.test(html), "index.html 에 github 주소가 있습니다 — 공개 링크는 metah.dev 하위 주소만");
+  ok(/^#[0-9a-f]{6}$/i.test(meta("name", "theme-color") ?? ""), "theme-color 가 없습니다");
+});
+
 const txError = await import(pathToFileURL(path.join(ROOT, "client", "src", "net", "txError.ts")).href);
 
 describe("전송 실패 문구 — 창에는 viem 영어 원문 대신 사람 말");
