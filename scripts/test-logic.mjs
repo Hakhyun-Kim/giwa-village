@@ -1153,6 +1153,25 @@ it("흔한 실패(취소 · 잔액 · 거절 사유 · nonce · 네트워크)를
   ok(txError.txReason(cases[1][0]) === "insufficient", "계측 갈래와 화면 문구가 어긋났습니다");
 });
 
+const entryError = await import(pathToFileURL(path.join(ROOT, "client", "src", "net", "entryError.ts")).href);
+
+it("원정 입장 실패 — Colyseus 영어 원문 대신 무엇이 문제인지(코드 · 정원 · 서버) 한 갈래만", () => {
+  const E = (m) => new Error(m);
+  const cases = [
+    [E('room "AbC12xyz" not found'), "그 입장 코드의 원정을 찾지 못했습니다 — 코드를 다시 확인하세요."],
+    [E('room "AbC12xyz" is locked'), "이미 정원이 찼거나 끝난 원정입니다 — 새 원정을 열어 보세요."],
+    [E("AbC12xyz is already full."), "이미 정원이 찼거나 끝난 원정입니다 — 새 원정을 열어 보세요."],
+    [E("Failed to fetch"), "원정 서버에 닿지 못했습니다 — 잠시 뒤 다시 시도하세요."],
+    [E("원정 입장 코드가 아닙니다."), "원정 입장 코드가 아닙니다."],
+    [E("weird thing\nstack"), "입장하지 못했습니다 (weird thing)."],
+    [undefined, "입장하지 못했습니다. 잠시 뒤 다시 시도하세요."],
+  ];
+  const bad = cases.filter(([e, want]) => entryError.entryErrorText(e) !== want).map(([e, want]) => `"${entryError.entryErrorText(e)}" ≠ "${want}"`);
+  ok(bad.length === 0, bad.join("\n     "));
+  const src = fs.readFileSync(path.join(ROOT, "client", "src", "net", "expedition.ts"), "utf8");
+  ok(!/err\.message/.test(src), "expedition.ts 가 입장 실패에 err.message 원문을 그대로 붙입니다 — entryErrorText 를 거칠 것");
+});
+
 const marketDay = await import(pathToFileURL(path.join(ROOT, "client", "src", "chain", "marketDay.ts")).href);
 
 describe("장날 문구 — 언제 열리고 언제 닫히는지 (KST 토 21:00~22:00)");

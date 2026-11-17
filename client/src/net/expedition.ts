@@ -8,6 +8,7 @@ import { setMood } from "../audio/ambience";
 import { sfxHit, sfxSlain } from "../audio/sfx";
 import { addShake } from "../game/feel";
 import { combatSnapshot } from "../state/world";
+import { entryErrorText } from "./entryError";
 
 let arena: Room | null = null;
 // 서버가 없을 때 혼자 하는 연습 원정 — 서버가 돌리는 shared/expedition.ts 를 이 브라우저에서 그대로 돌린다(PROTOCOL.md §3.7).
@@ -175,7 +176,7 @@ export async function enterExpedition(code = "") {
       room.send("input",input);
     },50);
   } catch (err) {
-    if (seq===sequence) { clearSession(); useWorld.setState({entering:false,notice:`입장하지 못했습니다. 코드·정원·진행 상태를 확인하세요. ${err instanceof Error ? err.message : ""}`}); }
+    if (seq===sequence) { clearSession(); useWorld.setState({entering:false,notice:entryErrorText(err)}); }
   } finally { if (sequence!==seq || !arena) clearTimeout(deadline); }
 }
 
