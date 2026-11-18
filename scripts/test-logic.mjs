@@ -1129,6 +1129,21 @@ it("index.html 의 제목 · og · canonical 이 기와장터 · giwa.metah.dev 
   ok(/^#[0-9a-f]{6}$/i.test(meta("name", "theme-color") ?? ""), "theme-color 가 없습니다");
 });
 
+it("없는 주소의 404 — 마을 입구로 돌아가는 길이 있고, 링크는 모두 / 로 시작한다 (어느 깊이에서 떠도 깨지지 않게)", () => {
+  const html = fs.readFileSync(path.join(ROOT, "client", "public", "404.html"), "utf8");
+  ok(/<html lang="ko">/.test(html) && /<title>기와장터/.test(html), "404.html 의 lang · 제목이 없습니다");
+  const hrefs = [...html.matchAll(/(?:href|src)="([^"]*)"/g)].map((m) => m[1]);
+  ok(hrefs.includes("/"), "404.html 에 마을 입구(/)로 가는 링크가 없습니다");
+  const bad = hrefs.filter((h) => !h.startsWith("/") || h.startsWith("//"));
+  ok(bad.length === 0, `404.html 의 링크가 / 로 시작하지 않습니다(깊은 주소에서 깨진다): ${bad.join(", ")}`);
+  // guide/*.html 은 빌드가 guide/*.md 에서 굽는다 — 원본 md 가 있는지 본다
+  const exists = (h) => h === "/" || fs.existsSync(path.join(ROOT, "client", "public", h)) ||
+    (h.startsWith("/guide/") && fs.existsSync(path.join(ROOT, "guide", h.slice(7).replace(/\.html$/, ".md").toUpperCase().replace(/\.MD$/, ".md"))));
+  const missing = hrefs.filter((h) => !exists(h));
+  ok(missing.length === 0, `404.html 이 가리키는 파일이 없습니다: ${missing.join(", ")}`);
+  ok(!/github\.(io|com)/i.test(html), "404.html 에 github 주소가 있습니다");
+});
+
 const txError = await import(pathToFileURL(path.join(ROOT, "client", "src", "net", "txError.ts")).href);
 
 describe("전송 실패 문구 — 창에는 viem 영어 원문 대신 사람 말");

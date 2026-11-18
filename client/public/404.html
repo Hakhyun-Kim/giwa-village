@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#161b26">
+<title>기와장터 — 길을 잃었습니다</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  /* 없는 주소로 들어온 사람에게 GitHub 의 영어 404 대신 마을 입구를 보여 준다.
+     이 파일은 어느 깊이의 주소에서도 그대로 뜨므로 링크는 모두 / 로 시작한다(상대 경로 금지). */
+  :root { --ink: #241F2E; --soft: #524B60; --paper: #EFEAE1; --gold: #B8790E; }
+  @media (prefers-color-scheme: dark) { :root { --ink: #EDE7DA; --soft: #B4A99A; --paper: #161b26; --gold: #E0A63A; } }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--paper); color: var(--ink); display: grid; place-items: center; padding: 16px; box-sizing: border-box;
+    font-family: "Pretendard Variable", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; text-align: center; }
+  main { max-width: 26rem; }
+  .lamp { font-size: 3rem; line-height: 1; }
+  h1 { font-family: "Noto Serif KR", "Nanum Myeongjo", Batang, serif; font-size: 1.6rem; margin: .6rem 0 .4rem; }
+  p { color: var(--soft); line-height: 1.6; margin: 0 0 1.4rem; }
+  a.go { display: inline-block; padding: .7rem 1.3rem; border-radius: 999px; background: var(--gold); color: #fff; text-decoration: none; font-weight: 600; }
+  nav { margin-top: 1.2rem; font-size: .9rem; }
+  nav a { color: var(--soft); margin: 0 .5rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="lamp" aria-hidden="true">🏮</div>
+  <h1>이 골목에는 노점이 없습니다</h1>
+  <p>주소가 바뀌었거나 잘못 적혔습니다.<br>저잣거리 입구로 돌아가 다시 걸어 보세요.</p>
+  <a class="go" href="/">마을 입구로</a>
+  <nav><a href="/guide/play.html">노는 법</a><a href="/tech.html">기술 문서</a></nav>
+</main>
+</body>
+</html>
