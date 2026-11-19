@@ -34,6 +34,10 @@ import { returnVillage } from "./net/expedition";
 import { maybeStartShowcase } from "./demo/showcase";
 import { TOUCH } from "./game/touch";
 import { txErrorText } from "./net/txError";
+import { hasWebGL } from "./game/webgl";
+
+// 부팅 때 한 번만 묻는다 — 렌더마다 시험 문맥을 열지 않게
+const WEBGL = hasWebGL();
 
 export default function App() {
   const zone = useWorld(s => s.zone);
@@ -102,7 +106,15 @@ export default function App() {
     <div className="app">
       {/* 화소 밀도 상한 — 휴대폰은 1.5 에서 자른다(2 의 절반 남짓의 픽셀). 렌더 전용이라 판정과 무관하다.
           (전에 있던 AdaptiveDpr 은 아무도 regress() 를 부르지 않아 해상도를 낮춘 적이 없었다) */}
-      <Canvas
+      {!WEBGL && (
+        <div className="no-webgl" role="alert">
+          <b>🏮 이 브라우저에서는 마을을 3D 로 그릴 수 없습니다</b>
+          <p>브라우저 설정에서 <b>하드웨어 가속</b>을 켜거나, 최신 크롬 · 엣지 · 사파리로 다시 열어 주세요.
+            지갑 · 노점 같은 기록은 체인에 그대로 있습니다.</p>
+          <a href="./guide/play.html">노는 법 보기</a>
+        </div>
+      )}
+      {WEBGL && <Canvas
         shadows
         camera={{ position: [0, 9.5, 11.5], fov: 50 }}
         dpr={[1, TOUCH ? 1.5 : 2]}
@@ -110,7 +122,7 @@ export default function App() {
       >
         {zone === "village" ? <><Village /><Portal /><Stalls /><RemotePlayers /><VillageExit /></> : <Outside />}
         <Player key={zone} />
-      </Canvas>
+      </Canvas>}
       {zone === "village" && <>
       <Hud />
       <GiftFeed />
@@ -125,12 +137,11 @@ export default function App() {
       <SellerLedgerDialog />
       <GaekjuDialog />
       <WorkshopDialog />
-      <QuestLog />
-      <DailyRequest />
-      <Welcome />
+      {/* 3D 가 없으면 걸어서 하는 부탁 · 시연 권유는 할 수 없으니 안내만 남긴다 */}
+      {WEBGL && <><QuestLog /><DailyRequest /><Welcome /></>}
       </>}
       <WorldHud />
-      <TouchControls />
+      {WEBGL && <TouchControls />}
     </div>
   );
 }

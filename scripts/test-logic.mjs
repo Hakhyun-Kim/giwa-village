@@ -1127,6 +1127,7 @@ it("index.html 의 제목 · og · canonical 이 기와장터 · giwa.metah.dev 
     ok(v === "https://giwa.metah.dev/", `${k} 가 공개 주소(https://giwa.metah.dev/)가 아닙니다: ${v}`);
   ok(!/github\.(io|com)/i.test(html), "index.html 에 github 주소가 있습니다 — 공개 링크는 metah.dev 하위 주소만");
   ok(/^#[0-9a-f]{6}$/i.test(meta("name", "theme-color") ?? ""), "theme-color 가 없습니다");
+  ok(/<noscript>[^<]*자바스크립트/.test(html), "index.html 에 자바스크립트가 꺼진 사람을 위한 <noscript> 안내가 없습니다");
 });
 
 it("없는 주소의 404 — 마을 입구로 돌아가는 길이 있고, 링크는 모두 / 로 시작한다 (어느 깊이에서 떠도 깨지지 않게)", () => {

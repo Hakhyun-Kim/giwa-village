@@ -588,6 +588,25 @@ try {
   });
   must(overlaps.n >= 3 && overlaps.out.length === 0, `세로 휴대폰에서 상태 카드 · 지갑 줄 · 부탁 카드가 서로 덮지 않는다 (${overlaps.out.join(" · ") || `${overlaps.n}개 따로`})`);
   await phone.close();
+
+  // WebGL 을 못 그리는 브라우저(하드웨어 가속 끔 · 오래된 기기) — 검은 화면 대신 한국어 안내가 뜨고,
+  // three 가 문맥을 만들다 죽는 오류(pageerror)가 나지 않는다
+  const nogl = await browser.newContext({ viewport: { width: 1024, height: 640 } });
+  await nogl.addInitScript(() => {
+    const get = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+      return /webgl/.test(type) ? null : get.call(this, type, ...rest);
+    };
+  });
+  const np = await nogl.newPage();
+  const noglErrors = [];
+  np.on("pageerror", (e) => noglErrors.push(e.message.slice(0, 120)));
+  await np.goto(`http://localhost:${PORT}/?rafshim`, { waitUntil: "domcontentloaded" });
+  const notice = await np.waitForSelector(".no-webgl", { timeout: 15000 }).then((el) => el.innerText()).catch(() => "");
+  await wait(1500);
+  must(/3D/.test(notice) && noglErrors.length === 0 && (await np.$("canvas")) === null,
+    `WebGL 이 없으면 캔버스 대신 안내가 뜨고 오류가 없다 (${noglErrors.join(" · ") || (notice ? "안내 뜸" : "안내 없음")})`);
+  await nogl.close();
 } finally {
   await browser.close();
   if (!server.killed) server.kill();

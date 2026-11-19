@@ -29,6 +29,24 @@ body,
   position: relative;
 }
 
+/* WebGL 을 못 그리는 브라우저 — 캔버스 자리에 안내 한 장(HUD 는 그 위 모서리에 그대로) */
+.no-webgl {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(26rem, calc(100% - 32px));
+  height: fit-content;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: rgba(22, 27, 38, 0.92);
+  color: #ede7da;
+  text-align: center;
+  line-height: 1.6;
+  z-index: 50;
+}
+.no-webgl p { margin: 8px 0 12px; color: #c9c0b0; }
+.no-webgl a { color: #e0a63a; }
+
 /* ---------- HUD ---------- */
 .hud {
   position: absolute;
