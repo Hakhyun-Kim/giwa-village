@@ -21,6 +21,11 @@ import {
 import { currentDaylight } from "../game/daylight";
 import { ambiencePreference, setAmbience } from "../audio/ambience";
 import { txErrorText } from "../net/txError";
+import { TOUCH } from "../game/touch";
+
+// 근처 안내의 "누를 것" — 키보드면 키, 손가락이면 오른쪽 아래 단추의 그림(TouchControls 와 같은 것).
+// 휴대폰에 "X — 모닥불 쬐기"를 띄우면 누를 X 가 없다
+const keyOr = (key: string, button: string) => (TOUCH ? button : key);
 
 function StallButtons({ walletAddress }: { walletAddress: string }) {
   const myStall = useStore((s) =>
@@ -432,16 +437,16 @@ export default function Hud() {
             {bossCooldown > 0 ? (
               <>🕰 다음 타격까지 <b>{bossCooldown}초</b> · 이모트로 동료를 응원하세요</>
             ) : (
-              <><b>R</b> — 도깨비 타격 준비 완료 · 함께 때려잡으세요</>
+              <><b>{keyOr("R", "🧿")}</b> — 도깨비 타격 준비 완료 · 함께 때려잡으세요</>
             )}
           </div>
         ) : nearFire ? (
           <div className="hud-card hud-prompt">
-            <b>X</b> — {selfSitting ? "일어나기" : "모닥불 쬐기 (함께 쬐면 온기가 쌓입니다)"}
+            <b>{keyOr("X", "🔥")}</b> — {selfSitting ? "일어나기" : "모닥불 쬐기 (함께 쬐면 온기가 쌓입니다)"}
           </div>
         ) : nearPortal ? (
           <div className="hud-card hud-prompt">
-            <b>F</b> — 백층 던전 입장
+            <b>{keyOr("F", "⚔")}</b> — 백층 던전 입장
           </div>
         ) : (
           <div className="hud-card hud-hint">

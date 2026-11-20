@@ -587,6 +587,17 @@ try {
     return { out, n: boxes.length };
   });
   must(overlaps.n >= 3 && overlaps.out.length === 0, `세로 휴대폰에서 상태 카드 · 지갑 줄 · 부탁 카드가 서로 덮지 않는다 (${overlaps.out.join(" · ") || `${overlaps.n}개 따로`})`);
+
+  // 휴대폰의 근처 안내는 키(X) 대신 오른쪽 아래 단추의 그림(🔥)을 가리킨다 — 누를 X 가 없으니까
+  const firePrompt = await pp.evaluate(async () => {
+    window.__giwa.teleport(-9, 12);
+    await new Promise((r) => setTimeout(r, 800));
+    const prompt = document.querySelector(".hud-prompt")?.textContent ?? "";
+    const btn = [...document.querySelectorAll(".touch-btn")].some((b) => b.textContent.includes("🔥"));
+    return { prompt, btn };
+  });
+  must(/🔥/.test(firePrompt.prompt) && !/\bX\b/.test(firePrompt.prompt) && firePrompt.btn,
+    `휴대폰의 모닥불 안내가 키 대신 단추(🔥)를 가리킨다 ("${firePrompt.prompt.slice(0, 30)}" · 단추 ${firePrompt.btn ? "있음" : "없음"})`);
   await phone.close();
 
   // WebGL 을 못 그리는 브라우저(하드웨어 가속 끔 · 오래된 기기) — 검은 화면 대신 한국어 안내가 뜨고,

@@ -1145,6 +1145,17 @@ it("없는 주소의 404 — 마을 입구로 돌아가는 길이 있고, 링크
   ok(!/github\.(io|com)/i.test(html), "404.html 에 github 주소가 있습니다");
 });
 
+it("근처 안내의 손가락용 그림은 오른쪽 아래 단추와 같다 (휴대폰에 '누를 수 없는 키'를 띄우지 않는다)", () => {
+  const hud = fs.readFileSync(path.join(ROOT, "client", "src", "ui", "Hud.tsx"), "utf8");
+  const touch = fs.readFileSync(path.join(ROOT, "client", "src", "ui", "TouchControls.tsx"), "utf8");
+  const pairs = [...hud.matchAll(/keyOr\("([A-Z])", "([^"]+)"\)/g)].map((m) => [m[1], m[2]]);
+  ok(pairs.length >= 3, `Hud.tsx 의 근처 안내(R · X · F)가 keyOr 를 거치지 않습니다 (${pairs.length}개)`);
+  const raw = hud.match(/<b>[RXF]<\/b> —/g) ?? [];
+  ok(raw.length === 0, `Hud.tsx 에 손가락 기기에서도 키만 보이는 안내가 남아 있습니다: ${raw.join(", ")}`);
+  const bad = pairs.filter(([k, icon]) => !new RegExp(`pressKey\\("Key${k}"\\)[^<]{0,80}>\\s*${icon}`).test(touch));
+  ok(bad.length === 0, `안내의 그림과 TouchControls 단추가 다릅니다: ${bad.map(([k, i]) => `${k}→${i}`).join(", ")}`);
+});
+
 const txError = await import(pathToFileURL(path.join(ROOT, "client", "src", "net", "txError.ts")).href);
 
 describe("전송 실패 문구 — 창에는 viem 영어 원문 대신 사람 말");
