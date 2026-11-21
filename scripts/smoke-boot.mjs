@@ -525,6 +525,16 @@ try {
   must(errors.length === 0, `콘솔 에러 0 (${errors.length}건)`);
   errors.forEach((e) => console.log("   " + e));
 
+  // 좁은 PC 창(폭 390px) — 아래 조작 안내가 양옆으로 잘리지 않는다
+  await page.setViewportSize({ width: 390, height: 700 });
+  await page.evaluate(() => window.__giwa.teleport(0, 5));
+  await wait(600);
+  const hint = await page.evaluate(() => {
+    const r = document.querySelector(".hud-hint")?.getBoundingClientRect();
+    return r?.width ? [Math.round(r.left), Math.round(r.right), innerWidth] : null;
+  });
+  must(!!hint && hint[0] >= 0 && hint[1] <= hint[2], `좁은 창에서 아래 조작 안내가 화면 안에 든다 (${hint ? `${hint[0]}~${hint[1]} / ${hint[2]}` : "안내 없음"})`);
+
   await ctx.close();
 
   // 가로 휴대폰(844×390 · 터치) — 왼쪽 아래 조이스틱이 부탁 카드를 덮으면 손가락이 카드 대신
@@ -596,6 +606,24 @@ try {
     const btn = [...document.querySelectorAll(".touch-btn")].some((b) => b.textContent.includes("🔥"));
     return { prompt, btn };
   });
+  // 그 안내가 조이스틱 · 단추 · 부탁 카드를 덮지 않고 화면 안에 있다 — 세로와 가로 둘 다
+  const promptHits = async () => pp.evaluate(() => {
+    const p = document.querySelector(".hud-prompt")?.getBoundingClientRect();
+    if (!p?.width) return ["안내 없음"];
+    const out = [];
+    if (p.left < 0 || p.right > innerWidth || p.bottom > innerHeight) out.push(`화면 밖 ${Math.round(p.left)}~${Math.round(p.right)}`);
+    for (const sel of [".joystick", ".touch-actions", ".quest-card", ".daily-card"]) {
+      const r = document.querySelector(sel)?.getBoundingClientRect();
+      if (r?.width && p.left < r.right && r.left < p.right && p.top < r.bottom && r.top < p.bottom) out.push(sel);
+    }
+    return out;
+  });
+  const portraitHits = await promptHits();
+  await pp.setViewportSize({ width: 844, height: 390 });
+  await wait(500);
+  const landscapeHits = await promptHits();
+  must(portraitHits.length === 0 && landscapeHits.length === 0,
+    `휴대폰의 근처 안내가 조이스틱 · 단추 · 부탁 카드를 덮지 않는다 (세로 ${portraitHits.join("·") || "따로"} / 가로 ${landscapeHits.join("·") || "따로"})`);
   must(/🔥/.test(firePrompt.prompt) && !/\bX\b/.test(firePrompt.prompt) && firePrompt.btn,
     `휴대폰의 모닥불 안내가 키 대신 단추(🔥)를 가리킨다 ("${firePrompt.prompt.slice(0, 30)}" · 단추 ${firePrompt.btn ? "있음" : "없음"})`);
   await phone.close();

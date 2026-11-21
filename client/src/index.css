@@ -228,24 +228,28 @@ body,
   padding: 2px 4px;
 }
 
+/* 아래 가운데 안내 — 좌우 16px 안에서 가운데 맞춤, 좁으면 줄을 바꾼다.
+   (전에는 left:50% + nowrap 이라 폭 390px 창에서 조작 안내가 양옆으로 잘려 나갔다) */
 .hud-bottom {
   position: absolute;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: center;
 }
 
 .hud-hint {
   font-size: 13px;
   opacity: 0.92;
-  white-space: nowrap;
+  text-align: center;
 }
 
 .hud-prompt {
   font-size: 15px;
   border: 1px solid rgba(154, 108, 255, 0.7);
   color: #d8c7ff;
-  white-space: nowrap;
+  text-align: center;
 }
 
 /* ---------- in-world labels ---------- */
@@ -1435,6 +1439,18 @@ body,
   .daily-card,
   .quest-card + .daily-card { top: auto; bottom: 8px; left: 156px; }
   .quest-card:has(+ .daily-card) { bottom: auto; top: 136px; left: 14px; }
+}
+/* 근처 안내(🔥 — 모닥불 쬐기 …)도 손가락 자리를 비킨다 — 세로는 조이스틱 · 단추 위로 올리고,
+   가로는 부탁 카드(왼쪽 156~586px)와 오른쪽 단추 사이의 오른쪽 아래 빈자리에 좁게 세운다.
+   그 틈마저 없는 작은 가로 화면에서는 카드가 떠 있는 동안 안내를 접는다 — 같은 말이 단추(🔥 앉기)에 있다 */
+@media (pointer: coarse) and (max-height: 520px) {
+  .hud-bottom { left: auto; right: 86px; bottom: 8px; max-width: 166px; }
+}
+@media (pointer: coarse) and (max-height: 520px) and (max-width: 799px) {
+  .app:has(.quest-card, .daily-card) .hud-bottom { display: none; }
+}
+@media (pointer: coarse) and (max-width: 560px) {
+  .hud-bottom { bottom: 176px; }
 }
 /* ── 객주 장부 (GaekjuDialog) — 장터 전체 에스크로 원장 · 읽기 전용 ───────────── */
 .gaekju-modal {
