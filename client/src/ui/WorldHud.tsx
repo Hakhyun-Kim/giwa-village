@@ -4,6 +4,7 @@ import { localPos } from "../net/colyseus";
 import { combatAction, enterExpedition, goField, returnVillage } from "../net/expedition";
 import { useStore } from "../state/store";
 import { ATTACK_RANGE } from "../../../shared/expedition";
+import { TOUCH } from "../game/touch";
 import "./world.css";
 
 export default function WorldHud() {
@@ -42,7 +43,7 @@ export default function WorldHud() {
       <div className="world-entry-actions"><button disabled={!near||world.entering} onClick={()=>void enterExpedition()}>{world.entering?"입장 준비 중…":offline?"혼자 연습 시작":"새 원정 시작"}</button>
       <input aria-label="원정 입장 코드" placeholder="동료의 입장 코드" maxLength={24} value={code} disabled={offline} onChange={e=>setCode(e.target.value)}/>
       <button disabled={!near||!code.trim()||offline||world.entering} onClick={()=>void enterExpedition(code)}>동료에게 합류</button></div>
-      <p className="world-fine">{!near?"길을 따라 북쪽 산채 입구까지 이동하세요.":offline?"입구 도착 · F 키로도 혼자 연습을 시작할 수 있어요.":"입구 도착 · F 키로도 새 원정을 시작할 수 있어요."}{offline&&" 동료와 합류하려면 실시간 서버가 연결되어야 해요."}</p>
+      <p className="world-fine">{!near?"길을 따라 북쪽 산채 입구까지 이동하세요.":TOUCH?"입구 도착 · 위 단추로 시작하세요.":offline?"입구 도착 · F 키로도 혼자 연습을 시작할 수 있어요.":"입구 도착 · F 키로도 새 원정을 시작할 수 있어요."}{offline&&" 동료와 합류하려면 실시간 서버가 연결되어야 해요."}</p>
       <small>전투 체험은 가스 0 · 전투 점수와 체력은 이번 원정에서만 유지됩니다.</small>
     </section>:<>
       <aside className="world-party"><small>원정대 {snap?.players.length??1}/4</small>
@@ -52,8 +53,8 @@ export default function WorldHud() {
         <small>교관 다솔 동행 · 온체인 보상 없음</small>
       </aside>
       {!finished&&<div className="combat-hotbar"><div className="player-health"><b>내 체력 {me?.hp??100} / 100</b><progress value={me?.hp??100} max={100}/><span>{me?.hp===0?"동료의 전투를 지켜보거나 귀환하세요":range?"공격 사거리 안":"적에게 가까이 다가가세요"}</span></div>
-        <button disabled={!me||me.hp<=0||!range||(snap?.now??0)<me.attackAt} onClick={()=>combatAction("attack")}><kbd>R</kbd> 기본 공격 <small>가까운 적 1명</small></button>
-        <button disabled={!me||me.hp<=0||skillLeft>0} onClick={()=>combatAction("skill")}><kbd>Q</kbd> 회전 일격 <small>{skillLeft>0?`${skillLeft}초` : "주변 5m · 재사용 5초"}</small></button>
+        <button disabled={!me||me.hp<=0||!range||(snap?.now??0)<me.attackAt} onClick={()=>combatAction("attack")}>{!TOUCH&&<kbd>R</kbd>} 기본 공격 <small>가까운 적 1명</small></button>
+        <button disabled={!me||me.hp<=0||skillLeft>0} onClick={()=>combatAction("skill")}>{!TOUCH&&<kbd>Q</kbd>} 회전 일격 <small>{skillLeft>0?`${skillLeft}초` : "주변 5m · 재사용 5초"}</small></button>
       </div>}
       {finished&&<section className="world-result"><small>{snap?.phase==="victory"?"산채에 평온이 돌아왔습니다":"잠시 숨을 고르세요"}</small><h2>{snap?.phase==="victory"?"첫 원정을 마쳤어요!":"원정대가 쓰러졌습니다"}</h2><p>{snap?.phase==="victory"?"다솔: 멋진 협동이었어요. 다음에는 동료와 함께 와볼까요?":"붉은 원 밖으로 이동하면 피해를 피할 수 있어요. 들판에서 새 원정을 시작할 수 있습니다."}</p><p className="world-fine">이번 결과는 세션 기록입니다. 온체인 자산·길드 층수는 변경되지 않습니다.</p><button onClick={()=>goField("산채 입구에서 새 원정을 시작할 수 있습니다.")}>들판으로 돌아가기</button></section>}
     </>}

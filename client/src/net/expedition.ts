@@ -9,6 +9,10 @@ import { sfxHit, sfxSlain } from "../audio/sfx";
 import { addShake } from "../game/feel";
 import { combatSnapshot } from "../state/world";
 import { entryErrorText } from "./entryError";
+import { TOUCH } from "../game/touch";
+
+// 휴대폰에는 R 키가 없다 — 아래 단추의 이름으로 부른다
+const ATTACK_KEY = TOUCH ? "'기본 공격' 단추" : "R";
 
 let arena: Room | null = null;
 // 서버가 없을 때 혼자 하는 연습 원정 — 서버가 돌리는 shared/expedition.ts 를 이 브라우저에서 그대로 돌린다(PROTOCOL.md §3.7).
@@ -81,7 +85,7 @@ function startPractice() {
   if (!addFighter(state,PRACTICE_ID,s.selfName,s.selfColor)) return;
   practice=state;
   const me=receive(structuredClone(state),PRACTICE_ID); if (!me) return;
-  arrive(me,"",PRACTICE_ID,"다솔: 오늘은 둘이서 연습해요. 도깨비에게 다가가 R로 공격하고, 붉은 원 밖으로 피하세요!");
+  arrive(me,"",PRACTICE_ID,`다솔: 오늘은 둘이서 연습해요. 도깨비에게 다가가 ${ATTACK_KEY}로 공격하고, 붉은 원 밖으로 피하세요!`);
   let last=performance.now(), carry=0;
   pump=setInterval(() => {
     if (seq!==sequence || practice!==state) return;
@@ -164,7 +168,7 @@ export async function enterExpedition(code = "") {
     if (joined.name !== "expedition") { void joined.leave(); throw new Error("원정 입장 코드가 아닙니다."); }
     hold(joined,seq,me => {
       clearTimeout(deadline);
-      arrive(me,joined.roomId,joined.sessionId,"다솔: 도깨비에게 다가가 R로 공격해요. 붉은 원 밖으로 피하세요!");
+      arrive(me,joined.roomId,joined.sessionId,`다솔: 도깨비에게 다가가 ${ATTACK_KEY}로 공격해요. 붉은 원 밖으로 피하세요!`);
     });
     pump=setInterval(() => {
       const room=arena; if (!room) return; // 다시 잇는 중

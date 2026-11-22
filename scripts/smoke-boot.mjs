@@ -626,6 +626,26 @@ try {
     `휴대폰의 근처 안내가 조이스틱 · 단추 · 부탁 카드를 덮지 않는다 (세로 ${portraitHits.join("·") || "따로"} / 가로 ${landscapeHits.join("·") || "따로"})`);
   must(/🔥/.test(firePrompt.prompt) && !/\bX\b/.test(firePrompt.prompt) && firePrompt.btn,
     `휴대폰의 모닥불 안내가 키 대신 단추(🔥)를 가리킨다 ("${firePrompt.prompt.slice(0, 30)}" · 단추 ${firePrompt.btn ? "있음" : "없음"})`);
+  // 휴대폰의 들판 · 산채도 누를 수 없는 키(F · R · Q)를 말하지 않는다 — 단추로 시작하고 단추로 싸운다
+  await pp.evaluate(() => window.__giwa.teleport(0, 5));
+  await pp.locator(".world-village-entry button").click();
+  await pp.waitForSelector(".world-entry-card", { timeout: 10000 });
+  const phoneWalk = pp.getByRole("button", { name: "다솔 따라 산채 입구로" });
+  if (await phoneWalk.count()) await phoneWalk.click();
+  const phoneReady = await pp
+    .waitForFunction(() => [...document.querySelectorAll(".world-entry-actions button")].some((b) => !b.disabled), undefined, { timeout: 30000 })
+    .then(() => true).catch(() => false);
+  const fieldFine = await pp.locator(".world-fine").first().innerText().catch(() => "");
+  let fightWords = "";
+  if (phoneReady) {
+    await pp.locator(".world-entry-actions button").first().click();
+    await pp.waitForSelector(".combat-hotbar", { timeout: 10000 }).catch(() => {});
+    fightWords = await pp.evaluate(() =>
+      `${document.querySelector(".world-notice")?.textContent ?? ""} | ${document.querySelectorAll(".combat-hotbar kbd").length}kbd`);
+    await pp.getByRole("button", { name: "들판으로 귀환" }).click().catch(() => {});
+  }
+  must(phoneReady && /단추/.test(fieldFine) && !/F 키/.test(fieldFine) && !/\bR로|[1-9]kbd/.test(fightWords),
+    `휴대폰의 들판 · 산채 안내가 키 대신 단추를 말한다 ("${fieldFine.slice(0, 24)}" · "${fightWords.slice(0, 60)}")`);
   await phone.close();
 
   // WebGL 을 못 그리는 브라우저(하드웨어 가속 끔 · 오래된 기기) — 검은 화면 대신 한국어 안내가 뜨고,
