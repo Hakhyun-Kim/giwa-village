@@ -1156,6 +1156,22 @@ it("근처 안내의 손가락용 그림은 오른쪽 아래 단추와 같다 (�
   ok(bad.length === 0, `안내의 그림과 TouchControls 단추가 다릅니다: ${bad.map(([k, i]) => `${k}→${i}`).join(", ")}`);
 });
 
+it("PLAY.md 의 휴대폰 조작표가 실제 오른쪽 아래 단추와 같다 (단추를 더하거나 바꾸면 문서도 함께)", () => {
+  const touch = fs.readFileSync(path.join(ROOT, "client", "src", "ui", "TouchControls.tsx"), "utf8");
+  const play = fs.readFileSync(path.join(ROOT, "guide", "PLAY.md"), "utf8");
+  const section = play.split("### 휴대폰 (터치)")[1]?.split(/\n## /)[0] ?? "";
+  ok(section.length > 0, "PLAY.md 에 '### 휴대폰 (터치)' 절이 없습니다");
+  // 단추 = 그림 + 이름(<span>…</span> 안의 첫 글자열). 이름이 상황에 따라 바뀌는 것은 문서의 첫 이름만 본다
+  const buttons = [...touch.matchAll(/className="touch-btn[^"]*"[\s\S]*?>\s*(\S+)\s*<span>/g)].map((m) => m[1]);
+  ok(buttons.length >= 4, `TouchControls 의 단추를 읽지 못했습니다 (${buttons.length}개)`);
+  const missing = buttons.filter((icon) => !section.includes(`**${icon} `));
+  ok(missing.length === 0, `PLAY.md 휴대폰 조작표에 없는 단추: ${missing.join(" ")}`);
+  const rows = [...section.matchAll(/^\| \*\*(\S+) [^*]+\*\* \|/gm)].map((m) => m[1]).filter((icon) => /\p{Extended_Pictographic}/u.test(icon));
+  const stale = rows.filter((icon) => !buttons.includes(icon));
+  ok(stale.length === 0, `PLAY.md 휴대폰 조작표에 이제 없는 단추가 남아 있습니다: ${stale.join(" ")}`);
+  ok(!/QR/.test(section), "PLAY.md 휴대폰 절에 웹에 없는 QR 안내가 남아 있습니다");
+});
+
 const txError = await import(pathToFileURL(path.join(ROOT, "client", "src", "net", "txError.ts")).href);
 
 describe("전송 실패 문구 — 창에는 viem 영어 원문 대신 사람 말");
