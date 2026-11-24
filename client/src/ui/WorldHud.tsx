@@ -5,10 +5,11 @@ import { combatAction, enterExpedition, goField, returnVillage } from "../net/ex
 import { useStore } from "../state/store";
 import { ATTACK_RANGE } from "../../../shared/expedition";
 import { TOUCH } from "../game/touch";
+import { copyText } from "./copy";
 import "./world.css";
 
 export default function WorldHud() {
-  const world=useWorld(); const [code,setCode]=useState("");const [copied,setCopied]=useState(false);
+  const world=useWorld(); const [code,setCode]=useState("");const [copied,setCopied]=useState<"ok"|"fail"|null>(null);
   const [tick,setTick]=useState(0);
   const showcasing=useStore(s=>s.showcasing);
   // 들판·산채의 거리 · 전투 스냅숏은 React 밖(20Hz)에 있다 — 그것을 읽는 때만 150ms 박자로 다시 그린다. 마을 줄은 useWorld 가 깨운다
@@ -48,7 +49,7 @@ export default function WorldHud() {
     </section>:<>
       <aside className="world-party"><small>원정대 {snap?.players.length??1}/4</small>
         {snap?.players.map(p=><div className="party-member" key={p.id}><b>{p.name}{p.id===world.fighterId?" (나)":""}</b><progress value={p.hp} max={p.maxHp}/><span>{p.hp}/{p.maxHp}{p.hp<=0?" · 쓰러짐":""}</span></div>)}
-        {world.instanceId?<div className="instance-code">입장 코드 <b>{world.instanceId}</b><button onClick={async()=>{try{await navigator.clipboard.writeText(world.instanceId);setCopied(true);}catch{setCopied(false);}}}>{copied?"복사됨":"복사"}</button></div>
+        {world.instanceId?<div className="instance-code">입장 코드 <b>{world.instanceId}</b><button onClick={async()=>{setCopied((await copyText(world.instanceId))?"ok":"fail");window.setTimeout(()=>setCopied(null),1600);}}>{copied==="ok"?"복사됨":copied==="fail"?"복사 안 됨 · 코드를 적어 주세요":"복사"}</button></div>
           :<div className="instance-code">혼자 연습 · 이 기기에서 진행</div>}
         <small>교관 다솔 동행 · 온체인 보상 없음</small>
       </aside>

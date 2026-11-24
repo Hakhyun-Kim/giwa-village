@@ -26,6 +26,7 @@ import { fetchDesign } from "../chain/workshop";
 import { shortAddress } from "../wallet/wallet";
 import { kstDate, recordDaily } from "../state/daily";
 import { txErrorText } from "../net/txError";
+import { copyText } from "./copy";
 
 const DEFAULT_PALETTE = [1, 3, 5, 8]; // 검정·홍·금·하늘
 
@@ -370,7 +371,7 @@ function DesignRow({
     try {
       if (navigator.share) await navigator.share({ title: "기와장터 문양", text, url });
       else {
-        await navigator.clipboard.writeText(url);
+        if (!(await copyText(url))) return; // 복사가 막혔으면 "복사됨"을 띄우지 않는다
         setShared(true);
         window.setTimeout(() => setShared(false), 1600);
       }

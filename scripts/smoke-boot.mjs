@@ -666,6 +666,32 @@ try {
   must(/3D/.test(notice) && noglErrors.length === 0 && (await np.$("canvas")) === null,
     `WebGL 이 없으면 캔버스 대신 안내가 뜨고 오류가 없다 (${noglErrors.join(" · ") || (notice ? "안내 뜸" : "안내 없음")})`);
   await nogl.close();
+
+  // 지갑 주소 복사 — 클립보드가 막힌 브라우저(https 아님 · 권한 거절)에서 "복사됨!"이라고 거짓말하지 않는다
+  const clip = await browser.newContext({ viewport: { width: 1024, height: 640 }, permissions: ["clipboard-read", "clipboard-write"] });
+  await clip.addInitScript(() => {
+    localStorage.setItem("giwa-welcome", "self");
+    window.__noclip = false;
+    const write = navigator.clipboard.writeText.bind(navigator.clipboard);
+    navigator.clipboard.writeText = (t) => (window.__noclip ? Promise.reject(new Error("blocked")) : write(t));
+    const exec = document.execCommand.bind(document);
+    document.execCommand = (...a) => (window.__noclip ? false : exec(...a));
+  });
+  const cp = await clip.newPage();
+  await cp.goto(`http://localhost:${PORT}/?rafshim&debug`, { waitUntil: "domcontentloaded" });
+  await cp.waitForFunction(() => window.__giwa?.ready?.() === true, undefined, { timeout: 60000 });
+  const addr = cp.locator(".hud .addr").first();
+  await cp.evaluate(() => { window.__noclip = true; });
+  await addr.click();
+  const blocked = await addr.innerText();
+  await wait(1800);
+  await cp.evaluate(() => { window.__noclip = false; });
+  await addr.click();
+  const allowed = await addr.innerText();
+  const pasted = await cp.evaluate(() => navigator.clipboard.readText()).catch(() => "");
+  must(blocked === "복사 안 됨" && allowed === "복사됨!" && /^0x[0-9a-fA-F]{40}$/.test(pasted),
+    `주소 복사가 막히면 '복사 안 됨', 되면 '복사됨!' (${blocked} / ${allowed} / ${pasted ? "클립보드에 주소" : "클립보드 비었음"})`);
+  await clip.close();
 } finally {
   await browser.close();
   if (!server.killed) server.kill();

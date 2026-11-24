@@ -22,6 +22,7 @@ import { currentDaylight } from "../game/daylight";
 import { ambiencePreference, setAmbience } from "../audio/ambience";
 import { txErrorText } from "../net/txError";
 import { TOUCH } from "../game/touch";
+import { copyText } from "./copy";
 
 // 근처 안내의 "누를 것" — 키보드면 키, 손가락이면 오른쪽 아래 단추의 그림(TouchControls 와 같은 것).
 // 휴대폰에 "X — 모닥불 쬐기"를 띄우면 누를 X 가 없다
@@ -267,7 +268,7 @@ export default function Hud() {
   const selfDojang = !!myIdentity?.dojang;
   const myUpid = myIdentity?.name ?? null;
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"ok" | "fail" | null>(null);
 
   useEffect(() => {
     if (!walletAddress) {
@@ -310,11 +311,10 @@ export default function Hud() {
     }
   }
 
-  function onCopy() {
+  async function onCopy() {
     if (!walletAddress) return;
-    void navigator.clipboard.writeText(walletAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+    setCopied((await copyText(walletAddress)) ? "ok" : "fail");
+    setTimeout(() => setCopied(null), 1600);
   }
 
   const bossCooldown = boss
@@ -400,7 +400,7 @@ export default function Hud() {
               onClick={onCopy}
               title={`${walletAddress} (클릭하여 복사)`}
             >
-              {copied ? "복사됨!" : (myUpid ?? shortAddress(walletAddress))}
+              {copied === "ok" ? "복사됨!" : copied === "fail" ? "복사 안 됨" : (myUpid ?? shortAddress(walletAddress))}
             </button>
             <span className="balance">
               {balanceEth === null ? "…" : balanceEth} ETH
