@@ -84,7 +84,8 @@ export default function GuildDialog() {
               </div>
               <input
                 className="gift-input wide"
-                placeholder="길드 이름 (예: 달빛 원정대)"
+                aria-label="길드 이름"
+            placeholder="길드 이름 (예: 달빛 원정대)"
                 maxLength={12}
                 value={name}
                 onChange={(e) => setName(e.target.value)}

@@ -1172,6 +1172,21 @@ it("PLAY.md 의 휴대폰 조작표가 실제 오른쪽 아래 단추와 같다 
   ok(!/QR/.test(section), "PLAY.md 휴대폰 절에 웹에 없는 QR 안내가 남아 있습니다");
 });
 
+it("창의 입력칸마다 이름이 있다 (aria-label 이나 <label> — 자리표시 글은 쓰는 순간 사라져 이름이 못 된다)", () => {
+  const dir = path.join(ROOT, "client", "src", "ui");
+  const bad = [];
+  for (const f of fs.readdirSync(dir).filter((n) => n.endsWith(".tsx"))) {
+    const src = fs.readFileSync(path.join(dir, f), "utf8");
+    for (const m of src.matchAll(/<(input|textarea|select)\b([\s\S]*?)\/?>/g)) {
+      if (/aria-label|type="hidden"/.test(m[2])) continue;
+      const before = src.slice(Math.max(0, m.index - 300), m.index);
+      if (before.lastIndexOf("<label") > before.lastIndexOf("</label>")) continue;
+      bad.push(`${f}:${src.slice(0, m.index).split("\n").length}`);
+    }
+  }
+  ok(bad.length === 0, `이름 없는 입력칸: ${bad.join(", ")}`);
+});
+
 const txError = await import(pathToFileURL(path.join(ROOT, "client", "src", "net", "txError.ts")).href);
 
 describe("전송 실패 문구 — 창에는 viem 영어 원문 대신 사람 말");

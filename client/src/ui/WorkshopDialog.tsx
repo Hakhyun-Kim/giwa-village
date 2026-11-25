@@ -237,7 +237,8 @@ export default function WorkshopDialog() {
             </div>
             <input
               className="gift-input wide"
-              placeholder="문양 이름 (예: 달무늬)"
+              aria-label="문양 이름"
+            placeholder="문양 이름 (예: 달무늬)"
               maxLength={36}
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -248,6 +249,7 @@ export default function WorkshopDialog() {
                 type="number"
                 step="0.0001"
                 min="0"
+                aria-label="문양 판매가 (ETH)"
                 placeholder="판매가 (ETH · 0이면 무료)"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}

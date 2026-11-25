@@ -95,6 +95,7 @@ export default function GiftDialog() {
             <div className="gift-input-row">
               <input
                 className="gift-input"
+                aria-label="선물할 금액 (ETH)"
                 type="number"
                 step="0.001"
                 min="0"

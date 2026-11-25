@@ -89,6 +89,7 @@ export default function StallOpenDialog() {
 
         <input
           className="gift-input wide"
+          aria-label="노점 이름"
           placeholder="노점 이름 (예: 싸다싸 목도리)"
           maxLength={20}
           value={title}
@@ -106,6 +107,7 @@ export default function StallOpenDialog() {
                 {sel && (
                   <input
                     className="stall-good-price"
+                    aria-label={`${g.name} 가격 (ETH)`}
                     type="number"
                     step="0.001"
                     min="0"

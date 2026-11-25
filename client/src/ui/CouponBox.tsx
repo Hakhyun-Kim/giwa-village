@@ -222,7 +222,8 @@ export default function CouponBox() {
               <div className="coupon-gift-row">
                 <input
                   className="gift-input wide"
-                  placeholder="받는 지갑 주소 (0x…)"
+                  aria-label="쿠폰을 받을 지갑 주소"
+                placeholder="받는 지갑 주소 (0x…)"
                   value={giftAddr}
                   onChange={(e) => setGiftAddr(e.target.value)}
                 />

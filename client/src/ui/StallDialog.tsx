@@ -206,6 +206,7 @@ export default function StallDialog() {
               type="number"
               step="0.0001"
               min="0"
+              aria-label="흥정 제안가 (ETH)"
               placeholder="제안가 (ETH)"
               value={offerEth}
               onChange={(e) => setOfferEth(e.target.value)}

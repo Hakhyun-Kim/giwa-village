@@ -682,12 +682,16 @@ try {
   await cp.waitForFunction(() => window.__giwa?.ready?.() === true, undefined, { timeout: 60000 });
   const addr = cp.locator(".hud .addr").first();
   await cp.evaluate(() => { window.__noclip = true; });
-  await addr.click();
-  const blocked = await addr.innerText();
+  // 복사는 비동기다 — 글이 바뀔 때까지 기다렸다 읽는다(바로 읽으면 아직 주소가 보인다)
+  const labelAfterClick = async () => {
+    await addr.click();
+    await cp.waitForFunction(() => /복사/.test(document.querySelector(".hud .addr")?.textContent ?? ""), undefined, { timeout: 3000 }).catch(() => {});
+    return addr.innerText();
+  };
+  const blocked = await labelAfterClick();
   await wait(1800);
   await cp.evaluate(() => { window.__noclip = false; });
-  await addr.click();
-  const allowed = await addr.innerText();
+  const allowed = await labelAfterClick();
   const pasted = await cp.evaluate(() => navigator.clipboard.readText()).catch(() => "");
   must(blocked === "복사 안 됨" && allowed === "복사됨!" && /^0x[0-9a-fA-F]{40}$/.test(pasted),
     `주소 복사가 막히면 '복사 안 됨', 되면 '복사됨!' (${blocked} / ${allowed} / ${pasted ? "클립보드에 주소" : "클립보드 비었음"})`);
