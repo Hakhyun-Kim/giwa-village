@@ -15,6 +15,7 @@ import { addCoupon } from "../state/coupons";
 import { giwaSepolia } from "../config/giwa";
 import { MARKET_ADDRESS } from "../config/market";
 import { txErrorText } from "../net/txError";
+import { parseEthInput } from "../chain/ethAmount";
 
 const THEME_EMOJI: Record<string, string> = {
   pizza: "🍕",
@@ -116,6 +117,11 @@ export default function StallDialog() {
 
   async function onOffer(itemName: string) {
     if (busyItem || !stall) return;
+    const amount = parseEthInput(offerEth);
+    if (amount.error) {
+      setError(`제안가: ${amount.error}`);
+      return;
+    }
     setBusyItem("offer");
     setError(null);
     try {
@@ -213,7 +219,7 @@ export default function StallDialog() {
             />
             <button
               className="gift-btn primary small"
-              disabled={!!busyItem || !(Number(offerEth) > 0)}
+              disabled={!!busyItem || !offerEth.trim()}
               onClick={() =>
                 onOffer(stall.items.find((i) => i.id === offerFor)?.name ?? "")
               }

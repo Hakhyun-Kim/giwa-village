@@ -4,6 +4,7 @@ import { sendGiftTx, shortAddress } from "../wallet/wallet";
 import { demoGift } from "../demo/demo";
 import { giwaSepolia } from "../config/giwa";
 import { txErrorText } from "../net/txError";
+import { parseEthInput } from "../chain/ethAmount";
 
 const PRESETS = ["0.001", "0.005", "0.01"];
 
@@ -28,6 +29,11 @@ export default function GiftDialog() {
 
   async function onSend() {
     if (busy || !targetId || !target) return;
+    const value = parseEthInput(amount);
+    if (value.error) {
+      setError(value.error);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {

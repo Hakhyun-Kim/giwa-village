@@ -1187,6 +1187,29 @@ it("창의 입력칸마다 이름이 있다 (aria-label 이나 <label> — 자�
   ok(bad.length === 0, `이름 없는 입력칸: ${bad.join(", ")}`);
 });
 
+const ethAmount = await import(pathToFileURL(path.join(ROOT, "client", "src", "chain", "ethAmount.ts")).href);
+
+it("칸에 적은 ETH 금액 — 지수 표기 · 19자리 소수(0 wei) · 0 · 상한을 사람 말로 막고, 정상 값은 viem 과 같은 wei", () => {
+  const bad = [];
+  for (const [text, max, want] of [
+    ["1e-3", undefined, "숫자로만"], ["0.0000000000000000001", undefined, "18자리"], ["0", undefined, "0보다"],
+    ["", undefined, "적어 주세요"], ["-0.1", undefined, "숫자로만"], ["1.5", 1, "1 ETH 까지"], ["abc", undefined, "숫자로만"],
+  ]) {
+    const r = ethAmount.parseEthInput(text, max);
+    if (!r.error?.includes(want)) bad.push(`"${text}" → ${r.error ?? r.wei} (기대: ${want})`);
+  }
+  for (const text of ["0.005", " 0.01 ", "1", "1.", ".5", "0.000000000000000001", "0.123456789012345678"]) {
+    const r = ethAmount.parseEthInput(text, 1);
+    if (r.wei !== parseEther(text.trim())) bad.push(`"${text}" → ${r.error ?? r.wei} ≠ ${parseEther(text.trim())}`);
+  }
+  ok(bad.length === 0, bad.join("\n     "));
+  // 노점 열기 · 흥정 · 선물이 모두 이 검사를 지난다 (Number(...) > 0 으로 되돌아가지 않게)
+  for (const f of ["StallOpenDialog.tsx", "StallDialog.tsx", "GiftDialog.tsx"]) {
+    const src = fs.readFileSync(path.join(ROOT, "client", "src", "ui", f), "utf8");
+    ok(/parseEthInput\(/.test(src), `${f} 가 금액을 parseEthInput 으로 따지지 않습니다`);
+  }
+});
+
 const txError = await import(pathToFileURL(path.join(ROOT, "client", "src", "net", "txError.ts")).href);
 
 describe("전송 실패 문구 — 창에는 viem 영어 원문 대신 사람 말");

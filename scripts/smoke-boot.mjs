@@ -695,6 +695,16 @@ try {
   const pasted = await cp.evaluate(() => navigator.clipboard.readText()).catch(() => "");
   must(blocked === "복사 안 됨" && allowed === "복사됨!" && /^0x[0-9a-fA-F]{40}$/.test(pasted),
     `주소 복사가 막히면 '복사 안 됨', 되면 '복사됨!' (${blocked} / ${allowed} / ${pasted ? "클립보드에 주소" : "클립보드 비었음"})`);
+  // 노점 열기 — 소수점 아래 19자리 가격은 체인에서 0 wei(공짜 상품)가 된다. 전송 전에 사람 말로 막는다
+  await cp.evaluate(() => window.__giwa.state().setStallOpenDialog(true));
+  await cp.waitForSelector(".gift-modal", { timeout: 5000 });
+  await cp.getByLabel("노점 이름").fill("스모크 노점");
+  await cp.locator(".stall-good-pick").first().click();
+  await cp.locator(".stall-good-price").first().fill("0.0000000000000000001");
+  await cp.getByRole("button", { name: "노점 개설" }).click();
+  const priceWarn = await cp.locator(".gift-warn").innerText({ timeout: 3000 }).catch(() => "");
+  must(/18자리/.test(priceWarn), `노점 가격이 0 wei 로 깎이는 값이면 전송 전에 막는다 ("${priceWarn}")`);
+  await cp.keyboard.press("Escape");
   await clip.close();
 } finally {
   await browser.close();

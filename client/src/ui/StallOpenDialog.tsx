@@ -4,6 +4,7 @@ import { openStallOnChain } from "../chain/village";
 import { sfxStallOpen } from "../audio/sfx";
 import { track } from "../net/analytics";
 import { txErrorText } from "../net/txError";
+import { parseEthInput } from "../chain/ethAmount";
 
 const PRESET_GOODS = [
   { name: "할인쿠폰", emoji: "🎫" },
@@ -62,9 +63,10 @@ export default function StallOpenDialog() {
       return;
     }
     for (const it of items) {
-      const n = Number(it.priceEth);
-      if (!(n > 0 && n <= 1)) {
-        setError(`${it.name} 가격이 올바르지 않습니다 (0~1 ETH).`);
+      // Number() 는 "1e-3" · 19자리 소수(체인에서는 0 wei — 공짜 상품)를 통과시킨다 — wei 로 따져 본다
+      const price = parseEthInput(it.priceEth, 1);
+      if (price.error) {
+        setError(`${it.name} 가격: ${price.error}`);
         return;
       }
     }
