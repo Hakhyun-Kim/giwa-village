@@ -1210,6 +1210,22 @@ it("칸에 적은 ETH 금액 — 지수 표기 · 19자리 소수(0 wei) · 0 ·
   }
 });
 
+it("문양 판매가 — 0 은 무료 배포로 받고, 19자리 소수가 무료로 깎이거나 지수 표기가 영어로 새지 않는다", () => {
+  const bad = [];
+  for (const [text, want] of [["0", 0n], ["0.0", 0n], ["0.001", parseEther("0.001")]]) {
+    const r = ethAmount.parseEthInput(text, 1, true);
+    if (r.wei !== want) bad.push(`"${text}" → ${r.error ?? r.wei} (기대: ${want})`);
+  }
+  for (const [text, want] of [["0.0000000000000000001", "18자리"], ["1e-3", "숫자로만"], ["2", "1 ETH 까지"]]) {
+    const r = ethAmount.parseEthInput(text, 1, true);
+    if (!r.error?.includes(want)) bad.push(`"${text}" → ${r.error ?? r.wei} (기대: ${want})`);
+  }
+  if (!ethAmount.parseEthInput("0").error) bad.push("allowZero 없이 0 이 통과합니다");
+  const src = fs.readFileSync(path.join(ROOT, "client", "src", "ui", "WorkshopDialog.tsx"), "utf8");
+  if (!/parseEthInput\(.*, true\)/.test(src)) bad.push("WorkshopDialog 가 판매가를 parseEthInput 으로 따지지 않습니다");
+  ok(bad.length === 0, bad.join("\n     "));
+});
+
 const txError = await import(pathToFileURL(path.join(ROOT, "client", "src", "net", "txError.ts")).href);
 
 describe("전송 실패 문구 — 창에는 viem 영어 원문 대신 사람 말");

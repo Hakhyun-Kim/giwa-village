@@ -112,7 +112,7 @@ export async function registerDesign(
   name: string,
   cells: number[],
   paletteSlots: number[],
-  priceEth: string,
+  priceWei: bigint,
 ): Promise<void> {
   const wc = activeWalletClient;
   if (!wc?.account) throw new Error("지갑이 없습니다.");
@@ -127,7 +127,7 @@ export async function registerDesign(
         name,
         encodePixels(cells),
         encodePalette(paletteSlots),
-        priceEth ? parseEther(priceEth) : 0n,
+        priceWei,
       ],
     }),
   );

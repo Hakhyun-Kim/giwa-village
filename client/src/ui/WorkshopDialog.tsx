@@ -27,6 +27,7 @@ import { shortAddress } from "../wallet/wallet";
 import { kstDate, recordDaily } from "../state/daily";
 import { txErrorText } from "../net/txError";
 import { copyText } from "./copy";
+import { parseEthInput } from "../chain/ethAmount";
 
 const DEFAULT_PALETTE = [1, 3, 5, 8]; // 검정·홍·금·하늘
 
@@ -96,10 +97,15 @@ export default function WorkshopDialog() {
       setError("빈 문양은 등록할 수 없습니다.");
       return;
     }
+    const amount = parseEthInput(price.trim() || "0", 1, true);
+    if (amount.error !== undefined) {
+      setError(amount.error);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      await registerDesign(name.trim(), cells, slots, price.trim() || "0");
+      await registerDesign(name.trim(), cells, slots, amount.wei);
       setName("");
       setTab("market");
       void fetchDesigns().then(setDesigns).catch(() => {});
